@@ -9,7 +9,7 @@
  
 /*
  *  Astrohelion 
- *  Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
+ *  Copyright 2015-2018, Andrew Cox; Protected under the GNU GPL v3.0
  *  
  *  This file is part of Astrohelion
  *
@@ -741,7 +741,7 @@ void DynamicsModel::multShoot_targetCont_Ctrl(MultShootData& it, const Constrain
 				// * For now, all time-derivatives of control laws are zero
 				//
 				// TODO - Will need to retrieve constrol state time derivatives from propagated segment
-				// * Instantaneous time derivatives are available via ControlLaw.getLaw_StateDeriv()
+				// * Instantaneous time derivatives are available via ControlLaw.getTimeDeriv()
 
 				// std::vector<double> lastDeriv = propSeg.getStateDerivByIx(-1);
 

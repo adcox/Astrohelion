@@ -9,7 +9,7 @@
  
 /*
  *  Astrohelion 
- *  Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
+ *  Copyright 2015-2018, Andrew Cox; Protected under the GNU GPL v3.0
  *  
  *  This file is part of Astrohelion
  *
@@ -51,6 +51,7 @@ namespace astrohelion{
 DynamicsModel_cr3bp_lt::DynamicsModel_cr3bp_lt() : DynamicsModel_cr3bp() {
     coreDim = 7;
     extraDim = 0;
+    allowedCons.push_back(Constraint_tp::HLT);
     allowedEvents.push_back(Event_tp::MASS);
 }//==============================================
 
@@ -108,31 +109,196 @@ std::vector<double> DynamicsModel_cr3bp_lt::getStateDeriv(double t, std::vector<
     return dsdt;
 }//==================================================
 
-//------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 //      Simulation Engine Functions
-//------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 /**
  *  @brief Create default events for a simulation run
- *  @details These events are intended to prevent numerical issues, e.g., to avoid singularities.
+ *  @details These events are intended to prevent numerical issues, e.g., to 
+ *  avoid singularities.
  * 
  *  @param pSys pointer to system data object
  *  @return A vector of events to use in the simulation
  */
-std::vector<Event> DynamicsModel_cr3bp_lt::sim_makeDefaultEvents(const SysData *pSys) const{
+std::vector<Event> DynamicsModel_cr3bp_lt::sim_makeDefaultEvents(
+    const SysData *pSys) const{
+
     // Create crash events from base dynamics model
     std::vector<Event> events = DynamicsModel::sim_makeDefaultEvents(pSys);
 
-    // Add event to keep mass greater than 0.01 (1% of spacecraft reference mass)
+    // Add event to keep mass greater than 0.01 (1% of spacecraft ref. mass)
     std::vector<double> minMass {0.01};
     events.push_back(Event(Event_tp::MASS, -1, true, minMass));
 
     return events;
 }//==================================================
 
-//------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 //      Multiple Shooting Functions
-//------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
+void DynamicsModel_cr3bp_lt::multShoot_applyConstraint(MultShootData& it, 
+    const Constraint& con, int c) const{
+
+    // Let the base class do its thing first
+    DynamicsModel_cr3bp::multShoot_applyConstraint(it, con, c);
+
+    // Handle constraints specific to the CR3BP-LT
+    int row0 = it.conRows[c];
+
+    switch(con.getType()){
+        case Constraint_tp::HLT:
+            multShoot_targetHLT(it, con, row0);
+            break;
+        default: break;
+    }
+}//====================================================
+
+/**
+ * @brief Compute constraint function and partial derivative values for a 
+ * low-thrust Hamiltonian constraint.
+ * 
+ * @param it reference to the corrector's iteration data structure
+ * @param con reference to the constraint being applied
+ * @param row0 row this constraint begins on in the constraint vector
+ */
+void DynamicsModel_cr3bp_lt::multShoot_targetHLT(MultShootData &it,
+    const Constraint& con, int row0) const{
+
+    // Figure out which segments the node is linked to
+    // in order to get the control law
+    const Node& node = it.pArcIn->getNodeRef_const(con.getID());
+    int links[2] = {node.getLink(0), node.getLink(1)};
+    
+    ControlLaw_cr3bp_lt *pLaw = nullptr;
+    if(links[1] == Linkable::INVALID_ID){
+        pLaw = static_cast<ControlLaw_cr3bp_lt *>(it.pArcIn->getSegRef_const(links[0]).getCtrlLaw());
+    }else{
+        const Segment &seg0 = it.pArcIn->getSegRef_const(links[0]);
+        const Segment &seg1 = it.pArcIn->getSegRef_const(links[1]);
+
+        // Use the law of the segment that has an origin at the node
+        // If both segments originate at the node, use seg0
+        pLaw = (seg0.getOrigin() == node.getID()) ? 
+            static_cast<ControlLaw_cr3bp_lt *>(seg0.getCtrlLaw()) :
+            static_cast<ControlLaw_cr3bp_lt *>(seg1.getCtrlLaw());
+    }
+
+    const SysData_cr3bp_lt *pSys =
+        static_cast<const SysData_cr3bp_lt *>(it.pArcIn->getSysData());
+
+    MSVarMap_Obj state_var = it.getVarMap_obj(MSVar_tp::STATE, con.getID());
+    MSVarMap_Obj ctrl_var;  // To be initialized
+    unsigned int core_dim = pSys->getDynamicsModel()->getCoreStateSize();
+    unsigned int ctrl_dim = pLaw ? pLaw->getNumStates() : 0;
+
+    // Initialize vector for state information
+    std::vector<double> q(core_dim + ctrl_dim, 0);
+
+    // Copy in the state information
+    if(state_var.row0 == -1){
+        const std::vector<double> q_in =
+            it.pArcIn->getNodeRef_const(con.getID()).getStateRef_const();
+        // Expect q_in to have size equal to core_dim
+        std::copy(q_in.begin(), q_in.end(), q.begin());
+    }else{
+        std::copy(&(it.X[state_var.row0]), &(it.X[state_var.row0])+core_dim,
+            &(q[0]));
+    }
+
+    // Copy in ctrl information, if available
+    if(pLaw && ctrl_dim > 0){
+        ctrl_var = it.getVarMap_obj(MSVar_tp::CTRL, con.getID());
+
+        // Cannot proceed if neighther state nor ctrl are variable
+        if(state_var.row0 == -1 && ctrl_var.row0 == -1){
+            throw Exception("DynamicsModel_cr3bp_lt::multShoot_targetHLT:\n"
+                "\tCannot constraint H_LT when the state and control variables\n"
+                "\tare not included in the free-variable vector");
+        }else if(ctrl_var.row0 == -1){
+            // State is variable but ctrl is fixed; get ctrl from input arcset
+            std::vector<double> ctrl_in = 
+                it.pArcIn->getNodeRef_const(con.getID()).getExtraParamVec(PARAMKEY_CTRL);
+            std::copy(ctrl_in.begin(), ctrl_in.end(), q.begin()+core_dim);
+        }else{
+            // state and ctrl are variable; get control from free var vector
+            std::copy(&(it.X[ctrl_var.row0]), &(it.X[ctrl_var.row0]) + ctrl_dim,
+                &(q[0]) + core_dim);
+        }
+    }
+
+    // Get Control info, if applicable
+    double a[3] = {0};  // Control output (accel)
+
+    // dadq = partials of control output w.r.t. core state, q
+    // dEOMdg = partials of core state EOMs w.r.t. ctrl state, g
+    std::vector<double> dadq(3*core_dim, 0), dEOMdg(core_dim*ctrl_dim, 0);
+    
+    if(pLaw){
+        // Get the law output and associated partials: ASSUME t0 = 0
+        pLaw->getOutput(0, &(q[0]), pSys, a, 3);
+        pLaw->getPartials_OutputWRTCoreState(0, &(q[0]), pSys, &(dadq[0]),
+            dadq.size());
+        if(ctrl_dim > 0){
+            pLaw->getPartials_EOMsWRTCtrlState(0, &(q[0]), pSys, &(dEOMdg[0]),
+                dEOMdg.size());
+        }
+    }
+    
+    // Compute useful parameters
+    double mu = pSys->getMu();
+    double r13 = sqrt((q[0] + mu)*(q[0] + mu) + q[1]*q[1] + q[2]*q[2]);
+    double r23 = sqrt((q[0] - 1 + mu)*(q[0] -1 + mu) + q[1]*q[1] + q[2]*q[2]);
+
+    // Compute the Hamiltonian at the node
+    double H_lt = 0.5*(q[3]*q[3] + q[4]*q[4] + q[5]*q[5]) -
+        0.5*(q[0]*q[0] + q[1]*q[1]) - (1-mu)/r13 - mu/r23 - a[0]*q[0] - 
+        a[1]*q[1] - a[2]*q[2];
+    
+    const std::vector<double>& conData = con.getDataRef_const();
+    it.FX[row0] = H_lt - conData[0];
+
+    unsigned int i;
+    if(state_var.row0 != -1){
+        // dF/dx
+        it.DF_elements.push_back(Tripletd(row0, state_var.row0+0,
+            -q[0] + (1-mu)*(q[0]+mu)/pow(r13,3) + mu*(q[0]-1+mu)/pow(r23,3) - 
+            a[0] - q[0]*dadq[core_dim*0 + 0] - q[1]*dadq[core_dim*1 + 0] -
+            q[2]*dadq[core_dim*2 + 0]));
+        // dF/dy
+        it.DF_elements.push_back(Tripletd(row0, state_var.row0+1,
+            -q[1] + (1-mu)*q[1]/pow(r13,3) + mu*q[1]/pow(r23,3) - a[1] -
+            q[0]*dadq[core_dim*0 + 1] - q[1]*dadq[core_dim*1 + 1] -
+            q[2]*dadq[core_dim*2 + 1]));
+        // dF/dz
+        it.DF_elements.push_back(Tripletd(row0, state_var.row0+2,
+            (1-mu)*q[2]/pow(r13,3) + mu*q[2]/pow(r23,3) - a[2] -
+            q[0]*dadq[core_dim*0 + 2] - q[1]*dadq[core_dim*1 + 2] -
+            q[2]*dadq[core_dim*2 + 2]));
+        
+        // dF/dvx, dF/dvy, dF/dvz
+        for(i = 3; i < 6; i++){
+            it.DF_elements.push_back(Tripletd(row0, state_var.row0+i,
+                q[i] - q[0]*dadq[core_dim*0 + i] - q[1]*dadq[core_dim*1 + i] -
+                q[2]*dadq[core_dim*2 + i]));
+        }
+
+        // dF/dm
+        it.DF_elements.push_back(Tripletd(row0, state_var.row0+6,
+            -q[0]*dadq[core_dim*0 + 6] - q[1]*dadq[core_dim*1 + 6] -
+            q[2]*dadq[core_dim*2 + 6]));
+    }
+
+    // dF/dg
+    if(ctrl_dim > 0 && ctrl_var.row0 != -1){
+        for(i = 0; i < ctrl_dim; i++){
+            it.DF_elements.push_back(Tripletd(row0, ctrl_var.row0+i,
+                -q[0]*dEOMdg[ctrl_dim*3 + i] - q[1]*dEOMdg[ctrl_dim*4 + i] -
+                q[2]*dEOMdg[ctrl_dim*5 + i]));
+        }
+    }
+}//==================================================
 
 /**
  *  @brief Perform model-specific initializations on the MultShootData object
@@ -143,9 +309,9 @@ void DynamicsModel_cr3bp_lt::multShoot_initIterData(MultShootData& it) const{
     it.propSegs.assign(it.pArcIn->getNumSegs(), traj);
 }//====================================================
 
-//------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 //      Static Calculation Functions
-//------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 /**
  *  @brief Integrate the equations of motion for the CR3BP LTVP
@@ -171,7 +337,7 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
     // Retrieve the control law acceleration values
     double control_accel[3] = {0};
     if(law){
-        law->getLaw_Output(t, s, pSys, control_accel, 3);
+        law->getOutput(t, s, pSys, control_accel, 3);
     }
 
     sdot[0] = s[3];
@@ -189,7 +355,7 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
     const unsigned int ctrlOutDim = law ? law->getNumOutputs() : 0;
     if(law && ctrlDim > 0){
         std::vector<double> control_stateDeriv(ctrlDim, 0);
-        law->getLaw_StateDeriv(t, s, pSys, &(control_stateDeriv.front()), ctrlDim);
+        law->getTimeDeriv(t, s, pSys, &(control_stateDeriv.front()), ctrlDim);
 
         std::copy(control_stateDeriv.begin(), control_stateDeriv.begin() + ctrlDim, sdot + coreDim);
     }
@@ -230,12 +396,15 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
 
     unsigned int r = 0, c = 0, k = 0;
     if(law){
-        // Get partial derivatives of acceleration terms (which are part of EOMS 3, 4, 5) w.r.t. all state variables
+        // Get partial derivatives of acceleration terms (which are part of 
+        // EOMS 3, 4, 5) w.r.t. all state variables
         std::vector<double> law_accelPartials(ctrlOutDim*coreDim, 0);
         
-        law->getLaw_OutputPartials(t, s, pSys, &(law_accelPartials.front()), law_accelPartials.size());
+        law->getPartials_OutputWRTCoreState(t, s, pSys, &(law_accelPartials.front()),
+            law_accelPartials.size());
 
-        // Add the control output partials to the existing partials (control outputs are part of core state EOMs)
+        // Add the control output partials to the existing partials 
+        // (control outputs are part of core state EOMs)
         for(r = 3; r < 3+ctrlOutDim; r++){
             for(c = 0; c < coreDim; c++){
                 A[r*stmSide + c] += law_accelPartials.at((r - 3)*coreDim + c);
@@ -243,10 +412,14 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
         }
 
         if(ctrlDim > 0){
-            std::vector<double> law_eomPartials(coreDim*ctrlDim, 0), law_stateDerivPartials(ctrlDim*(coreDim+ctrlDim), 0);
+            std::vector<double> law_eomPartials(coreDim*ctrlDim, 0),
+                law_stateDerivPartials(ctrlDim*(coreDim+ctrlDim), 0);
 
-            law->getLaw_StateDerivPartials(t, s, pSys, &(law_stateDerivPartials.front()), law_stateDerivPartials.size());
-            law->getLaw_EOMPartials(t, s, pSys, &(law_eomPartials.front()), law_eomPartials.size());
+            law->getPartials_TimeDerivWRTAllState(t, s, pSys,
+                &(law_stateDerivPartials.front()),
+                law_stateDerivPartials.size());
+            law->getPartials_EOMsWRTCtrlState(t, s, pSys, &(law_eomPartials.front()),
+                law_eomPartials.size());
 
             // Assign the partial derivatives of the time derivatives of the control states w.r.t. all core and control states
             for(r = coreDim; r < coreDim + ctrlDim; r++){
@@ -302,7 +475,7 @@ int DynamicsModel_cr3bp_lt::simpleEOMs(double t, const double s[], double sdot[]
     // Retrieve the control law acceleration values
     double control_accel[3] = {0};
     if(law)
-        law->getLaw_Output(t, s, pSys, control_accel, 3);
+        law->getOutput(t, s, pSys, control_accel, 3);
 
     sdot[0] = s[3];
     sdot[1] = s[4];
@@ -318,7 +491,7 @@ int DynamicsModel_cr3bp_lt::simpleEOMs(double t, const double s[], double sdot[]
     if(law){
         if(unsigned int ctrl_dim = law->getNumStates() > 0){
             std::vector<double> control_stateDeriv(ctrl_dim, 0);
-            law->getLaw_StateDeriv(t, s, pSys, &(control_stateDeriv.front()), ctrl_dim);
+            law->getTimeDeriv(t, s, pSys, &(control_stateDeriv.front()), ctrl_dim);
 
             std::copy(control_stateDeriv.begin(), control_stateDeriv.begin() + ctrl_dim, sdot+7);
         }
@@ -725,16 +898,20 @@ void DynamicsModel_cr3bp_lt::getEquilibPt(const SysData_cr3bp_lt *pSys, int L, d
  * @param pLaw pointer to the control law object
  * @return the CR3BP-LT Hamiltonian value at the specified state and time
  */
-double DynamicsModel_cr3bp_lt::getHamiltonian(double t, const double *q, const SysData_cr3bp_lt *pSys, const ControlLaw_cr3bp_lt *pLaw){
+double DynamicsModel_cr3bp_lt::getHamiltonian(double t, const double *q, 
+    const SysData_cr3bp_lt *pSys, const ControlLaw_cr3bp_lt *pLaw){
+
     if(pSys ==  nullptr)
-        throw Exception("DynamicsModel_cr3bp_lt::getHamiltonian: Cannot proceed with SysData = nullptr");
+        throw Exception("DynamicsModel_cr3bp_lt::getHamiltonian: "
+            "Cannot proceed with SysData = nullptr");
 
     if(pLaw == nullptr)
-        throw Exception("DynamicsModel_cr3bp_lt::getHamiltonian: Cannot proceed with ControlLaw = nullptr");
+        throw Exception("DynamicsModel_cr3bp_lt::getHamiltonian: "
+            "Cannot proceed with ControlLaw = nullptr");
 
     // Get the control law output (acceleration vector)
-    Eigen::Vector3d a;
-    pLaw->getLaw_Output(t, q, pSys, a.data(), 3);
+    double a[3] = {0};
+    pLaw->getOutput(t, q, pSys, a, 3);
 
     // Compute other useful parameters
     double mu = pSys->getMu();
@@ -743,7 +920,7 @@ double DynamicsModel_cr3bp_lt::getHamiltonian(double t, const double *q, const S
 
     // Compute the CR3BP-LT Hamiltonian
     return 0.5*(q[3]*q[3] + q[4]*q[4] + q[5]*q[5]) - 0.5*(q[0]*q[0] + q[1]*q[1]) -
-        (1-mu)/r13 - mu/r23 - a(0)*q[0] - a(1)*q[1] - a(2)*q[2];
+        (1-mu)/r13 - mu/r23 - a[0]*q[0] - a[1]*q[1] - a[2]*q[2];
 }//====================================================
 
 /**

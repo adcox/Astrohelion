@@ -9,7 +9,7 @@
  
 /*
  *  Astrohelion 
- *  Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
+ *  Copyright 2015-2018, Andrew Cox; Protected under the GNU GPL v3.0
  *  
  *  This file is part of Astrohelion
  *
@@ -581,7 +581,7 @@ void Segment::print() const{
 	printf("Segment | id = %d\n", ID);
 	printf("\tOrigin Node ID: %d, Terminus Node ID: %d\n", getOrigin(), getTerminus());
 	printf("\tTOF = %.4f\n", tof);
-	printf("\tControl Law = %s\n", pCtrlLaw ? pCtrlLaw->lawTypeToString(pCtrlLaw->getType()).c_str() : "NONE");
+	printf("\tControl Law = %s\n", pCtrlLaw ? pCtrlLaw->typeToString(pCtrlLaw->getType()).c_str() : "NONE");
 
 	printf("\tTime Vector: %zu x 1\n", times.size());
 	if(times.size() > 0){

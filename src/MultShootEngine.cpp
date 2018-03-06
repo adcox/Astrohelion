@@ -8,7 +8,7 @@
  */
 /*
  *	Astrohelion 
- *	Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2015-2018, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of Astrohelion
  *
@@ -46,9 +46,9 @@ using Eigen::MatrixXd;
 using Eigen::JacobiSVD;
 
 namespace astrohelion{
-//-----------------------------------------------------
+//-----------------------------------------------------------------------------
 //      *structors
-//-----------------------------------------------------
+//-----------------------------------------------------------------------------
 
 /**
  *  @brief Default constructor
@@ -93,9 +93,9 @@ void MultShootEngine::copyMe(const MultShootEngine &e){
 	ls_maxStepSize = e.ls_maxStepSize;
 }//====================================================
 
-//-----------------------------------------------------
+//-----------------------------------------------------------------------------
 //      Operator Functions
-//-----------------------------------------------------
+//-----------------------------------------------------------------------------
 
 /**
  *	@brief Copy operator; make a copy of the input correction engine.
@@ -108,13 +108,14 @@ MultShootEngine& MultShootEngine::operator =(const MultShootEngine &e){
 	return *this;
 }//====================================
 
-//-----------------------------------------------------
+//-----------------------------------------------------------------------------
 //      Set and Get Functions
-//-----------------------------------------------------
+//-----------------------------------------------------------------------------
 
 /**
  *  @brief Retrieve whether or not the engine is locating an event crossing
- *	@return whether or not the algorithm will optimize the process to find an event
+ *	@return whether or not the algorithm will optimize the process to find an 
+ *	event
  */
 bool MultShootEngine::isFindingEvent() const { return bFindEvent; }
 
@@ -172,9 +173,9 @@ double MultShootEngine::getTol() const { return tolF; }
  *  @details Although the Newton step direction is guaranteed to point toward a 
  *  decreasing constraint vector, the full step may be too large. By leveraging
  *  a line search, the step size is chosen such that the magnitude of the 
- *  constraint vector decreases. WARNING: This adds many evaluations of expensive
- *  functions and will greatly decrease the speed. The line search is only recommended
- *  for particularly stubborn correction processes.
+ *  constraint vector decreases. WARNING: This adds many evaluations of 
+ *  expensive functions and will greatly decrease the speed. The line search is 
+ *  only recommended for particularly stubborn correction processes.
  * 
  *  @param b 
  */
@@ -253,7 +254,8 @@ void MultShootEngine::setTol(double d){
 	tolF = d;
 
 	if(tolF > 1)
-		astrohelion::printWarn("MultShootEngine::setTol: tolerance is greater than 1... just FYI\n");
+		astrohelion::printWarn("MultShootEngine::setTol: "
+			"tolerance is greater than 1... just FYI\n");
 }//====================================================
 
 /**
@@ -273,9 +275,9 @@ void MultShootEngine::setFindEvent(bool b){ bFindEvent = b; }
  *	input arcset object. 
  *	
  *	Numerical integration is used to generate state transition matrices between
- *	nodes. In order to optimize performance and accuracy, only two steps are computed
- *	by the simulation engine, and the step size is fixed to force the usage of the 
- *	Adams-Bashforth Adams-Moulton method.
+ *	nodes. In order to optimize performance and accuracy, only two steps are 
+ *	computed by the simulation engine, and the step size is fixed to force the 
+ *	usage of the Adams-Bashforth Adams-Moulton method.
  *	
  *	@param pArcIn pointer to the arcset that needs to be corrected
  *	@param pArcOut pointer to the arcset object that will contain the results of
@@ -291,7 +293,8 @@ void MultShootEngine::setFindEvent(bool b){ bFindEvent = b; }
  */
 MultShootData MultShootEngine::multShoot(const Arcset *pArcIn, Arcset *pArcOut){
 	if(pArcOut != nullptr && *(pArcIn->getSysData()) != *(pArcOut->getSysData()))
-		throw Exception("MultShootEngine::multShoot: Input and Output arcsets must use the same system data object");
+		throw Exception("MultShootEngine::multShoot: "
+			"Input and Output arcsets must use the same system data object");
 
 	if(!bIsClean)
 		cleanEngine();
@@ -303,9 +306,12 @@ MultShootData MultShootEngine::multShoot(const Arcset *pArcIn, Arcset *pArcOut){
 	it.pArcOut = pArcOut;
 	it.tofTp = tofTp;
 	
-	astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "Multiple Shooting Algorithm:\n");
-	astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  it.numNodes = %zu\n", it.numNodes);
-	astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  sysType = %s\n", pArcIn->getSysData()->getTypeStr().c_str());
+	printVerb(verbosity >= Verbosity_tp::ALL_MSG, 
+		"Multiple Shooting Algorithm:\n");
+	printVerb(verbosity >= Verbosity_tp::ALL_MSG, 
+		"  it.numNodes = %zu\n", it.numNodes);
+	printVerb(verbosity >= Verbosity_tp::ALL_MSG, 
+		"  sysType = %s\n", pArcIn->getSysData()->getTypeStr().c_str());
 
 	// Get the model associated with the arcset
 	const DynamicsModel *pModel = pArcIn->getSysData()->getDynamicsModel();
@@ -318,13 +324,15 @@ MultShootData MultShootEngine::multShoot(const Arcset *pArcIn, Arcset *pArcOut){
 
 	// Add all node constraints
 	for(unsigned int n = 0; n < pArcIn->getNumNodes(); n++){
-		std::vector<Constraint> nodeCons = pArcIn->getNodeRefByIx_const(n).getConstraints();
+		std::vector<Constraint> nodeCons = 
+			pArcIn->getNodeRefByIx_const(n).getConstraints();
 		it.allCons.insert(it.allCons.end(), nodeCons.begin(), nodeCons.end());
 	}
 
 	// Add all segment constraints
 	for(unsigned int s = 0; s < pArcIn->getNumSegs(); s++){
-		std::vector<Constraint> segCons = pArcIn->getSegRefByIx_const(s).getConstraints();
+		std::vector<Constraint> segCons = 
+			pArcIn->getSegRefByIx_const(s).getConstraints();
 		it.allCons.insert(it.allCons.end(), segCons.begin(), segCons.end());
 	}
 
@@ -346,7 +354,8 @@ MultShootData MultShootEngine::multShoot(const Arcset *pArcIn, Arcset *pArcOut){
 		Constraint con = it.allCons[c];
 
 		if(!pModel->supportsCon(con.getType()))
-			throw Exception("MultShootEngine::multShoot: The dynamic model does not support one of the constraints!");
+			throw Exception("MultShootEngine::multShoot: "
+				"The dynamic model does not support one of the constraints!");
 
 		switch(con.getType()){
 			case Constraint_tp::CONT_PV:
@@ -383,9 +392,10 @@ MultShootData MultShootEngine::multShoot(const Arcset *pArcIn, Arcset *pArcOut){
 			case Constraint_tp::ENDSEG_MAX_DIST:
 			case Constraint_tp::ENDSEG_MIN_DIST:
 				it.X.push_back(pModel->multShoot_getSlackVarVal(it, con));
-				it.slackAssignCon.push_back(c);	// remember where this slack variable is hiding
+				// remember where this slack variable is hiding
+				it.slackAssignCon.push_back(c);	
 				it.numSlack++;
-				// do NOT break here, continue on to do stuff for Constraint_tp::DIST as well
+				// do NOT break here, continue on to do stuff for DIST as well
 			case Constraint_tp::DIST:
 			case Constraint_tp::ENDSEG_DIST:
 				addToRows = 1;
@@ -397,16 +407,17 @@ MultShootData MultShootEngine::multShoot(const Arcset *pArcIn, Arcset *pArcOut){
 					foundDVCon = true;
 
 					if(con.getType() == Constraint_tp::MAX_DELTA_V){
-						/* Add a slack variable to the end of design vector and keep track
-						 * of which constraint it is assigned to; value of slack
-						 * variable will be recomputed later
+						/* Add a slack variable to the end of design vector and 
+						 * keep track of which constraint it is assigned to; 
+						 * value of slack variable will be recomputed later
 						 */
 						it.X.push_back(pModel->multShoot_getSlackVarVal(it, con));
 						it.numSlack++;
 						it.slackAssignCon.push_back(c);
 					}
 				}else{
-					throw Exception("MultShootEngine::multShoot: You can only apply ONE delta-V constraint");
+					throw Exception("MultShootEngine::multShoot: "
+						"You can only apply ONE delta-V constraint");
 				}
 				break;
 			case Constraint_tp::ANGLE:
@@ -415,22 +426,28 @@ MultShootData MultShootEngine::multShoot(const Arcset *pArcIn, Arcset *pArcOut){
 			case Constraint_tp::ENDSEG_APSE:
 			case Constraint_tp::JC:
 			case Constraint_tp::ENDSEG_JC:
+			case Constraint_tp::HLT:
 			case Constraint_tp::PSEUDOARC:
 			case Constraint_tp::SEG_CONT_EX:
 				addToRows = 1;
 				break;
 			case Constraint_tp::TOF_TOTAL:
 				if(to_underlying(tofTp) <= 0)
-					astrohelion::printWarn("MultShootEngine::multShoot: Attempting to constraint TOF without variable time... won't work!\n");
+					astrohelion::printWarn("MultShootEngine::multShoot: "
+						"Attempting to constraint TOF without variable time... "
+						"won't work!\n");
 				
 				if(!foundTOFCon)
 					addToRows = 1;
 				else
-					throw Exception("MultShootEngine::multShoot: You can only apply ONE TOF constraint");
+					throw Exception("MultShootEngine::multShoot: "
+						"You can only apply ONE TOF constraint");
 				break;
 			case Constraint_tp::EPOCH:
 				if(to_underlying(tofTp) <= 0)
-					printWarn("MultShootEngine::multShoot: Attempting to constrain Epoch without variable time... won't work!\n");
+					printWarn("MultShootEngine::multShoot: "
+						"Attempting to constrain Epoch without variable time..."
+						" won't work!\n");
 
 				addToRows = 1;
 				break;
@@ -441,7 +458,8 @@ MultShootData MultShootEngine::multShoot(const Arcset *pArcIn, Arcset *pArcOut){
 				addToRows = 0;
 				break;
 			default:
-				printWarn("MultShootEngine::multShoot: Unhandled constraint: %s\n", con.getTypeStr());
+				printWarn("MultShootEngine::multShoot: "
+					"Unhandled constraint: %s\n", con.getTypeStr());
 				break;
 		}
 
@@ -458,10 +476,12 @@ MultShootData MultShootEngine::multShoot(const Arcset *pArcIn, Arcset *pArcOut){
 	it.X0 = it.X;
 
 	// Print debugging information
-	astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  # Free: %d\n  # Constraints: %d\n", it.totalFree, it.totalCons);
-	astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  -> # Slack Variables: %d\n", it.numSlack);
+	printVerb(verbosity >= Verbosity_tp::ALL_MSG,
+		"  # Free: %d\n  # Constraints: %d\n", it.totalFree, it.totalCons);
+	printVerb(verbosity >= Verbosity_tp::ALL_MSG,
+		"  -> # Slack Variables: %d\n", it.numSlack);
 
-	astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "ALL CONSTRAINTS:\n\n");
+	printVerb(verbosity >= Verbosity_tp::ALL_MSG, "ALL CONSTRAINTS:\n\n");
 	if(verbosity >= Verbosity_tp::ALL_MSG){
 		for(unsigned int n = 0; n < it.allCons.size(); n++){
 			it.allCons[n].print();
@@ -492,26 +512,31 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 	else
 		simEngine.setVerbosity(Verbosity_tp::NO_MSG);
 	
-	// Set both tolerances of simulation engine to be three orders of magnitude less corrector
+	// Set both tolerances of simulation engine to be three orders of 
+	// magnitude less corrector
 	double simTol = tolF/1000 < 1e-15 ? 1e-15 : tolF/1000;
 	simEngine.setAbsTol(simTol);
 	simEngine.setRelTol(simTol);
 
-	// Only need info about the final state, no need to generate lots of intermediate data points
-	// This forces the integrator to use the Adams-Bashforth Adams-Moulton integration method,
-	// which is most similar to Matlab's ode113
+	// Only need info about the final state, no need to generate lots of 
+	// intermediate data points. This forces the integrator to use the 
+	// Adams-Bashforth Adams-Moulton integration method, which is most similar 
+	// to Matlab's ode113
 	simEngine.setVarStepSize(false);
 	simEngine.setNumSteps(2);
 
 	if(bFindEvent || bIgnoreCrash){
-		simEngine.setMakeDefaultEvents(false);	// don't use crash events when searching for an event
+		// don't use crash events when searching for an event
+		simEngine.setMakeDefaultEvents(false);
 	}
 
 	// Define values for use in corrections loop
 	double errF = 10*tolF, errX = 10*tolX;
-	unsigned int coreStateSize = it.pArcIn->getSysData()->getDynamicsModel()->getCoreStateSize();
+	unsigned int coreStateSize = 
+		it.pArcIn->getSysData()->getDynamicsModel()->getCoreStateSize();
 
-	Eigen::VectorXd oldX(it.totalFree, 1), newX(it.totalFree, 1), FX(it.totalCons, 1);
+	Eigen::VectorXd oldX(it.totalFree, 1), newX(it.totalFree, 1), 
+		FX(it.totalCons, 1);
 
 	// Loop through iterations; error checking is done inside the loop
 	while(it.count < maxIts){
@@ -544,15 +569,16 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 			char filename[24];
 			sprintf(filename, "multShoot_it%04d.mat", it.count+1);
 			it.pArcOut->saveToMat(filename);
-			it.pArcOut->reset();	// Needs to be empty for the next createOutput() call
+			it.pArcOut->reset();	// Must be empty for next createOutput() call
 		}
 		// waitForUser();
 
-		// Loop through all constraints and compute the constraint values, partials, and
-		// apply them to the FX and DF matrices
+		// Loop through all constraints and compute the constraint values, 
+		// partials, and apply them to the FX and DF matrices
 		for(unsigned int c = 0; c < it.allCons.size(); c++){
 			it.pArcIn->getSysData()->getDynamicsModel()->multShoot_applyConstraint(it, it.allCons[c], c);
-			printVerb(verbosity >= Verbosity_tp::DEBUG, "* Applying %s constraint\n", it.allCons[c].getTypeStr());
+			printVerb(verbosity >= Verbosity_tp::DEBUG, 
+				"* Applying %s constraint\n", it.allCons[c].getTypeStr());
 		}
 
 		// Check to see what the error is; if it's too high, update X and continue another iteration
@@ -569,8 +595,10 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 		}
 
 		it.count++;
-		astrohelion::printVerbColor((bFindEvent && verbosity >= Verbosity_tp::ALL_MSG) || (!bFindEvent && verbosity > Verbosity_tp::NO_MSG),
-			YELLOW, "It %02d : ||F(X)|| = %6.4e / %4.2e : ||dX|| = %6.4e / %4.2e\n", it.count, errF, tolF, errX, tolX);
+		printVerbColor((bFindEvent && verbosity >= Verbosity_tp::ALL_MSG) || 
+			(!bFindEvent && verbosity > Verbosity_tp::NO_MSG),
+			YELLOW, "It %02d : ||F(X)|| = %6.4e / %4.2e : "
+			"||dX|| = %6.4e / %4.2e\n", it.count, errF, tolF, errX, tolX);
 
 		// End the iterations if the constraint error grows too large or if
 		// the constraint error or step size reaches the desired precision
@@ -582,9 +610,11 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 		if( (errF > maxErr) || (errF > tolF && errX > tolX)){
 			char msg[256];
 			if(errF > maxErr){
-				sprintf(msg, "MultShootEngine: Diverged! Constraint Error = %e > maxErr = %e", errF, maxErr);
+				sprintf(msg, "MultShootEngine: Diverged! "
+					"Constraint Error = %e > maxErr = %e", errF, maxErr);
 			}else{
-				sprintf(msg, "MultShootEngine: Diverged! Constraint Error = %e > tolF = %e", errF, tolF);
+				sprintf(msg, "MultShootEngine: Diverged! "
+					"Constraint Error = %e > tolF = %e", errF, tolF);
 			}
 
 			throw DivergeException(msg);
@@ -593,14 +623,16 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 
 	if(it.pArcOut){
 		try{
-			// Save propagated data and free variable vector values to the output arcset
+			// Save propagated data and free variable vector values to the 
+			// output arcset
 			if(bFullFinalProp){
 				simEngine.setVarStepSize(true);
 				propSegsFromFreeVars(it, simEngine, verbosity);
 			}
 			it.pArcIn->getSysData()->getDynamicsModel()->multShoot_createOutput(it);
 		}catch(Exception &e){
-			printErr("MultShootEngine::multShoot: Unable to create output arcset\n  Err: %s\n", e.what());
+			printErr("MultShootEngine::multShoot: "
+				"Unable to create output arcset\n  Err: %s\n", e.what());
 			throw e;
 		}
 	}
@@ -616,9 +648,9 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
  *  @param it reference to the multiple shooting data structure
  *  @param sim reference to a simulalation engine initialized for multiple
  *  shooting propagations
- *  @param verbosity how verbose the output should be; the verbosity of the input
- *  SimEngine object is set separately (i.e., via sim.setVerbosity()) and is not affected
- *  by this input
+ *  @param verbosity how verbose the output should be; the verbosity of the 
+ *  input SimEngine object is set separately (i.e., via sim.setVerbosity()) and 
+ *  is not affected by this input
  */
 void MultShootEngine::propSegsFromFreeVars(MultShootData& it, SimEngine &sim, Verbosity_tp verbosity){
 	unsigned int coreStateSize = it.pArcIn->getSysData()->getDynamicsModel()->getCoreStateSize();
@@ -626,13 +658,15 @@ void MultShootEngine::propSegsFromFreeVars(MultShootData& it, SimEngine &sim, Ve
 	it.deltaVs.clear();
 	it.deltaVs.assign(3*it.numNodes, 0);
 
-	// initialize a vector of trajectory objects to store each propagated segment
+	// initialize a vector of trajectory objects to store each propagated 
+	// segment
 	it.propSegs.clear();
 	it.pArcIn->getSysData()->getDynamicsModel()->multShoot_initIterData(it);
 
 	for(unsigned int s = 0; s < it.pArcIn->getNumSegs(); s++){
 		// printf("Retrieving ICs for segment (ix %02d):\n", s);
-		// Get simulation conditions from design vector via dynamic model implementation
+		// Get simulation conditions from design vector via dynamic model 
+		// implementation
 		double t0 = 0, tof = 0;
 		std::vector<double> ic(coreStateSize, 0);
 
@@ -647,7 +681,8 @@ void MultShootEngine::propSegsFromFreeVars(MultShootData& it, SimEngine &sim, Ve
 
 		sim.setRevTime(tof < 0);
 		
-		printVerbColor(verbosity >= Verbosity_tp::DEBUG, MAGENTA, "Simulating segment %d:\n  t0 = %.4f\n  tof = %.4f\n", s, t0, tof);
+		printVerbColor(verbosity >= Verbosity_tp::DEBUG, MAGENTA, 
+			"Simulating segment %d:\n  t0 = %.4f\n  tof = %.4f\n", s, t0, tof);
 
 		try{
 			sim.runSim(ic, ctrl0, t0, tof, &(it.propSegs[s]), pLaw);
@@ -656,11 +691,15 @@ void MultShootEngine::propSegsFromFreeVars(MultShootData& it, SimEngine &sim, Ve
 				printf("%s", RED);
 				printf("SimEngine integration diverged on segment %u...\n", s);
 				printf("  > ic = [");
-				for(unsigned int i = 0; i < ic.size(); i++){ printf(" %.4f ", ic[i]); }
+				for(unsigned int i = 0; i < ic.size(); i++){
+					printf(" %.4f ", ic[i]);
+				}
 				printf("]\n  > t0 = %.4f\n  > tof = %.4f\n", t0, tof);
 			}
 		}catch(Exception &e){
-			printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, RED, "SimEngine Error on segment %u:\n%s\nEnding corrections.\n", s, e.what());
+			printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, RED, 
+				"SimEngine Error on segment %u:\n%s\nEnding corrections.\n",
+				s, e.what());
 		}
 
 		// if(verbosity >= Verbosity_tp::DEBUG){
@@ -674,18 +713,21 @@ void MultShootEngine::propSegsFromFreeVars(MultShootData& it, SimEngine &sim, Ve
 			// Get the state of the terminal node
 			MSVarMap_Obj stateVar = it.getVarMap_obj(MSVar_tp::STATE, termID);
 			std::vector<double> state;
-			if(stateVar.row0 == -1)
+			if(stateVar.row0 == -1){
 				state = it.pArcIn->getState(termID);
-			else
-				state = std::vector<double>(it.X.begin() + stateVar.row0, it.X.begin() + stateVar.row0 + stateVar.nRows);
+			}else{
+				state = std::vector<double>(it.X.begin() + stateVar.row0, 
+					it.X.begin() + stateVar.row0 + stateVar.nRows);
+			}
 
-			// velCon has false for a velocity state if there is a discontinuity between
-			// the terminus of the segment and the terminal node
+			// velCon has false for a velocity state if there is a 
+			// discontinuity between the terminus of the segment and the 
+			// terminal node
 			std::vector<bool> velCon = it.pArcIn->getSegRefByIx_const(s).getVelCon();
 			for(int i = 3; i < 6; i++){
-				// Compute difference in velocity; if velCon[i-3] is true, then velocity
-				// should be continuous and any difference is numerical error, so set to
-				// zero by multiplying by not-true
+				// Compute difference in velocity; if velCon[i-3] is true, 
+				// then velocity should be continuous and any difference is 
+				// numerical error, so set to zero by multiplying by not-true
 				it.deltaVs[s*3+i-3] = !velCon[i-3]*(lastState[i] - state[i]);
 			}
 		}
@@ -693,50 +735,66 @@ void MultShootEngine::propSegsFromFreeVars(MultShootData& it, SimEngine &sim, Ve
 }//=====================================================
 
 /**
- *	@brief Apply linear algebra to solve the update equation and obtain an updated free-variable vector
+ *	@brief Apply linear algebra to solve the update equation and obtain an 
+ *	updated free-variable vector.
  *
- *	The update equation takes the form
+ *	@details The update equation takes the form
  * 	\f[
- *		\vec{F}(\vec{X}) = D\vec{F}(\vec{X}) \left( \vec{X}_{n+1} - \vec{X}_n \right)
+ *		\vec{F}(\vec{X}) = D\vec{F}(\vec{X}) \left( \vec{X}_{n+1} - 
+ *		\vec{X}_n \right)
  *	\f]
- *	We know \f$ \vec{X}_n \f$, \f$ \vec{F}(\vec{X}) \f$ and \f$ D\vec{F}(\vec{X}) \f$, and we wish to solve for
- *	\f$ \vec{X}_{n+1} \f$. To do this, we need to invert or factor the Jacobian matrix \f$ D\vec{F}(\vec{X}) \f$.
- *	Assuming the Jacobian is non-singular, a solution can be obtained. Three possible scenarios can occur: either
- *	the system is over-constrained (no solution), perfectly constrained (square, one solution), or under constrained
- *	(infinitely many solutions).
+ *	We know \f$ \vec{X}_n \f$, \f$ \vec{F}(\vec{X}) \f$ and 
+ *	\f$ D\vec{F}(\vec{X}) \f$, and we wish to solve for
+ *	\f$ \vec{X}_{n+1} \f$. To do this, we need to invert or factor the 
+ *	Jacobian matrix \f$ D\vec{F}(\vec{X}) \f$. Assuming the Jacobian is 
+ *	non-singular, a solution can be obtained. Three possible scenarios can 
+ *	occur: either the system is over-constrained (no solution), perfectly 
+ *	constrained (square, one solution), or under constrained (infinitely many 
+ *	solutions).
  *
- *	In the first case, we can use least squares to find the closest possible solution. This is not implemented and
- *	the function will throw an error of the system is over constrained. In the second case, the equation is solved
- *	via LU factorization using GSL's linear algebra functions. Finally, if the system is under constrained, which 
- *	is the most common case, we compute the minimum-norm solution. We sequentially solve the following equations to
+ *	In the first case, we can use least squares to find the closest possible 
+ *	solution. This is not implemented and the function will throw an error of 
+ *	the system is over constrained. In the second case, the equation is solved
+ *	via LU factorization using GSL's linear algebra functions. Finally, if the 
+ *	system is under constrained, which is the most common case, we compute the 
+ *	minimum-norm solution. We sequentially solve the following equations to
  *	arrive at the min-norm solution:
  *	\f{eqnarray*}{
  *		JJ^T \vec{w} &=& \vec{F}(\vec{X}) \\
  *		\vec{X}^* &=& J^T \vec{w}
  *	\f}
- *	where \f$ J \f$ is the Jacobian matrix, \f$ JJ^T \f$ is the associated Gram Matrix, and \f$ \vec{X}^* \f$ is the
- *	min-norm solution. If the Jacobian is non-singular, then the Gram Matrix will also be non-singular and the system
- *	can be solved. Note that \f$ \vec{X}^* \f$ is the min-norm solution for \f$ \vec{X}_{n+1} = \vec{X}_n \f$.
+ *	where \f$ J \f$ is the Jacobian matrix, \f$ JJ^T \f$ is the associated 
+ *	Gram Matrix, and \f$ \vec{X}^* \f$ is the min-norm solution. If the 
+ *	Jacobian is non-singular, then the Gram Matrix will also be non-singular 
+ *	and the system can be solved. Note that \f$ \vec{X}^* \f$ is the min-norm 
+ *	solution for \f$ \vec{X}_{n+1} = \vec{X}_n \f$.
  *
- *	In all cases, errors will be thrown if the Jacobian is singular. This most likely indicates that there has been
- *	a coding error in the corrector, although singular Jacobians do occur when trajectories pass very near primaries.
+ *	In all cases, errors will be thrown if the Jacobian is singular. This most 
+ *	likely indicates that there has been a coding error in the corrector, 
+ *	although singular Jacobians do occur when trajectories pass very near 
+ *	primaries.
  *
- *	@param it reference to the MultShootData object associated with the corrections process
+ *	@param it reference to the MultShootData object associated with the 
+ *	corrections process
  *	@param oldX constant reference to the current (previous) design vector
  *	@param FX constant reference to the current constraint vector
- *	@param newX reference to a vector in which to store the updated design variable vector
+ *	@param newX reference to a vector in which to store the updated design 
+ *	variable vector
  *	
- *	@throws LinAlgException if the problem is over constrained (i.e. Jacobian has more rows than columns);
- *	\todo This can be updated to use a least-squares solution
+ *	@throws LinAlgException if the problem is over constrained (i.e. Jacobian 
+ *	has more rows than columns);
+ *	
+ *	@todo This can be updated to use a least-squares solution
  */
 void MultShootEngine::solveUpdateEq(MultShootData& it, const Eigen::VectorXd& oldX, const Eigen::VectorXd& FX, Eigen::VectorXd& newX){
 	if(it.totalCons == 1 && it.totalFree == 1){
-		// If Jacobian is 1x1, skip all that linear algebra and just solve the equation
-		newX = oldX - FX/(it.DF_elements[0].value());	// Update the design variable vector
+		// If Jacobian is 1x1, skip all that linear algebra and just solve the 
+		// equation. Update the design variable vector
+		newX = oldX - FX/(it.DF_elements[0].value());
 	}else{
 		// Jacobian is not scalar; use linear algebra to solve update equation
 
-		Eigen::VectorXd fullStep(it.totalFree, 1);	// Create a vector to put the solution in
+		Eigen::VectorXd fullStep(it.totalFree, 1);	// Vector for solution
 		
 		// Construct the sparse Jacobian matrix
 		SparseMatXCd J(it.totalCons, it.totalFree);
@@ -744,7 +802,7 @@ void MultShootEngine::solveUpdateEq(MultShootData& it, const Eigen::VectorXd& ol
 		
 		if(it.totalCons == it.totalFree){	// J is square, use regular inverse
 
-			/* Use LU decomposition to invert the Jacobian matrix and find a vector
+			/* Use LU decomposition to invert the Jacobian matrix and find a vec
 			w. Multiplying J^T by w yields the minimum-norm solution x, where x 
 			lies in the column-space of J^T, or in the orthogonal complement of
 			the nullptrspace of J.
@@ -769,10 +827,10 @@ void MultShootEngine::solveUpdateEq(MultShootData& it, const Eigen::VectorXd& ol
 		}else{
 			if(it.totalCons < it.totalFree){	// Under-constrained
 
-				/* Use LU decomposition to invert the Gramm matrix and find a vector
-				w. Multiplying J^T by w yields the minimum-norm solution x, where x 
-				lies in the column-space of J^T, or in the orthogonal complement of
-				the nullptrspace of J.
+				/* Use LU decomposition to invert the Gramm matrix and find a 
+				vector w. Multiplying J^T by w yields the minimum-norm solution
+				x, where x lies in the column-space of J^T, or in the 
+				orthogonal complement of the nullptrspace of J.
 				Source: <http://www.math.usm.edu/lambers/mat419/lecture15.pdf>
 				 */
 
@@ -791,12 +849,14 @@ void MultShootEngine::solveUpdateEq(MultShootData& it, const Eigen::VectorXd& ol
 				fullStep = JT*w;
 
 				// Alternative Method: SVD
-				// NOTE: This takes approximately five times as much computation time
+				// NOTE: This takes approximately five times as much 
+				// computation time
 				// JacobiSVD<MatrixXd> svd(JT, Eigen::ComputeFullV | Eigen::ComputeFullU);
 				// svd.setThreshold(tolF/100.f);
 
 				// MatrixXd singVals = svd.singularValues();
-				// double svdTol = (1e-12)*singVals(0);	// First singular value is the biggest one
+				// // First singular value is the biggest one
+				// double svdTol = (1e-12)*singVals(0);
 
 				// MatrixXd Z = MatrixXd::Zero(JT.rows(), JT.cols());
 				// for(unsigned int r = 0; r < singVals.rows(); r++){
@@ -806,18 +866,22 @@ void MultShootEngine::solveUpdateEq(MultShootData& it, const Eigen::VectorXd& ol
 				// fullStep = svd.matrixU() * Z * svd.matrixV().transpose() * FX;
 
 			}else{	// Over-constrained
-				throw LinAlgException("MultShootEngine::solveUpdateEq: System is over constrained... No solution implemented");
+				throw LinAlgException("MultShootEngine::solveUpdateEq: "
+					"System is over constrained... No solution implemented");
 			}			
 		}
 
 		if(bLineSearchAttenFactor){
 			bool checkLocalMin = false;
-			chooseStep_LineSearch(it, oldX, FX, J, fullStep, newX, checkLocalMin);
+			chooseStep_LineSearch(it, oldX, FX, J, fullStep, newX, 
+				checkLocalMin);
 
-			// This algorithm to check for the local min is lifted directly from the NumericalRecipes book,
-			// section 9.7 in the `newt` function example
+			// This algorithm to check for the local min is lifted directly 
+			// from the NumericalRecipes book, section 9.7 in the `newt` 
+			// function example
 			if(checkLocalMin){
-				double f = 0.5*FX.transpose()*FX;	// half the magnitude of the constraint vector
+				// f = half the magnitude of the constraint vector
+				double f = 0.5*FX.transpose()*FX;
 				double test = 0, temp = 0, denom = std::max(f, 0.5*FX.rows());
 				Eigen::RowVectorXd grad_f = FX.transpose() * J;
 				for(unsigned int i = 0; i < FX.rows(); i++){
@@ -827,7 +891,10 @@ void MultShootEngine::solveUpdateEq(MultShootData& it, const Eigen::VectorXd& ol
 				}
 
 				if(test < tolA){
-					throw LinAlgException("MultShootEngine:solveUpdateEq: The line search has converged to a local minimum of f = (1/2) FX * FX. Try another initial guess for the design vector");
+					throw LinAlgException("MultShootEngine:solveUpdateEq: "
+						"The line search has converged to a local minimum of "
+						"f = (1/2) FX * FX. Try another initial guess for the "
+						"design vector");
 				}
 			}
 		}else{
@@ -838,9 +905,9 @@ void MultShootEngine::solveUpdateEq(MultShootData& it, const Eigen::VectorXd& ol
 
 /**
  *  @brief Apply LU and/or QR factorization to solve the update equation
- *  @details LU factorization is attempted first; if this fails, QR factorization
- *  is attempted as it can be more robust. The details of the factorization process
- *  are explained in the Eigen documentation at
+ *  @details LU factorization is attempted first; if this fails, QR 
+ *  factorization is attempted as it can be more robust. The details of the 
+ *  factorization process are explained in the Eigen documentation at
  *  <https://eigen.tuxfamily.org/dox/group__TopicSparseSystems.html>
  * 
  *  @param J the Jacobian (or Gramm) matrix that needs to be factorized
@@ -849,8 +916,8 @@ void MultShootEngine::solveUpdateEq(MultShootData& it, const Eigen::VectorXd& ol
  *  @param out the solution to the equation J*out = FX
  *  @param bIsSymmetric whether or not the matrix J is symmetric
  */
-void MultShootEngine::factorizeJacobian(const SparseMatXCd &J, const Eigen::VectorXd& FX,
-	Eigen::VectorXd &out, bool bIsSymmetric){
+void MultShootEngine::factorizeJacobian(const SparseMatXCd &J, 
+	const Eigen::VectorXd& FX, Eigen::VectorXd &out, bool bIsSymmetric){
 
 	Eigen::ComputationInfo info;
 
@@ -868,7 +935,8 @@ void MultShootEngine::factorizeJacobian(const SparseMatXCd &J, const Eigen::Vect
 		if(info != Eigen::Success){
 			bLUFailed = true;
 			printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, RED, "LU"
-				" Factorization failed, trying QR factorization to solve update equation.\n");
+				" Factorization failed, trying QR factorization to solve "
+				"update equation.\n");
 			info = QR(J, FX, out);
 		}
 	}
@@ -878,7 +946,9 @@ void MultShootEngine::factorizeJacobian(const SparseMatXCd &J, const Eigen::Vect
 		checkDFSingularities(J);
 		std::string err = eigenCompInfo2Str(info);
 		char msg[256];
-		sprintf(msg, "MultShootEngine::factorizeJacobian: Could not factorize Jacobian matrix.\nEigen error: %s\n", err.c_str());
+		sprintf(msg, "MultShootEngine::factorizeJacobian: "
+			"Could not factorize Jacobian matrix.\nEigen error: %s\n",
+			err.c_str());
 		throw LinAlgException(msg);
 	}
 }//====================================================
@@ -894,10 +964,11 @@ void MultShootEngine::factorizeJacobian(const SparseMatXCd &J, const Eigen::Vect
  *  @param FX constant reference to the current constraint vector
  *  @param out the solution to the equation J*out = FX
  */
-Eigen::ComputationInfo MultShootEngine::QR(const SparseMatXCd &J, const Eigen::VectorXd& FX,
-	Eigen::VectorXd &out){
+Eigen::ComputationInfo MultShootEngine::QR(const SparseMatXCd &J, 
+	const Eigen::VectorXd& FX, Eigen::VectorXd &out){
 
-	// The structure of J is the same for every iteration, so only analyze pattern once
+	// The structure of J is the same for every iteration, so only 
+	// analyze pattern once
 	if(!bInitQRSolver){
 		qrSolver.analyzePattern(J);
 		bInitQRSolver = true;
@@ -924,10 +995,11 @@ Eigen::ComputationInfo MultShootEngine::QR(const SparseMatXCd &J, const Eigen::V
  *  @param out the solution to the equation J*out = FX
  *  @param bIsSymmetric whether or not the matrix J is symmetric
  */
-Eigen::ComputationInfo MultShootEngine::LU(const SparseMatXCd &J, const Eigen::VectorXd& FX,
-	Eigen::VectorXd &out, bool bIsSymmetric){
+Eigen::ComputationInfo MultShootEngine::LU(const SparseMatXCd &J, 
+	const Eigen::VectorXd& FX, Eigen::VectorXd &out, bool bIsSymmetric){
 
-	// The structure of J is the same for every iteration, so only analyze pattern once
+	// The structure of J is the same for every iteration, so only 
+	// analyze pattern once
 	if(!bInitLUSolver){
 		luSolver.analyzePattern(J);
 		luSolver.isSymmetric(bIsSymmetric);
@@ -954,22 +1026,23 @@ Eigen::ComputationInfo MultShootEngine::LU(const SparseMatXCd &J, const Eigen::V
  *  in the book, Numerical Recipes in C: The Art of Scientific Computing. The 
  *  implementation details are included in my MathSpec document.
  *  
- *  The algorithm uses information from the current and previous iteration to scale 
- *  the full Newton step and compute a new design vector, which is stored in
- *  the vector that newX references
+ *  The algorithm uses information from the current and previous iteration to 
+ *  scale the full Newton step and compute a new design vector, which is stored
+ *  in the vector that newX references
  * 
- *  @param it reference to the current iteration data object. This stores the current
- *  constraint vector elements, Jacobian matrix elements, and design vector elements, 
- *  among other variables.
+ *  @param it reference to the current iteration data object. This stores the 
+ *  current constraint vector elements, Jacobian matrix elements, and design 
+ *  vector elements, among other variables.
  *  @param oldX reference to the previous iteration's design vector
  *  @param oldFX reference to the previous iteration's constraint vector
  *  @param J reference to the Jacobian matrix, in compressed form
- *  @param fullStep reference to the full Newton step computed in solveUpdateEq()
+ *  @param fullStep reference to the full Newton step computed in 
+ *  solveUpdateEq()
  *  @param newX pointer to a vector to store the new design vector in. 
  *  @param checkLocalMin pointer to a boolean that is set to true if 
- *  X_old and X_new are too close to one another. In a minimization algorithm this usually 
- *  signals convergence and can be ignored. In a root-finding algorithm, this should trigger
- *  additional checks.
+ *  X_old and X_new are too close to one another. In a minimization algorithm 
+ *  this usually signals convergence and can be ignored. In a root-finding 
+ *  algorithm, this should trigger additional checks.
  */
 void MultShootEngine::chooseStep_LineSearch(MultShootData& it, const Eigen::VectorXd& oldX, const Eigen::VectorXd& oldFX,
 	const SparseMatXCd &J, const Eigen::VectorXd& fullStep, Eigen::VectorXd& newX, bool& checkLocalMin){
@@ -992,11 +1065,15 @@ void MultShootEngine::chooseStep_LineSearch(MultShootData& it, const Eigen::Vect
 	double initROD = slopeProd(0);	// initial rate of decrease
 
 	if(initROD >= 0.0){
-		printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, RED, "  Line search: initROD = %e >= 0... roundoff error in update\n", initROD);
+		printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, RED, 
+			"  Line search: initROD = %e >= 0... roundoff error in update\n",
+			initROD);
 		
 		// Use the analytical initial rate of descent by bypassing the update equation
 		initROD = -1 * oldFX.transpose() * oldFX;
-		printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, BLUE, "  Line Search: Using analytical solution for initROD = %e\n", initROD);
+		printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, BLUE, 
+			"  Line Search: Using analytical solution for initROD = %e\n",
+			initROD);
 		// throw DivergeException(msg);
 	}
 
@@ -1010,7 +1087,8 @@ void MultShootEngine::chooseStep_LineSearch(MultShootData& it, const Eigen::Vect
 	double minLambda = tolX/big;	// smallest permissible attenuation factor
 	double lambda = 1;				// attenuation factor begins at 1
 
-	printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, BLUE, "  Line Search: Minimum attenuation factor = %.4e\n", minLambda);
+	printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, BLUE, 
+		"  Line Search: Minimum attenuation factor = %.4e\n", minLambda);
 
 	// Set up a simulation engine to propagate segments
 	SimEngine sim;

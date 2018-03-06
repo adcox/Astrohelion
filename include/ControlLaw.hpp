@@ -9,7 +9,7 @@
  
 /*
  *	Astrohelion 
- *	Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2015-2018, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of Astrohelion
  *
@@ -42,8 +42,8 @@ class SysData;
 
 /**
  *  \ingroup model
- *  @brief Stores control law equations and derivatives for flexible applications throughout
- *  the astrohelion framework
+ *  @brief Stores control law equations and derivatives for flexible 
+ *  applications throughout the astrohelion framework
  */
 class ControlLaw : public Core{
 public:
@@ -68,7 +68,7 @@ public:
 	 *  \{
 	 */
 	unsigned int getType() const;
-	virtual std::string getLawTypeString() const;
+	virtual std::string getTypeString() const;
 	unsigned int getNumOutputs() const;
 	unsigned int getNumStates() const;
 	double getParam(int) const;
@@ -85,22 +85,28 @@ public:
 	 *  \name Analysis Functions
 	 *  \{
 	 */
-	virtual void getLaw_EOMPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const;
-	virtual void getLaw_Output(double t, const double *s, const SysData *pSys, double *output, unsigned int len) const;
-	virtual void getLaw_OutputPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const;
-	virtual void getLaw_StateDeriv(double t, const double *s, const SysData *pSys, double *deriv, unsigned int len) const;
-	virtual void getLaw_StateDerivPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const;
+	virtual void getOutput(double t, const double *s, const SysData *pSys,
+		double *output, unsigned int len) const;
+	virtual void getPartials_OutputWRTCoreState(double t, const double *s,
+		const SysData *pSys, double *partials, unsigned int len) const;
+	virtual void getPartials_EOMsWRTCtrlState(double t, const double *s,
+		const SysData *pSys, double *partials, unsigned int len) const;
+	virtual void getPartials_TimeDerivWRTAllState(double t, const double *s,
+		const SysData *pSys, double *partials, unsigned int len) const;
+	virtual void getTimeDeriv(double t, const double *s, const SysData *pSys,
+		double *deriv, unsigned int len) const;
 	//\}
 
 	/**
 	 *  \name Utility Functions
 	 *  \{
 	 */
-	static std::string lawTypeToString(unsigned int);
+	static std::string typeToString(unsigned int);
 	virtual void print() const;
 	//\}
 	
-	const static unsigned int NO_CTRL = 0;	//!< Value to use for the control law ID when no control law is implemented
+	/** Value to use for the control law ID when no control law is implemented*/
+	const static unsigned int NO_CTRL = 0;
 
 protected:
 	/**

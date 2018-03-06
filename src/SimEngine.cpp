@@ -10,7 +10,7 @@
  
 /*
  *  Astrohelion 
- *  Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
+ *  Copyright 2015-2018, Andrew Cox; Protected under the GNU GPL v3.0
  *  
  *  This file is part of Astrohelion
  *
@@ -849,7 +849,7 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
         bSimpleIntegration ? model->getSimpleEOM_fcn() : model->getFullEOM_fcn();     // Pointer for the EOM function
 
     printVerb(verbosity >= Verbosity_tp::ALL_MSG, 
-        "  using control law: %s\n", eomParams->pCtrlLaw ? eomParams->pCtrlLaw->getLawTypeString().c_str() : "NONE");
+        "  using control law: %s\n", eomParams->pCtrlLaw ? eomParams->pCtrlLaw->getTypeString().c_str() : "NONE");
 
     /*
      * BOOST INTEGRATOR ADDITION

@@ -8,7 +8,7 @@
  */
 /*
  *	Astrohelion 
- *	Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2015-2018, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of Astrohelion
  *
@@ -184,6 +184,13 @@ int Constraint::getID() const { return id; }
 std::vector<double> Constraint::getData() const { return data; }
 
 /**
+ * @brief Retrieve a reference to the data vector
+ * @details This method avoids a potentially expensive copy operation
+ * @return a reference to the data vector
+ */
+const std::vector<double>& Constraint::getDataRef_const() const{ return data; }
+
+/**
  *  @brief Retrieve the first data value that is not an NAN
  *  @return The value of the first data value. If no data
  *  value is located, NAN is returned.
@@ -301,6 +308,7 @@ const char* Constraint::getConTypeStr(Constraint_tp t){
 		case Constraint_tp::MAX_DELTA_V: { return "MAX_DELTA_V"; }
 		case Constraint_tp::DELTA_V: { return "DELTA_V"; }
 		case Constraint_tp::JC: { return "JC"; }
+		case Constraint_tp::HLT: { return "H_LT"; }
 		case Constraint_tp::SP: { return "SP"; }
 		case Constraint_tp::SP_RANGE: { return "SP_RANGE"; }
 		case Constraint_tp::SP_DIST: { return "SP_DIST"; }

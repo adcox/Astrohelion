@@ -9,7 +9,7 @@
  
 /*
  *	Astrohelion 
- *	Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2015-2018, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of Astrohelion
  *
@@ -56,9 +56,9 @@ class SysData_cr3bp_lt;
  *  the nondimensional spacecraft mass is \f$ m \in [0,1] \f$, and the thrust pointing unit vector is
  *  \f$ \hat{u} \f$. While most of the core state eoms, \f$ \vec{a} \f$, are computed in the DynamicsModel_cr3bp_lt
  *  class, several of the control-specific elements are computed in the control law object. The low-thrust 
- *  acceleration, \f$ \vec{a}_{lt} \f$, is obtained from the `getLaw_output()` function,
+ *  acceleration, \f$ \vec{a}_{lt} \f$, is obtained from the `getOutput()` function,
  *  
- *  	a_lt = getLaw_Output(t, s, pSysData, partials, len);
+ *  	a_lt = getOutput(t, s, pSysData, partials, len);
  *  	
  *  where the `s` array contains a full state, which is generally of the form
  *  \f$ \vec{s} = \begin{Bmatrix} \vec{q} & \vec{\gamma} & \phi_1 & \dots & \phi_n & \vec{q}_{\text{extra}} \end{Bmatrix} \f$.
@@ -71,14 +71,14 @@ class SysData_cr3bp_lt;
  *  
  *	Because the mass time derivative is a function of thrust and Isp, both control law parameters
  *  (or states), the second equation of motion is computed via the control law function `get_dmdt()`. The
- *  final EOM, the control state time derivative, is computed via the control law function `getLaw_StateDeriv()`.
+ *  final EOM, the control state time derivative, is computed via the control law function `getTimeDeriv()`.
  *  Note that, in most current implementations, the control states are held constant over propagated arcs, thus,
  *  the time derivatives are zero.
  *  
  *  To facilitate multiple shooting corrections, the partial derivatives that relate the equations
  *  of motion to the core and control state variables are required. The primary function of this object is to supply
  *  both the control output, \f$ \vec{a}_{lt} \f$, and those partial derivatives. The first task is achieved via
- *  the `getLaw_Output()` function, as described above. The second of the two tasks, the computation of the partial 
+ *  the `getOutput()` function, as described above. The second of the two tasks, the computation of the partial 
  *  derivatives, is acheived in several pieces. The partial derivatives are collected in the 
  *  \f$ \mathbf{A} \f$ matrix that represents the linearized dynamics,
  *  \f[
@@ -96,9 +96,9 @@ class SysData_cr3bp_lt;
  *  	\mathbf{D_{a,v}} &= \dpd{\vec{a}}{\vec{v}} = \mathbf{K_v} + \dpd{\vec{a}_{lt}}{\vec{v}},\\
  *  	\mathbf{D_{a,\gamma}} &= \dpd{\vec{a}}{\vec{\gamma}} = \dmd{\Omega}{2}{\vec{r}}{}{\vec{\gamma}}{} +  \dpd{\vec{a}_{lt}}{\vec{\gamma}} = \dpd{\vec{a}_{lt}}{\vec{\gamma}}\,.
  *  \f}
- *  These partials are computed via several functions. First, consider the `getLaw_OutputPartials()` function,
+ *  These partials are computed via several functions. First, consider the `getPartials_OutputWRTCoreState()` function,
  *  
- *  	getLaw_OutputPartials(t, s, pSys, partials, len)
+ *  	getPartials_OutputWRTCoreState(t, s, pSys, partials, len)
  *  	
  *  This function fills the array, `partials`, with the elements of a 3x7 matrix,
  *  \f$ \partial \vec{a}_{lt}/\partial \vec{q}\f$, in row-major order. This matrix includes pieces of 
@@ -106,9 +106,9 @@ class SysData_cr3bp_lt;
  *  \f[
  *  	\dpd{\vec{a}_{lt}}{\vec{q}} = \begin{bmatrix} \dpd{\vec{a}_{lt}}{\vec{r}} & \dpd{\vec{a}_{lt}}{\vec{v}} & \dpd{\vec{a}_{lt}}{m} \end{bmatrix}\,.
  *  \f]
- *  Next, consider the `getLaw_EOMPartials()` function,
+ *  Next, consider the `getPartials_EOMsWRTCtrlState()` function,
  *  
- *  	getLaw_EOMPartials(t, s, pSys, partials, len)
+ *  	getPartials_EOMsWRTCtrlState(t, s, pSys, partials, len)
  *  	
  *  which fills the `partials` array with the elements of a \f$ 7 \times n \f$ matrix,
  *  \f$ \partial \vec{q}/\partial \vec{\gamma} \f$, which includes several of the blocks from the
@@ -123,9 +123,9 @@ class SysData_cr3bp_lt;
  *  
  *  The final row of the \f$ \mathbf{A} \f$ matrix contains the partial derivatives of the control state
  *  vector equation of motion with respect to all core and control state variables. This entire row is 
- *  computed via the function `getLaw_StateDerivPartials()`,
+ *  computed via the function `getPartials_TimeDerivWRTAllState()`,
  *  
- *  	getLaw_StateDerivPartials(t, s, pSys, partials, len)
+ *  	getPartials_TimeDerivWRTAllState(t, s, pSys, partials, len)
  *  	
  *  where the `partials` array stores the elements in row-major order.
  */
@@ -143,7 +143,7 @@ public:
 	 *  \{
 	 */
 	bool isVarMass() const;
-	std::string getLawTypeString() const override;
+	std::string getTypeString() const override;
 
 	void setVarMass(bool);
 	//\}
@@ -152,17 +152,18 @@ public:
 	 *  \name Analysis Functions
 	 *  \{
 	 */
-	void getLaw_EOMPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const override;
-	void getLaw_Output(double t, const double *s, const SysData *sysData, double *law, unsigned int len) const override;
-	void getLaw_OutputPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const override;
 	double get_dmdt(double t, const double *s, const SysData *pSys) const;
+	void getOutput(double t, const double *s, const SysData *sysData, double *law, unsigned int len) const override;
+	void getPartials_EOMsWRTCtrlState(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const override;	
+	void getPartials_OutputWRTCoreState(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const override;
+	
 	//\}
 
 	/**
 	 *  \name Utility Functions
 	 *  \{
 	 */
-	static std::string lawTypeToString(unsigned int);
+	static std::string typeToString(unsigned int);
 	static void convertLaws(Arcset_cr3bp_lt*, ControlLaw_cr3bp_lt*);
 	static double thrust_dim2nondim(double, SysData_cr3bp_lt*);
 	static double thrust_nondim2dim(double, SysData_cr3bp_lt*);
@@ -184,11 +185,11 @@ public:
 	 *  
 	 *  Procedure for adding a new control law:
 	 *  * Add the type to the enumerated type, `Law_tp`, with full documentation
-	 *  * Add to `init()` and `lawTypeToString()`
+	 *  * Add to `init()` and `typeToString()`
 	 *  * Add to `get_dmdt()`
-	 *  * Add to `getLaw_Output()` and any functions called from that switchboard
-	 *  * Add to `getLaw_OutputPartials()` and any functions called from that switchboard
-	 *  * Add to `getLaw_EOMPartials()` and any functions called from that switchboard
+	 *  * Add to `getOutput()` and any functions called from that switchboard
+	 *  * Add to `getPartials_OutputWRTCoreState()` and any functions called from that switchboard
+	 *  * Add to `getPartials_EOMsWRTCtrlState()` and any functions called from that switchboard
 	 */
 	enum Law_tp : unsigned int{
 		CONST_FC_2D_LEFT = 1,		/*!< Jacobi-Preserving (constant C), two-dimensional (xy-planar) control,
@@ -260,12 +261,12 @@ protected:
 	void getAccel_ConstC_2D(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int) const;
 	void getAccel_GeneralDir(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int) const;
 
-	void getAccelPartials_AlongVel(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int) const;
-	void getAccelPartials_ConstC_2D(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int) const;
-	void getAccelPartials_GeneralDir(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int) const;
+	void getPartials_AccelWRTCore_AlongVel(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int) const;
+	void getPartials_AccelWRTCore_ConstC_2D(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int) const;
+	void getPartials_AccelWRTCore_GeneralDir(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int) const;
 
-	void getEOMPartials_GeneralDir(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int) const;
-	void getEOMPartials_VarF(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int) const;
+	void getPartials_EOMsWRTCtrl_GeneralDir(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int) const;
+	void getPartials_EOMsWRTCtrl_VarF(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int) const;
 
 	static void convertTo_GeneralConstF(Arcset_cr3bp_lt*, ControlLaw_cr3bp_lt*);
 	//\}

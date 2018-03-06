@@ -8,7 +8,7 @@
  */
 /*
  *	Astrohelion 
- *	Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2015-2018, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of Astrohelion
  *
@@ -87,14 +87,16 @@ public:
 	 *  \name Multiple Shooting Analysis Functions
 	 *  \{
 	 */
+	void multShoot_applyConstraint(MultShootData&, const Constraint&, int) const override;
 	void multShoot_initIterData(MultShootData& it) const override;
+	void multShoot_targetHLT(MultShootData &, const Constraint&, int) const;
 	//\}
 
 	/**
 	 *  \name Utility Functions
 	 *  \{
 	 */
-	ControlLaw* createControlLaw(unsigned int, const std::vector<double> &params) const override;
+	ControlLaw* createControlLaw(unsigned int, const std::vector<double>&) const override;
 	bool supportsControl(const ControlLaw*) const override;
 	//\}
 };

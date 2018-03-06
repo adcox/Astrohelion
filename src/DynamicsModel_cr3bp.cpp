@@ -9,7 +9,7 @@
  
 /*
  *  Astrohelion 
- *  Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
+ *  Copyright 2015-2018, Andrew Cox; Protected under the GNU GPL v3.0
  *  
  *  This file is part of Astrohelion
  *
@@ -200,22 +200,23 @@ std::vector<double> DynamicsModel_cr3bp::getStateDeriv(double t, std::vector<dou
 
 // Use the defaults
 
-//------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 //      Multiple Shooting Functions
-//------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 /**
- *  @brief Compute constraint function and partial derivative values for a constraint
- *  
- *  This function calls its relative in the DynamicsModel base class and appends additional
- *  instructions specific to the CR3BP
+ *  @brief Compute constraint function and partial derivative values for a 
+ *  constraint
+ *  @details This function calls its relative in the DynamicsModel base class 
+ *  and appends additionalinstructions specific to the CR3BP
  *
  *  @param it a reference to the corrector's iteration data structure
  *  @param con the constraint being applied
- *  @param c the index of the constraint within the total constraint vector (which is, in
- *  turn, stored in the iteration data)
+ *  @param c the index of the constraint within the total constraint vector 
+ *  (which is, in turn, stored in the iteration data)
  */ 
-void DynamicsModel_cr3bp::multShoot_applyConstraint(MultShootData& it, const Constraint& con, int c) const{
+void DynamicsModel_cr3bp::multShoot_applyConstraint(MultShootData& it, 
+    const Constraint& con, int c) const{
 
     // Let the base class do its thing first
     DynamicsModel::multShoot_applyConstraint(it, con, c);
@@ -259,13 +260,15 @@ void DynamicsModel_cr3bp::multShoot_initIterData(MultShootData& it) const{
  *  @param con the constraint being applied
  *  @param row0 the row this constraint begins on
  */
-void DynamicsModel_cr3bp::multShoot_targetAngle(MultShootData &it, const Constraint& con, int row0) const{
+void DynamicsModel_cr3bp::multShoot_targetAngle(MultShootData &it,
+    const Constraint& con, int row0) const{
+
     std::vector<double> conData = con.getData();
     MSVarMap_Obj state_var = it.getVarMap_obj(MSVar_tp::STATE, con.getID());
 
     if(state_var.row0 == -1){
-        throw Exception("DynamicsModel_cr3bp::multShoot_targetAngle: Cannot constrain "
-            "state that is not in the free variable vector.");
+        throw Exception("DynamicsModel_cr3bp::multShoot_targetAngle:\n"
+            "\tCannot constrain state that is not in the free-variable vector.");
     }
 
     // Compute the distance of the node from the plane
@@ -376,15 +379,18 @@ void DynamicsModel_cr3bp::multShoot_targetJC(MultShootData& it, const Constraint
     double vy = nodeState[4];
     double vz = nodeState[5];
 
-    double d = sqrt((x + mu)*(x + mu) + y*y + z*z);
-    double r = sqrt((x - 1 + mu)*(x - 1 + mu) + y*y + z*z);
+    double r13 = sqrt((x + mu)*(x + mu) + y*y + z*z);
+    double r23 = sqrt((x - 1 + mu)*(x - 1 + mu) + y*y + z*z);
 
     it.FX[row0] = nodeJC - conData[0];
     // printf("Targeting JC = %.4f, value is %.4f\n", conData[0], nodeJC);
 
-    it.DF_elements.push_back(Tripletd(row0, state_var.row0+0, (-2*(x + mu)*(1 - mu)/pow(d,3) - 2*(x + mu - 1)*mu/pow(r,3) + 2*x) ));
-    it.DF_elements.push_back(Tripletd(row0, state_var.row0+1, (-2*y*(1 - mu)/pow(d,3) - 2*y*mu/pow(r,3) + 2*y) ));
-    it.DF_elements.push_back(Tripletd(row0, state_var.row0+2, (-2*z*(1 - mu)/pow(d,3) - 2*z*mu/pow(r,3)) ));
+    it.DF_elements.push_back(Tripletd(row0, state_var.row0+0,
+        (-2*(x + mu)*(1 - mu)/pow(r13,3) - 2*(x + mu - 1)*mu/pow(r23,3) + 2*x) ));
+    it.DF_elements.push_back(Tripletd(row0, state_var.row0+1,
+        (-2*y*(1 - mu)/pow(r13,3) - 2*y*mu/pow(r23,3) + 2*y) ));
+    it.DF_elements.push_back(Tripletd(row0, state_var.row0+2,
+        (-2*z*(1 - mu)/pow(r13,3) - 2*z*mu/pow(r23,3)) ));
     it.DF_elements.push_back(Tripletd(row0, state_var.row0+3, -2*vx));
     it.DF_elements.push_back(Tripletd(row0, state_var.row0+4, -2*vy));
     it.DF_elements.push_back(Tripletd(row0, state_var.row0+5, -2*vz));
@@ -443,14 +449,14 @@ void DynamicsModel_cr3bp::multShoot_targetJC_endSeg(MultShootData& it, const Con
     double vy = lastState[4];
     double vz = lastState[5];
 
-    double d = sqrt((x + mu)*(x + mu) + y*y + z*z);
-    double r = sqrt((x + mu - 1)*(x + mu - 1) + y*y + z*z);
+    double r13 = sqrt((x + mu)*(x + mu) + y*y + z*z);
+    double r23 = sqrt((x + mu - 1)*(x + mu - 1) + y*y + z*z);
 
     // Partial derivative of constraint w.r.t. propagated node states
     double dFdq_f[6] = {
-        (-2*(x + mu)*(1 - mu)/pow(d,3) - 2*(x + mu - 1)*mu/pow(r,3) + 2*x),
-        (-2*y*(1 - mu)/pow(d,3) - 2*y*mu/pow(r,3) + 2*y),
-        (-2*z*(1 - mu)/pow(d,3) - 2*z*mu/pow(r,3)),
+        (-2*(x + mu)*(1 - mu)/pow(r13,3) - 2*(x + mu - 1)*mu/pow(r23,3) + 2*x),
+        (-2*y*(1 - mu)/pow(r13,3) - 2*y*mu/pow(r23,3) + 2*y),
+        (-2*z*(1 - mu)/pow(r13,3) - 2*z*mu/pow(r23,3)),
         -2*vx,
         -2*vy,
         -2*vz
@@ -544,16 +550,16 @@ int DynamicsModel_cr3bp::fullEOMs(double t, const double s[], double sdot[], voi
     // double xdot = s[3]; double ydot = s[4];
 
     // compute distance to primaries
-    double d = sqrt( (s[0] + mu)*(s[0] + mu) + s[1]*s[1] + s[2]*s[2] );
-    double r = sqrt( (s[0] - 1+mu)*(s[0] - 1+mu) + s[1]*s[1] + s[2]*s[2] );
+    double r13 = sqrt( (s[0] + mu)*(s[0] + mu) + s[1]*s[1] + s[2]*s[2] );
+    double r23 = sqrt( (s[0] - 1+mu)*(s[0] - 1+mu) + s[1]*s[1] + s[2]*s[2] );
 
     // Position derivatives = velocity
     std::copy(s+3, s+6, sdot);
 
     // Velocity derivatives = acceleraiton
-    sdot[3] =   2*s[4] + s[0] - (1-mu)*(s[0]+mu)/pow(d,3) - mu*(s[0]-1+mu)/pow(r,3);
-    sdot[4] =  -2*s[3] + s[1] - (1-mu) * s[1]/pow(d,3) - mu*s[1]/pow(r,3);
-    sdot[5] =  -(1-mu)*s[2]/pow(d,3) - mu*s[2]/pow(r,3); 
+    sdot[3] =   2*s[4] + s[0] - (1-mu)*(s[0]+mu)/pow(r13,3) - mu*(s[0]-1+mu)/pow(r23,3);
+    sdot[4] =  -2*s[3] + s[1] - (1-mu) * s[1]/pow(r13,3) - mu*s[1]/pow(r23,3);
+    sdot[5] =  -(1-mu)*s[2]/pow(r13,3) - mu*s[2]/pow(r23,3); 
 
     /*
      * Next step, compute STM
@@ -593,16 +599,16 @@ int DynamicsModel_cr3bp::simpleEOMs(double t, const double s[], double sdot[], v
     double mu = sysData->getMu();
 
     // compute distance to primaries
-    double d = sqrt( (s[0] + mu)*(s[0] + mu) + s[1]*s[1] + s[2]*s[2] );
-    double r = sqrt( (s[0] - 1+mu)*(s[0] - 1+mu) + s[1]*s[1] + s[2]*s[2] );
+    double r13 = sqrt( (s[0] + mu)*(s[0] + mu) + s[1]*s[1] + s[2]*s[2] );
+    double r23 = sqrt( (s[0] - 1+mu)*(s[0] - 1+mu) + s[1]*s[1] + s[2]*s[2] );
 
     // Position derivatives = velocity
     std::copy(s+3, s+6, sdot);
 
     // Velocity derivatives = acceleraiton
-    sdot[3] =   2*s[4] + s[0] - (1-mu)*(s[0]+mu)/pow(d,3) - mu*(s[0]-1+mu)/pow(r,3);
-    sdot[4] =  -2*s[3] + s[1] - (1-mu) * s[1]/pow(d,3) - mu*s[1]/pow(r,3);
-    sdot[5] =  -(1-mu)*s[2]/pow(d,3) - mu*s[2]/pow(r,3); 
+    sdot[3] =   2*s[4] + s[0] - (1-mu)*(s[0]+mu)/pow(r13,3) - mu*(s[0]-1+mu)/pow(r23,3);
+    sdot[4] =  -2*s[3] + s[1] - (1-mu) * s[1]/pow(r13,3) - mu*s[1]/pow(r23,3);
+    sdot[5] =  -(1-mu)*s[2]/pow(r13,3) - mu*s[2]/pow(r23,3); 
 
     return GSL_SUCCESS;
 }//=====================================================
@@ -690,9 +696,9 @@ void DynamicsModel_cr3bp::getEquilibPt(const SysData_cr3bp *sysData, int L, doub
  */
 double DynamicsModel_cr3bp::getJacobi(const double s[], double mu){
     double v_squared = s[3]*s[3] + s[4]*s[4] + s[5]*s[5];
-    double d = sqrt((s[0] + mu)*(s[0] + mu) + s[1]*s[1] + s[2]*s[2]);
-    double r = sqrt((s[0] - 1 + mu)*(s[0] - 1 + mu) + s[1]*s[1] + s[2]*s[2]);
-    double U = (1 - mu)/d + mu/r + 0.5*(s[0]*s[0] + s[1]*s[1]);
+    double r13 = sqrt((s[0] + mu)*(s[0] + mu) + s[1]*s[1] + s[2]*s[2]);
+    double r23 = sqrt((s[0] - 1 + mu)*(s[0] - 1 + mu) + s[1]*s[1] + s[2]*s[2]);
+    double U = (1 - mu)/r13 + mu/r23 + 0.5*(s[0]*s[0] + s[1]*s[1]);
     return 2*U - v_squared;
 }//================================================
 
@@ -708,23 +714,23 @@ double DynamicsModel_cr3bp::getJacobi(const double s[], double mu){
  */
 void DynamicsModel_cr3bp::getUDDots(double mu, double x, double y, double z, double* ddots){
     // compute distance to primaries
-    double d = sqrt( (x+mu)*(x+mu) + y*y + z*z );
-    double r = sqrt( (x-1+mu)*(x-1+mu) + y*y + z*z );
+    double r13 = sqrt( (x+mu)*(x+mu) + y*y + z*z );
+    double r23 = sqrt( (x-1+mu)*(x-1+mu) + y*y + z*z );
 
     // Uxx
-    ddots[0] = 1 - (1-mu)/pow(d,3) - mu/pow(r,3) + 3*(1-mu)*pow((x + mu),2)/pow(d,5) + 
-        3*mu*pow((x + mu - 1), 2)/pow(r,5);
+    ddots[0] = 1 - (1-mu)/pow(r13,3) - mu/pow(r23,3) + 3*(1-mu)*pow((x + mu),2)/pow(r13,5) + 
+        3*mu*pow((x + mu - 1), 2)/pow(r23,5);
     // Uyy
-    ddots[1] = 1 - (1-mu)/pow(d,3) - mu/pow(r,3) + 3*(1-mu)*y*y/pow(d,5) + 3*mu*y*y/pow(r,5);
+    ddots[1] = 1 - (1-mu)/pow(r13,3) - mu/pow(r23,3) + 3*(1-mu)*y*y/pow(r13,5) + 3*mu*y*y/pow(r23,5);
     // Uzz
-    ddots[2] = -(1-mu)/pow(d,3) - mu/pow(r,3) + 3*(1-mu)*z*z/pow(d,5) + 3*mu*z*z/pow(r,5);
+    ddots[2] = -(1-mu)/pow(r13,3) - mu/pow(r23,3) + 3*(1-mu)*z*z/pow(r13,5) + 3*mu*z*z/pow(r23,5);
 
     // Uxy
-    ddots[3] = 3*(1-mu)*(x + mu)*y/pow(d,5) + 3*mu*(x + mu - 1)*y/pow(r,5);
+    ddots[3] = 3*(1-mu)*(x + mu)*y/pow(r13,5) + 3*mu*(x + mu - 1)*y/pow(r23,5);
     // Uxz
-    ddots[4] = 3*(1-mu)*(x + mu)*z/pow(d,5) + 3*mu*(x + mu - 1)*z/pow(r,5);
+    ddots[4] = 3*(1-mu)*(x + mu)*z/pow(r13,5) + 3*mu*(x + mu - 1)*z/pow(r23,5);
     // Uyz
-    ddots[5] = 3*(1-mu)*y*z/pow(d,5) + 3*mu*y*z/pow(r,5);
+    ddots[5] = 3*(1-mu)*y*z/pow(r13,5) + 3*mu*y*z/pow(r23,5);
 }//========================================================
 
 }// END of Astrohelion namespace

@@ -8,7 +8,7 @@
  */
 /*
  *	Astrohelion 
- *	Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2015-2018, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of Astrohelion
  *
@@ -455,7 +455,7 @@ void Arcset::print() const {
 
 			unsigned int ctrl_dim = 0;
 			if(segs[index.second].getCtrlLaw()){
-				printf("\t> Ctrl Law: %s\n", segs[index.second].getCtrlLaw()->getLawTypeString().c_str());
+				printf("\t> Ctrl Law: %s\n", segs[index.second].getCtrlLaw()->getTypeString().c_str());
 				ctrl_dim = segs[index.second].getCtrlLaw()->getNumStates();
 			}else
 				printf("\t> Ctrl Law: None\n");

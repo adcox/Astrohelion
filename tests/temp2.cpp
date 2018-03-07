@@ -18,7 +18,7 @@ int main(){
 	std::vector<ControlLaw*> loadedLaws {};
 	lyapFam.readFromMat(filename, loadedLaws);
 
-	unsigned int ix0 = 5;
+	unsigned int ix0 = 10;
 
 	Arcset_periodic lyap = lyapFam.getMember(ix0);
 
@@ -30,7 +30,7 @@ int main(){
 	SysData_cr3bp_lt ltSys("earth", "moon", 1);	// Let M0 = 1
 	std::vector<double> ltParams {sqrt(f), Isp},
 		ctrl0 {0, 0},
-		n0conData {NAN, 0, 0, NAN, NAN, 0, 1},
+		n0conData {NAN, NAN, 0, NAN, NAN, 0, 1},
 		ctrlConData {1, 1};
 	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::CONST_MF_GENERAL, ltParams);
 
@@ -45,7 +45,7 @@ int main(){
 	shooter.setTOFType(MSTOF_tp::VAR_EQUALARC);
 	Family_PO fam(&ltSys);
 
-	double alpha = PI/3;
+	double alpha = 0;
 	
 	printf("Converging at alpha = %.2f deg\n", alpha*180/PI);
 
@@ -102,21 +102,101 @@ int main(){
 	// ltGuess.print();
 	// ltConverged.print();
 
-	PseudoArcEngine pae;
-	std::vector<Arcset> allArcs;
-	std::vector<int> initDir {1, 0, 0, 0, 0, 0};
-	Arcset_cr3bp_lt a1(&ltSys), a2(&ltSys);
+	// Now, pull out the constraints and adjust them so that we can converge
+	// orbits over a range of alpha but at the same H_lt value
+	std::vector<Constraint> allCons = ltConverged.getAllConstraints();
+	ltConverged.clearAllConstraints();
+	for(unsigned int i = 0; i < allCons.size(); i++){
+		if(allCons[i].getType() == Constraint_tp::RM_CTRL){
+			if(allCons[i].getID() != ltConverged.getNodeByIx(0).getID()){
+				ltConverged.addConstraint(allCons[i]);
+			}
+		}else{
+			ltConverged.addConstraint(allCons[i]);
+		}
+	}
 
-	pae.setNumOrbits(100);
-	pae.pac(&ltConverged, &a1, &a2, allArcs, initDir);
+	// Get the low-thrust Hamiltonian value; overwrite q0
+	q0 = ltConverged.getSegRefByIx(0).getStateByRow(0);
+	double H_lt = DynamicsModel_cr3bp_lt::getHamiltonian(0, &(q0[0]), &ltSys,
+		&law);
 
-	for(auto arc : allArcs)
-		fam.addMember(arc);
+
+	// Create a constraint to fix the low-thrust Hamiltonian
+	Constraint HltCon(Constraint_tp::HLT, ltConverged.getNodeByIx(0).getID(),
+		&H_lt, 1);
+	ltConverged.addConstraint(HltCon);
+
+	// Overwrite allCons with the constraints we want to apply to every orbit
+	allCons = ltConverged.getAllConstraints();
+
+	// Create a new constraint to fix the thrust angle
+	Constraint ctrl0Con(Constraint_tp::CTRL, ltConverged.getNodeByIx(0).getID(),
+		ctrl0);
+	ltConverged.addConstraint(ctrl0Con);	// only add so it shows up in file
+	
+	// Add the converged member to the family
+	fam.addMember(ltConverged);
+
+	printColor(BOLDBLUE, "LT_CONVERGED\n");
+	ltConverged.print();
+
+	// Loop through alpha and converge orbits for all values, at same H_lt value
+	double alphaStep = PI/180.0;
+	Arcset_cr3bp_lt ltDiffAlpha(&ltSys), guess = ltConverged;
+	for(alpha = alphaStep; std::abs(alpha) < PI; alpha += alphaStep){
+		ctrl0[0] = alpha;
+		ctrl0Con.setData(ctrl0);
+
+		guess.clearAllConstraints();
+		for(unsigned int i = 0; i < allCons.size(); i++){
+			guess.addConstraint(allCons[i]);
+		}
+		guess.addConstraint(ctrl0Con);
+
+		ltDiffAlpha.reset();
+		try{
+			printf("Converging at alpha = %.2f deg\n", alpha*180/PI);
+			shooter.multShoot(&guess, &ltDiffAlpha);
+
+			q0 = ltDiffAlpha.getSegRefByIx(0).getStateByRow(0);
+			double H = DynamicsModel_cr3bp_lt::getHamiltonian(0, &(q0[0]),
+				&ltSys, &law);
+			printf("Err in H_lt = %.2e\n", std::abs(H - H_lt));
+
+			guess = ltDiffAlpha;	// Update initiial guess
+			
+			printColor(BOLDBLUE, "GUESS\n");
+			guess.print();
+			printColor(BOLDBLUE, "LT_DIFF_ALPHA\n");
+			ltDiffAlpha.print();
+
+			waitForUser();
+		}catch(DivergeException &e){
+			printErr("Corrector diverged for alpha = %.2f deg\n", alpha*180/PI);
+			if(alphaStep > 0){
+				alphaStep *= -1;
+				alpha = 0;
+				guess = ltConverged;
+				continue;
+			}else{
+				break;
+			}
+		}
+		fam.addMember(ltDiffAlpha);
+
+		// Go back to zero and reverse direction if you make it to PI
+		if(alphaStep > 0 && std::abs(alpha + alphaStep) >= PI){
+			alphaStep *= -1;
+			alpha = 0;
+			guess = ltConverged;
+		}
+	}
 
 	fam.sortEigs();
 
-	sprintf(filename, "L1_Lyap_f%.1e_a%05.1f_law%d.mat", f,
-		alpha*180/PI, law.getType());
+	sprintf(filename, "L1_Lyap_f%.1e_Hlt_%.3f_law%d.mat", f,
+		H_lt, law.getType());
 	fam.saveToMat(filename);
 
 	// Free memory

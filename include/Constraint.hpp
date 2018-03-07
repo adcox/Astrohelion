@@ -120,10 +120,19 @@ enum class Constraint_tp : int{
 			 				 * 	Place the ID of the node you want to constrain in the `id`
 			 				 *	variable; `data` holds the value of Jacobi in the first element.
 			 				 */
-	HLT = 110,				/*!< Constrain the node to have a specific low-thrust Hamiltonian (CR3BP-LT only).
-							 *	Place the ID of the node you want to constrain in the `id` 
-							 *	variable; `data` holds the desired Hamiltonian value in the
-							 *	first element.
+	HLT = 110,				/*!< Constrain the node to have a specific 
+							 * 	low-thrust Hamiltonian (CR3BP-LT only). Place 
+							 * 	the ID of the node you want to constrain in the 
+							 * 	`id` variable; `data` holds the desired 
+							 * 	Hamiltonian value in the first element. Note 
+							 * 	that the control law leveraged to compute the
+							 * 	Hamiltonian value depends on the segments linked
+							 * 	to the Node with the specified ID. If the 
+							 * 	is a double-origin, the control law on the 
+							 * 	Segment associated with the first element in the
+							 * 	link array is used. If the Node is not a double-
+							 * 	origin, then the control law on the Segment that
+							 * 	originates at the specified node is used.
 							 */
 	SP = 200, 				/*!< Constrain the node to intersect the saddle point (BCR4BPR only)
 			 				 * 	Place the ID of the node you want to constrain in the `id`

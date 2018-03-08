@@ -9,8 +9,8 @@ using namespace astrohelion;
 
 int main(){
 	unsigned int lawID = ControlLaw_cr3bp_lt::CONST_FC_2D_LEFT;
-	double f_in = 1e-2;		// Load family with this thrust magnitude
-	double f_out = 2.5e-2;		// Compute family with this thrust magnitude
+	double f_in = 1.25e-1;		// Load family with this thrust magnitude
+	double f_out = 1.25e-1;		// Compute family with this thrust magnitude
 
 	// Load the L4 SPO family at the appropriate thrust level
 	char filename[128];
@@ -47,10 +47,11 @@ int main(){
 
 	PseudoArcEngine pae;
 	std::vector<Arcset> allArcs;
-	std::vector<int> initDir {1, 0, 0, 1, -1, 0};
+	// std::vector<int> initDir {1, 0, 0, 1, -1, 0};
+	std::vector<int> initDir {-1, 0, 0, -1, 1, 0};
 	Arcset_cr3bp_lt a1(&ltSys), a2(&ltSys);
 
-	pae.setNumOrbits(5);
+	pae.setNumOrbits(500);
 	pae.pac(&member, &a1, &a2, allArcs, initDir);
 
 	Family_PO fam(&ltSys);

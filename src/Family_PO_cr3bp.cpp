@@ -35,8 +35,21 @@
 
 namespace astrohelion{
 
+/**
+ * @brief Construct a CR3BP family of periodic orbits
+ * 
+ * @param pSys pointer to a CR3BP system data object
+ */
 Family_PO_cr3bp::Family_PO_cr3bp(const SysData_cr3bp *pSys) : Family_PO(pSys) {}
 
+/**
+ * @brief Retrieve all family members that have Jacobi constant values matching
+ * the specified value
+ * 
+ * @param JC Desired Jacobi constant value
+ * @return A vector of all matches located. If no matches are located, an empty
+ * vector is returned.
+ */
 std::vector<Arcset_periodic> Family_PO_cr3bp::getMemberByJacobi(double JC) const {
 	// Get an array of all the jacobi values
 	std::vector<double> allJC;

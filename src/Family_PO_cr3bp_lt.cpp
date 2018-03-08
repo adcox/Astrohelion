@@ -1,11 +1,16 @@
 /**
- * @file Family_PO_cr3bp.hpp
+ *  @file Family_PO_cr3bp_lt.cpp
+ *	@brief 
+ *	
+ *	@author Andrew Cox
+ *	@version March 8, 2018
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
  *	Copyright 2015-2018, Andrew Cox; Protected under the GNU GPL v3.0
  *	
- *	This file is part of the Astrohelion.
+ *	This file is part of Astrohelion
  *
  *  Astrohelion is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,39 +25,18 @@
  *  You should have received a copy of the GNU General Public License
  *  along with Astrohelion.  If not, see <http://www.gnu.org/licenses/>.
  */
-#pragma once
 
-#include "Family_PO_cr3bp.hpp"
+#include "Family_PO_cr3bp_lt.hpp"
+
+#include "SysData_cr3bp_lt.hpp"
 
 namespace astrohelion{
 
-// Forward Declarations
-class SysData_cr3bp_lt;
-
 /**
- *  \ingroup fam cr3bp_lt
- *  @brief [brief description]
- *  @details [long description]
+ * @brief Construct a CR3BP-LT family of periodic orbits
  * 
- *  @param  [description]
- *  @return [description]
+ * @param pSys pointer to a CR3BP-LT system data object
  */
-class Family_PO_cr3bp_lt : public Family_PO_cr3bp{
-	public:
-		/**
-		 *  \name *structors
-		 *  \{
-		 */
-		Family_PO_cr3bp_lt(const SysData_cr3bp_lt*);
-		//\}
-		
-		/**
-		 *  \name Analysis Functions
-		 *  \
-		 */		
-		std::vector<Arcset_periodic> getMemberByThrustMag(double) const;
-		std::vector<Arcset_periodic> getMemberByThrustAngle(double, double beta = 0) const;
-		//\}
-};
+Family_PO_cr3bp_lt::Family_PO_cr3bp_lt(const SysData_cr3bp_lt *pSys) : Family_PO_cr3bp(pSys) {}
 
 }// End of astrohelion namespace

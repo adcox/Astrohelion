@@ -2114,8 +2114,13 @@ matvar_t* BaseArcset::createVar_NodeState(Save_tp saveTp, const char *pVarName) 
 	for(unsigned int r = 0; r < numNodes; r++){
 		std::vector<double> state = nodes[r].getState();
 
-		if(state.size() < stateSize)
-			throw Exception("BaseArcset::createVar_NodeStates: state vector doesn't match core state size");
+		if(state.size() < stateSize){
+			char msg[256];
+			sprintf(msg, "BaseArcset::createVar_NodeStates: "
+				"State vector, length %zu, is less than core state size: %u",
+				state.size(), stateSize);
+			throw Exception(msg);
+		}
 
 		for(unsigned int c = 0; c < stateSize; c++){
 			posVel[c*numNodes + r] = state[c];
@@ -2303,7 +2308,8 @@ matvar_t* BaseArcset::createVar_NodeCtrl(Save_tp saveTp, const char *pVarName) c
 			Mat_VarSetCell(pMatVar, n, cell_element);
 		else{
 			Mat_VarFree(pMatVar);
-			throw Exception("BaseArcset::saveNodeCtrl: Could not create cell array variable\n");
+			throw Exception("BaseArcset::saveNodeCtrl: "
+				"Could not create cell array variable\n");
 		}
 	}
 
@@ -2341,7 +2347,14 @@ matvar_t* BaseArcset::createVar_SegState(Save_tp saveTp, const char *pVarName) c
 		std::vector<double> segStates = segs[s].getStateVector();
 		if(segStates.size() % full_size != 0){
 			Mat_VarFree(pMatVar);
-			throw Exception("BaseArcset:saveSegStates: Segment state vector size is not a multiple of the core state size; cannot proceed");
+			char msg[256];
+			sprintf(msg, "BaseArcset::saveSegState: "
+				"segStates has length %zu; expecting full_size = %u\n"
+				"\tRemainder = %zu THUS segStates is not multiple of full_size\n"
+				"\tSegState width = %u",
+				segStates.size(), full_size, segStates.size() % full_size,
+				segs[s].getStateWidth());
+			throw Exception(msg);
 		}
 
 		std::vector<double> segStates_trans;

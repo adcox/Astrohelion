@@ -670,11 +670,13 @@ void DynamicsModel::multShoot_targetCont_State(MultShootData& it, const Constrai
 }//====================================================
 
 /**
- *	@brief Compute control state continuity constraint values and partial derivatives
+ *	@brief Compute control state continuity constraint values and partial 
+ *	derivatives
  *
- *	This function computes and stores control state continuity constraints. The partial 
- *	derivatives of each node with respect to other nodes and integration times are all 
- *	computed and placed in the appropriate spots in the Jacobian matrix.
+ *	@details This function computes and stores control state continuity 
+ *	constraints. The partial derivatives of each node with respect to other 
+ *	nodes and integration times are all computed and placed in the appropriate 
+ *	spots in the Jacobian matrix.
  *
  *	Derived models may replace this function.
  *
@@ -682,7 +684,9 @@ void DynamicsModel::multShoot_targetCont_State(MultShootData& it, const Constrai
  *	@param con the constraint being applied
  *	@param row0 the first row this constraint applies to
  */
-void DynamicsModel::multShoot_targetCont_Ctrl(MultShootData& it, const Constraint& con, int row0) const{
+void DynamicsModel::multShoot_targetCont_Ctrl(MultShootData& it, 
+	const Constraint& con, int row0) const{
+	
 	int segID = con.getID();	// get segment ID
 	std::vector<double> conData = con.getData();
 
@@ -691,68 +695,88 @@ void DynamicsModel::multShoot_targetCont_Ctrl(MultShootData& it, const Constrain
 	const Segment &inputSeg = it.pArcIn->getSegRef_const(segID);
 
 	if(propSeg.getCtrlLaw() == nullptr)
-		throw Exception("DynamicsModel::multShoot_targetCont_Ctrl: Constrained segment has a nullptr control law");
+		throw Exception("DynamicsModel::multShoot_targetCont_Ctrl: "
+			"Constrained segment has a nullptr control law");
 	
 
 	const unsigned int ctrlDim = propSeg.getCtrlLaw()->getNumStates();
 
 	std::vector<double> lastFullState = propSeg.getStateByRow(-1);
-	double *lastPropState = &(lastFullState[coreDim]);
 	
 	MatrixXRd stm = propSeg.getSTM();
 
-	MSVarMap_Obj ctrl0_var = it.getVarMap_obj(MSVar_tp::CTRL, inputSeg.getOrigin());
-	MSVarMap_Obj nodeState0_var = it.getVarMap_obj(MSVar_tp::STATE, inputSeg.getOrigin());
+	MSVarMap_Obj ctrl0_var = it.getVarMap_obj(MSVar_tp::CTRL, 
+		inputSeg.getOrigin());
+	MSVarMap_Obj nodeState0_var = it.getVarMap_obj(MSVar_tp::STATE, 
+		inputSeg.getOrigin());
 
-	MSVarMap_Obj ctrlf_var = it.getVarMap_obj(MSVar_tp::CTRL, inputSeg.getTerminus());
+	MSVarMap_Obj ctrlf_var = it.getVarMap_obj(MSVar_tp::CTRL, 
+		inputSeg.getTerminus());
 
-	std::vector<double> ctrlf_static_vector = it.pArcIn->getNodeRef_const(ctrlf_var.key.id).getExtraParamVec(PARAMKEY_CTRL);
+	std::vector<double> ctrlf_static_vector = 
+		it.pArcIn->getNodeRef_const(ctrlf_var.key.id).\
+		getExtraParamVec(PARAMKEY_CTRL);
+
 	// Loop through conData
 	for(unsigned int s = 0; s < conData.size(); s++){
 		if(!std::isnan(conData[s])){
 			// This state is constrained to be continuous; compute error
-			double ctrlf_value = ctrlf_var.row0 == -1 ? ctrlf_static_vector[s] : it.X[ctrlf_var.row0 + s];
-			it.FX[row0+s] = lastPropState[s] - ctrlf_value;
+			double ctrlf_value = ctrlf_var.row0 == -1 ?\
+				ctrlf_static_vector[s] : it.X[ctrlf_var.row0 + s];
+
+			it.FX[row0+s] = lastFullState[coreDim + s] - ctrlf_value;
 
 			// Compute partials of F w.r.t. origin node state
 			for(unsigned int x = 0; x < coreDim; x++){
 				// put STM elements into DF matrix
 				if(nodeState0_var.row0 != -1){
-					it.DF_elements.push_back(Tripletd(row0+s, nodeState0_var.row0 + x, stm(coreDim + s, x)));
+					it.DF_elements.push_back(Tripletd(row0+s, 
+						nodeState0_var.row0 + x, stm(coreDim + s, x)));
 				}
 			}
 
-			// Compute partials of F w.r.t. origin and terminal node control states
+			// Compute partials of F w.r.t. origin and terminal node ctrl states
 			for(unsigned int x = 0; x < ctrlDim; x++){
 				// For origin node: Put STM elements into DF matrix
 				if(ctrl0_var.row0 != -1){
-					it.DF_elements.push_back(Tripletd(row0+s, ctrl0_var.row0 + x, stm(coreDim + s, coreDim + x)));
+					it.DF_elements.push_back(Tripletd(row0+s, 
+						ctrl0_var.row0 + x, stm(coreDim + s, coreDim + x)));
 				}
 
 				// For terminal node: Negative identity
 				if(ctrlf_var.row0 != -1 && s == x){
-					it.DF_elements.push_back(Tripletd(row0+s, ctrlf_var.row0 + x, -1.0));
+					it.DF_elements.push_back(Tripletd(row0+s, 
+						ctrlf_var.row0 + x, -1.0));
 				}
 			}
 
 			// Compute partials of F w.r.t. times-of-flight
 			// Columns of DF based on time constraints
 			if(to_underlying(it.tofTp) > 0){
-				// * For now, all time-derivatives of control laws are zero
-				//
-				// TODO - Will need to retrieve constrol state time derivatives from propagated segment
-				// * Instantaneous time derivatives are available via ControlLaw.getTimeDeriv()
+				/*
+				 * For now, all time-derivatives of control laws are zero
+				 *
+				 * TODO - Will need to retrieve constrol state time derivatives 
+				 * from propagated segment
+				 * * Instantaneous time derivatives are available via 
+				 *   ControlLaw.getTimeDeriv()
+				 */
 
 				// std::vector<double> lastDeriv = propSeg.getStateDerivByIx(-1);
 
-				// If equal arc time is enabled, place a 1/(n-1) in front of all time derivatives
-				// double timeCoeff = it.bEqualArcTime ? 1.0/(it.pArcIn->getNumSegs()) : 1.0;
+				// // If equal arc time is enabled, place a 1/(n-1) in front of  
+				// // all time derivatives
+				// double timeCoeff = it.bEqualArcTime ?\
+				// 	1.0/(it.pArcIn->getNumSegs()) : 1.0;
 
-				// MSVarMap_Obj tofVar = it.getVarMap_obj(it.bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
+				// MSVarMap_Obj tofVar = it.getVarMap_obj(it.bEqualArcTime ?\
+				// MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
 				// 	it.bEqualArcTime ? Linkable::INVALID_ID : segID);
 				
-				// Column of state time derivatives: [vel; accel; other time derivatives]
-				// it.DF_elements.push_back(Tripletd(row0+s, tofVar.row0, timeCoeff*lastDeriv[s]));
+				// // Column of state time derivatives: [vel; accel; other 
+				// // time derivatives]
+				// it.DF_elements.push_back(Tripletd(row0+s, tofVar.row0, 
+				// timeCoeff*lastDeriv[s]));
 			}
 
 		}

@@ -492,17 +492,24 @@ void Family_PO::reverseOrder(){
  *  @brief Read family data from a Matlab file
  * 
  *  @param filename path to the file
- *  @param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
- *  from the Matlab file, unique control laws are constructed and allocated on the stack.
- *  The user must manually delete the ControlLaw objects to avoid memory leaks.
- *  @param bReconstruct whether or not to reconstruct each arc as it is read from memory.
- *  "Reconstruction" is the process of propagating each segment to populate the full segment
- *  state history.
+ *  @param refLaws Reference to a vector of ControlLaw pointers. As control 
+ *  laws are read from the Matlab file, unique control laws are constructed and 
+ *  allocated on the stack. The user must manually delete the ControlLaw objects 
+ *  to avoid memory leaks.
+ *  
+ *  @param bReconstruct whether or not to reconstruct each arc as it is read 
+ *  from memory. "Reconstruction" is the process of propagating each segment to 
+ *  populate the full segment state history.
  */
-void Family_PO::readFromMat(const char *filename, std::vector<ControlLaw*> &refLaws, bool bReconstruct){
+void Family_PO::readFromMat(const char *filename,
+	std::vector<ControlLaw*> &refLaws, bool bReconstruct){
+
 	mat_t *pMatFile = Mat_Open(filename, MAT_ACC_RDONLY);
 	if(pMatFile == nullptr){
-		throw Exception("Family_PO::readFromMat: Could not load family from file");
+		char msg[256];
+		sprintf(msg, "Family_PO::readFromMat: Could not load family from %s",
+			filename);
+		throw Exception(msg);
 	}
 
 
@@ -512,7 +519,8 @@ void Family_PO::readFromMat(const char *filename, std::vector<ControlLaw*> &refL
 	try{
 		loadEigVecs(pMatFile);
 	}catch(Exception &e){
-		printWarn("Family_PO::readFromMat: Could not load eigenvectors from file\n");
+		printWarn("Family_PO::readFromMat: Could not load eigenvectors from %s",
+			filename);
 	}
 }//====================================================
 
@@ -644,19 +652,28 @@ void Family_PO::loadEigVecs(mat_t* pMatFile){
  *  @brief Load family members from a Matlab file
  * 
  *  @param pMatFile pointer to the open Matlab file
- *  @param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
- *  from the Matlab file, unique control laws are constructed and allocated on the stack.
- *  The user must manually delete the ControlLaw objects to avoid memory leaks.
- *  @param bReconstruct whether or not to reconstruct each arc as it is read from memory.
- *  "Reconstruction" is the process of propagating each segment to populate the full segment
- *  state history.
+ *  @param refLaws Reference to a vector of ControlLaw pointers. As control laws 
+ *  are read from the Matlab file, unique control laws are constructed and 
+ *  allocated on the stack. The user must manually delete the ControlLaw objects 
+ *  to avoid memory leaks.
+ *  
+ *  @param bReconstruct whether or not to reconstruct each arc as it is read 
+ *  from memory. "Reconstruction" is the process of propagating each segment to 
+ *  populate the full segment state history.
  */
-void Family_PO::loadMembers(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws, bool bReconstruct){
+void Family_PO::loadMembers(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws, 
+	bool bReconstruct){
+
 	matvar_t *pStruct = Mat_VarRead(pMatFile, VARNAME_FAM_MEMBER);
 	if(pStruct == nullptr){
-		throw Exception("Family_PO::loadMembers: Could not read variable from file");
+		char msg[256];
+		sprintf(msg, "Family_PO::readFromMat: "
+			"Could not read variable %s from file", VARNAME_FAM_MEMBER);
+		throw Exception(msg);
 	}else{
-		if(pStruct->class_type == MAT_C_STRUCT && pStruct->data_type == MAT_T_STRUCT){
+		if(pStruct->class_type == MAT_C_STRUCT && 
+			pStruct->data_type == MAT_T_STRUCT){
+
 			unsigned int numStructs = (pStruct->dims[0])*(pStruct->dims[1]);
 			for(unsigned int s = 0; s < numStructs; s++){
 				Arcset_periodic arc(pSysData);
@@ -670,7 +687,8 @@ void Family_PO::loadMembers(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws, 
 					members.push_back(arc);
 			}
 		}else{
-			throw Exception("Family_PO::loadMembers: Family member variable does not have structure type/class");
+			throw Exception("Family_PO::loadMembers: "
+				"Family member variable does not have structure type/class");
 		}
 	}
 }//====================================================
@@ -726,7 +744,9 @@ void Family_PO::saveEigVals(mat_t *pMatFile) const{
 
 		if(members.size() * nE != memberEigVals.size()){
 			char msg[128];
-			sprintf(msg, "Family_PO::saveEigVals: eigenvalue storage vector has %zu elements; expects %u*%zu", memberEigVals.size(), nE, members.size());
+			sprintf(msg, "Family_PO::saveEigVals: "
+				"eigenvalue storage vector has %zu elements; "
+				"expects %u*%zu", memberEigVals.size(), nE, members.size());
 			throw Exception(msg);
 		}
 

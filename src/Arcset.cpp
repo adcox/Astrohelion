@@ -681,7 +681,7 @@ void Arcset::readFromMat(const char *filepath, std::vector<ControlLaw*> &refLaws
 /**
  * @brief Read arcset data from an array of structures
  * 
- * @param pStruct pointer to the structure array variable loaded from a .mat file
+ * @param pStruct pointer to the structure array variable loaded from a Mat file
  * @param ix index of the structure within the array of structures
  * @param refLaws reference to a vector that contains pointers to the
  * control laws loaded with the arcset(s)
@@ -704,13 +704,16 @@ void Arcset::readFromStruct(matvar_t *pStruct, unsigned int ix,
  *  be overridden in derived classes as necessary.
  * 
  *  @param pMatFile pointer to an open Matlab file
- *  @param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
- *  from the Matlab file, unique control laws are constructed and allocated on the stack.
- *  The user must manually delete the ControlLaw objects to avoid memory leaks.
+ *  @param refLaws Reference to a vector of ControlLaw pointers. As control 
+ *  laws are read from the Matlab file, unique control laws are constructed and 
+ *  allocated on the stack. The user must manually delete the ControlLaw objects 
+ *  to avoid memory leaks.
  *  
  *  \todo Remove backward compatibility code in future (today: May 3 2017)
  */
-void Arcset::readCmds_fromFile(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws){
+void Arcset::readCmds_fromFile(mat_t *pMatFile, 
+	std::vector<ControlLaw*> &refLaws){
+
 	Save_tp saveTp = Save_tp::SAVE_ALL;
 
 	try{
@@ -720,7 +723,8 @@ void Arcset::readCmds_fromFile(mat_t *pMatFile, std::vector<ControlLaw*> &refLaw
 			if(readVar_LinkTable(pLinkTable)){
 				Mat_VarFree(pLinkTable);
 			}else{
-				throw Exception("Arcset::readCmds_fromFile: Could not read link table");
+				throw Exception("Arcset::readCmds_fromFile: "
+					"Could not read link table");
 			}
 		}catch(Exception &e){
 			// Try the old initialization scheme
@@ -734,7 +738,9 @@ void Arcset::readCmds_fromFile(mat_t *pMatFile, std::vector<ControlLaw*> &refLaw
 		matvar_t *pNodeCtrl = Mat_VarRead(pMatFile, VARNAME_NODECTRL);
 
 		if(readVar_NodeState(pNodeState, saveTp)){ Mat_VarFree(pNodeState); }
-		if(readVar_NodeStateDeriv(pNodeStateDeriv, saveTp)){ Mat_VarFree(pNodeStateDeriv); }
+		if(readVar_NodeStateDeriv(pNodeStateDeriv, saveTp)){
+			Mat_VarFree(pNodeStateDeriv);
+		}
 		if(readVar_NodeEpoch(pNodeEpoch, saveTp)){ Mat_VarFree(pNodeEpoch); }
 		if(readVar_NodeCtrl(pNodeCtrl, saveTp)){ Mat_VarFree(pNodeCtrl); }
 
@@ -745,7 +751,9 @@ void Arcset::readCmds_fromFile(mat_t *pMatFile, std::vector<ControlLaw*> &refLaw
 		matvar_t *pSegTime = Mat_VarRead(pMatFile, VARNAME_SEGTIME);
 		matvar_t *pSegTOF = Mat_VarRead(pMatFile, VARNAME_TOF);
 
-		if(readVar_SegCtrlLaw(pSegCtrl, refLaws, saveTp)){ Mat_VarFree(pSegCtrl); }
+		if(readVar_SegCtrlLaw(pSegCtrl, refLaws, saveTp)){ 
+			Mat_VarFree(pSegCtrl);
+		}
 		if(readVar_SegSTM(pSegSTM, saveTp)){ Mat_VarFree(pSegSTM); }
 		if(readVar_SegState(pSegState, saveTp)){ Mat_VarFree(pSegState); }
 		if(readVar_SegTime(pSegTime, saveTp)){ Mat_VarFree(pSegTime); }
@@ -756,8 +764,8 @@ void Arcset::readCmds_fromFile(mat_t *pMatFile, std::vector<ControlLaw*> &refLaw
 		if(readVar_Constraints(pCons, saveTp)){ Mat_VarFree(pCons); }
 
 	}catch(Exception &e){
-		throw Exception("Arcset:readCmds_fromFile: Deprecated file structure; fix"
-			" commented-out code to read");
+		throw Exception("Arcset:readCmds_fromFile:"
+			" Deprecated file structure; fix commented-out code to read");
 		// // if file was saved using older style, try slightly different read commands
 		// printErr("Arcset::readCmds_fromFile: Encountered error:\n\t%s\n", e.what());
 		
@@ -786,7 +794,7 @@ void Arcset::readCmds_fromFile(mat_t *pMatFile, std::vector<ControlLaw*> &refLaw
 /**
  * @brief Read arcset data from an array of structures
  * 
- * @param pStruct pointer to the structure array variable loaded from a .mat file
+ * @param pStruct pointer to the structure array variable loaded from a Mat file
  * @param ix index of the structure within the array of structures
  * @param refLaws reference to a vector that contains pointers to the
  * control laws loaded with the arcset(s)
@@ -794,37 +802,52 @@ void Arcset::readCmds_fromFile(mat_t *pMatFile, std::vector<ControlLaw*> &refLaw
 void Arcset::readCmds_fromStruct(matvar_t *pStruct, unsigned int ix,
 	std::vector<ControlLaw*> &refLaws){
 
-	matvar_t *pLinkTable = Mat_VarGetStructFieldByName(pStruct, VARNAME_LINKTABLE, ix);
+	matvar_t *pLinkTable = Mat_VarGetStructFieldByName(pStruct, 
+		VARNAME_LINKTABLE, ix);
 	if(readVar_LinkTable(pLinkTable)){ Mat_VarFree(pLinkTable); }
 
 	Save_tp saveTp = Save_tp::SAVE_ALL;
 
 	// Read Node Information
-	matvar_t *pNodeState = Mat_VarGetStructFieldByName(pStruct, VARNAME_NODESTATE, ix);
-	matvar_t *pNodeStateDeriv = Mat_VarGetStructFieldByName(pStruct, VARNAME_STATE_DERIV, ix);
-	matvar_t *pNodeEpoch = Mat_VarGetStructFieldByName(pStruct, VARNAME_NODETIME, ix);
-	matvar_t *pNodeCtrl = Mat_VarGetStructFieldByName(pStruct, VARNAME_NODECTRL, ix);
+	matvar_t *pNodeState = Mat_VarGetStructFieldByName(pStruct, 
+		VARNAME_NODESTATE, ix);
+	matvar_t *pNodeStateDeriv = Mat_VarGetStructFieldByName(pStruct, 
+		VARNAME_STATE_DERIV, ix);
+	matvar_t *pNodeEpoch = Mat_VarGetStructFieldByName(pStruct, 
+		VARNAME_NODETIME, ix);
+	matvar_t *pNodeCtrl = Mat_VarGetStructFieldByName(pStruct, 
+		VARNAME_NODECTRL, ix);
 
 	if(readVar_NodeState(pNodeState, saveTp)){ Mat_VarFree(pNodeState); }
-	if(readVar_NodeStateDeriv(pNodeStateDeriv, saveTp)){ Mat_VarFree(pNodeStateDeriv); }
+	if(readVar_NodeStateDeriv(pNodeStateDeriv, saveTp)){ 
+		Mat_VarFree(pNodeStateDeriv);
+	}
 	if(readVar_NodeEpoch(pNodeEpoch, saveTp)){ Mat_VarFree(pNodeEpoch); }
 	if(readVar_NodeCtrl(pNodeCtrl, saveTp)){ Mat_VarFree(pNodeCtrl); }
 
 	// Read Segment information
-	matvar_t *pSegState = Mat_VarGetStructFieldByName(pStruct, VARNAME_SEGSTATE, ix);
-	matvar_t *pSegTime = Mat_VarGetStructFieldByName(pStruct, VARNAME_SEGTIME, ix);
-	matvar_t *pSegTOF = Mat_VarGetStructFieldByName(pStruct, VARNAME_TOF, ix);
-	matvar_t *pSegSTM = Mat_VarGetStructFieldByName(pStruct, VARNAME_STM, ix);
-	matvar_t *pSegCtrl = Mat_VarGetStructFieldByName(pStruct, VARNAME_SEGCTRL, ix);
+	matvar_t *pSegState = Mat_VarGetStructFieldByName(pStruct, 
+		VARNAME_SEGSTATE, ix);
+	matvar_t *pSegTime = Mat_VarGetStructFieldByName(pStruct, 
+		VARNAME_SEGTIME, ix);
+	matvar_t *pSegTOF = Mat_VarGetStructFieldByName(pStruct, 
+		VARNAME_TOF, ix);
+	matvar_t *pSegSTM = Mat_VarGetStructFieldByName(pStruct, 
+		VARNAME_STM, ix);
+	matvar_t *pSegCtrl = Mat_VarGetStructFieldByName(pStruct, 
+		VARNAME_SEGCTRL, ix);
 
+	// Must read ctrl law before state
+	if(readVar_SegCtrlLaw(pSegCtrl, refLaws, saveTp)){ Mat_VarFree(pSegCtrl); }
 	if(readVar_SegState(pSegState, saveTp)){ Mat_VarFree(pSegState); }
 	if(readVar_SegTime(pSegTime, saveTp)){ Mat_VarFree(pSegTime); }
 	if(readVar_SegTOF(pSegTOF, saveTp)){ Mat_VarFree(pSegTOF); }
 	if(readVar_SegSTM(pSegSTM, saveTp)){ Mat_VarFree(pSegSTM); }
-	if(readVar_SegCtrlLaw(pSegCtrl, refLaws, saveTp)){ Mat_VarFree(pSegCtrl); }
+	
 
 	// Read constraint information
-	matvar_t *pCons = Mat_VarGetStructFieldByName(pStruct, VARNAME_CONSTRAINTS, ix);
+	matvar_t *pCons = Mat_VarGetStructFieldByName(pStruct, 
+		VARNAME_CONSTRAINTS, ix);
 	if(readVar_Constraints(pCons, saveTp)){ Mat_VarFree(pCons); }
 }//====================================================
 

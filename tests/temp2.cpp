@@ -23,11 +23,13 @@ int main(){
 		loadedLaws[i]->print();
 	}
 
-	unsigned int ix = 20;
+	unsigned int ix = std::floor(3*fam.getNumMembers()/8);
 	Arcset_periodic arc = fam.getMember(ix);
-	Arcset_cr3bp_lt arc_fixedMass = static_cast<Arcset_cr3bp_lt>(arc);
+	Arcset_cr3bp_lt arc_fixedMass(&ltSys);
+	reconstructArc(&arc, &arc_fixedMass);
+
 	// arc.print();
-	arc_fixedMass.print();
+	// arc_fixedMass.print();
 	arc_fixedMass.saveToMat("LTPO_fixedMass.mat");
 
 	// Copy the fixed mass case

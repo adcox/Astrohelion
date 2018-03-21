@@ -675,6 +675,9 @@ void Family_PO::loadMembers(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws,
 			pStruct->data_type == MAT_T_STRUCT){
 
 			unsigned int numStructs = (pStruct->dims[0])*(pStruct->dims[1]);
+			members = std::vector<Arcset_periodic>(numStructs,
+				Arcset_periodic(pSysData));
+
 			for(unsigned int s = 0; s < numStructs; s++){
 				Arcset_periodic arc(pSysData);
 				arc.readFromStruct(pStruct, s, refLaws);
@@ -682,9 +685,10 @@ void Family_PO::loadMembers(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws,
 				if(bReconstruct){
 					Arcset_periodic fullArc(pSysData);
 					reconstructArc(&arc, &fullArc);
-					members.push_back(fullArc);
-				}else
-					members.push_back(arc);
+					members[s] = fullArc;
+				}else{
+					members[s] = arc;
+				}
 			}
 		}else{
 			throw Exception("Family_PO::loadMembers: "

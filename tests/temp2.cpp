@@ -44,19 +44,20 @@ int main(){
 	linEngine.setVerbosity(Verbosity_tp::ALL_MSG);
 	Arcset_cr3bp_lt linArc(&sys);
 
-	double x0[] = {0.005, 0, 0};	// Step off of equilibria
+	double x0[] = {0.0075, 0, 0};	// Step off of equilibria
 	linEngine.getLinear(eqPt, sqrt(f), alpha, x0, LinMotion_tp::OSC,
 		&linArc, &law, 5);
 
 	law.setType(ControlLaw_cr3bp_lt::CONST_MF_GENERAL);
 
-	// linArc.saveToMat("linArc.mat");
+	linArc.saveToMat("linArc.mat");
 
 	MultShootEngine msEngine;
 	msEngine.setVerbosity(Verbosity_tp::SOME_MSG);
 	msEngine.setDoLineSearch(true);
 	msEngine.setMaxIts(200);
-	msEngine.setTOFType(MSTOF_tp::VAR_FIXSIGN);
+	// msEngine.setTOFType(MSTOF_tp::VAR_FIXSIGN);
+	msEngine.setTOFType(MSTOF_tp::VAR_EQUALARC);
 
 	// Periodicity Constraint
 	double nf = linArc.getNumNodes() - 1;
@@ -69,7 +70,7 @@ int main(){
 	Constraint stateCon(Constraint_tp::STATE, 0, stateConData);
 	linArc.addConstraint(stateCon);
 
-	Arcset_cr3bp_lt nonlinArc(&sys), nonlinArc2(&sys);;
+	Arcset_cr3bp_lt nonlinArc(&sys), nonlinArc2(&sys), nonlinArc3(&sys);
 
 	try{
 		msEngine.multShoot(&linArc, &nonlinArc);
@@ -87,7 +88,7 @@ int main(){
 	std::vector<double> stateEvtData {3, 0};
 	Event stateEvt(Event_tp::STATE_PLANE, 0, true, stateEvtData);
 	SimEngine sim;
-	sim.setVerbosity(Verbosity_tp::ALL_MSG);
+	// sim.setVerbosity(Verbosity_tp::ALL_MSG);
 	sim.addEvent(stateEvt);
 	Arcset_cr3bp_lt arc(&sys);
 	bool foundPt = false;
@@ -117,44 +118,51 @@ int main(){
 
 	// Update periodicity constraint
 	nf = nonlinArc.getNodeByIx(-1).getID();
-	perConData = std::vector<double> {nf, nf, NAN, nf, NAN, NAN};
+	perConData = std::vector<double> {nf, nf, NAN, nf, nf, NAN};
 	perCon.setData(perConData);
+
+	// Update state consraint
+	stateConData = std::vector<double> {NAN, NAN, NAN, NAN, NAN, NAN, 1};
+	stateCon.setData(stateConData);
 
 	nonlinArc.addConstraint(perCon);
 	nonlinArc.addConstraint(stateCon);
 
+	// Correct again for periodicity
 	try{
 		msEngine.multShoot(&nonlinArc, &nonlinArc2);
+		nonlinArc2.saveToMat("nonlin2.mat");
 	}catch(DivergeException &e){
 		printErr("Failed to converge: %s\n", e.what());
 		return EXIT_SUCCESS;
 	}
-	nonlinArc.print();
+	// nonlinArc2.print();
 
-	// // Remove control from the free variables; it remains fixed
-	// std::vector<double> rmCtrlData {1, 1}, ctrl0 {alpha, 0};
-	// for(unsigned int i = 0; i < nonlinArc.getNumNodes(); i++){
-	// 	Constraint rmCtrlCon(Constraint_tp::RM_CTRL, 
-	// 		nonlinArc.getNodeByIx(i).getID(), rmCtrlData);
-	// 	nonlinArc.addConstraint(rmCtrlCon);
-	// 	nonlinArc.getNodeRefByIx(i).setExtraParamVec(PARAMKEY_CTRL, ctrl0);
-	// }
+	// Remove control from the free variables; it remains fixed
+	std::vector<double> ctrl0 {alpha, 0}, ctrlCont {1, 1};
+	Constraint fixCtrlCon(Constraint_tp::CTRL, 
+		nonlinArc2.getNodeByIx(0).getID(), ctrl0);
+	nonlinArc2.addConstraint(fixCtrlCon);
+	for(unsigned int i = 0; i < nonlinArc2.getNumSegs(); i++){
+		Constraint contCon(Constraint_tp::CONT_CTRL, 
+			nonlinArc2.getSegByIx(i).getID(), ctrlCont);
+		nonlinArc2.addConstraint(contCon);
+	}
 
-	// nonlinArc.print();
+	// nonlinArc2.print();
 
-	// // Correct Again
-	// try{
-	// 	msEngine.multShoot(&nonlinArc, &nonlinArc2);
+	// Correct Again
+	msEngine.setVerbosity(Verbosity_tp::ALL_MSG);
+	try{
+		msEngine.multShoot(&nonlinArc2, &nonlinArc3);
 
-	// 	char filename[128];
-	// 	sprintf(filename, "guess_L4_a%06.2f.mat", alpha*180/PI);
-	// 	nonlinArc2.saveToMat(filename);
-	// }catch(DivergeException &e){
-	// 	printErr("Failed to converge: %s\n", e.what());
-	// 	return EXIT_SUCCESS;
-	// }
-
-	// Now, propagate to xdot = 0 and 
+		char filename[128];
+		sprintf(filename, "guess_L4_a%06.2f.mat", alpha*180/PI);
+		nonlinArc3.saveToMat(filename);
+	}catch(DivergeException &e){
+		printErr("Failed to converge: %s\n", e.what());
+		return EXIT_SUCCESS;
+	}
 
 	return EXIT_SUCCESS;
 }

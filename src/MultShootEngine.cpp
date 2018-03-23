@@ -600,6 +600,27 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 			YELLOW, "It %02d : ||F(X)|| = %6.4e / %4.2e : "
 			"||dX|| = %6.4e / %4.2e\n", it.count, errF, tolF, errX, tolX);
 
+		if(verbosity >= Verbosity_tp::ALL_MSG){
+			unsigned int conCount = 0;
+			for(unsigned int r = 0; r < it.FX.size(); r++){
+	            if(r == 0 && it.totalCons > 0){
+	                printf("Applies to %s %d: %s Constraint:\n", 
+	                    Constraint::getAppTypeStr(it.allCons[conCount].getAppType()),
+	                    it.allCons[conCount].getID(), 
+	                    it.allCons[conCount].getTypeStr());
+	            }else if(conCount+1 < it.allCons.size() && 
+	            	r >= static_cast<unsigned int>(it.conRows[conCount+1])){
+
+	                conCount++;
+	                printf("Applies to %s %d: %s Constraint:\n", 
+	                    Constraint::getAppTypeStr(it.allCons[conCount].getAppType()),
+	                    it.allCons[conCount].getID(), 
+	                    it.allCons[conCount].getTypeStr());
+	            }
+	            astrohelion::printColor(it.FX[r] > tolF ? RED : GREEN,
+	                "  row %03zu: %.6e \n", r, it.FX[r]);
+	        }
+		}
 		// End the iterations if the constraint error grows too large or if
 		// the constraint error or step size reaches the desired precision
 		if(errF > maxErr || errF < tolF || errX < tolX)

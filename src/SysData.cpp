@@ -180,7 +180,7 @@ std::string SysData::getTypeStr() const{
 		case SysData_tp::BCR4BPR_SYS:
 			return "BCR4BP, Rotating Coord.";
 		default:
-			return "Unrecognized value... May be a bug";
+			return "Unrecognized SysData Type... May be a bug";
 	}
 }//=================================================
 

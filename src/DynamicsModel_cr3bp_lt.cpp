@@ -505,7 +505,7 @@ int DynamicsModel_cr3bp_lt::simpleEOMs(double t, const double s[], double sdot[]
  *
  * @param  pSys  Pointer to the system data object
  * @param  L     Lagrange point number [1 - 5]
- * @param  f     Nondimensional thrust magnitude
+ * @param  f     Nondimensional thrust magnitude (NOT the square root)
  * @param  tol   The tolerance
  * @param  zac   Pointer to a vector that stores the equilibria as rows of
  *               values: [alpha, x, y]
@@ -522,8 +522,10 @@ void DynamicsModel_cr3bp_lt::getEquilibPt(const SysData_cr3bp_lt *pSys, int L, d
     double minStep_alpha = PI/500.0;
     double stepChangeFactor = 2;
 
-    if(L < 1 || L > 5)
-        throw Exception("DynamicsModel_cr3bp_lt::getEquilibPt: input L value is invalid");
+    if(L < 1 || L > 5){
+        throw Exception("DynamicsModel_cr3bp_lt::getEquilibPt: "
+            "input L value is invalid");
+    }
 
     std::vector<double>& zacRef = *zac;
     if(f == 0){
@@ -550,7 +552,9 @@ void DynamicsModel_cr3bp_lt::getEquilibPt(const SysData_cr3bp_lt *pSys, int L, d
                         initSol[2] = r13*sin(sgn*theta);
                     }else{
                         char msg[128];
-                        sprintf(msg, "DynamicsModel_cr3bp_lt::getEquilibPt: Did not catch imaginary number in L%d at alpha = 0", L);
+                        sprintf(msg, "DynamicsModel_cr3bp_lt::getEquilibPt: "
+                            "Did not catch imaginary number in L%d at "
+                            "alpha = 0", L);
                         throw Exception(msg);
                     }
                 }
@@ -569,13 +573,16 @@ void DynamicsModel_cr3bp_lt::getEquilibPt(const SysData_cr3bp_lt *pSys, int L, d
                         initSol[2] = r13*sin(sgn*theta);
                     }else{
                         char msg[128];
-                        sprintf(msg, "DynamicsModel_cr3bp_lt::getEquilibPt: Could not compute initial value for L%d", L);
+                        sprintf(msg, "DynamicsModel_cr3bp_lt::getEquilibPt: "
+                            "Could not compute initial value for L%d", L);
                         throw Exception(msg);
                     }
                 }else{
                     // This shouldn't happen for "reasonable" values of f
                     char msg[128];
-                    sprintf(msg, "DynamicsModel_cr3bp_lt::getEquilibPt: f = %e is too large for analytical solution for L4/5", f);
+                    sprintf(msg, "DynamicsModel_cr3bp_lt::getEquilibPt: "
+                        "f = %e is too large for analytical solution for L4/5",
+                        f);
                     throw Exception(msg);
                 }
             }

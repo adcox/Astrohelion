@@ -1354,6 +1354,12 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, int evtIx, Arcs
     Constraint rmInitState(Constraint_tp::RM_STATE, 0, nullptr, 0);
     eventArcset.addConstraint(rmInitState);
 
+    // Remove the initial control from the design vector; it is fixed.
+    if(ctrl_dim > 0){
+        Constraint rmInitCtrl(Constraint_tp::RM_CTRL, 0, nullptr, 0);
+        eventArcset.addConstraint(rmInitCtrl);
+    }
+
     // Remove the initial epoch too, if applicable
     if(model->supportsCon(Constraint_tp::EPOCH)){
         Constraint rmInitEpoch(Constraint_tp::RM_EPOCH, 0, nullptr, 0);

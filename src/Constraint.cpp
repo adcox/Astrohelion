@@ -354,7 +354,7 @@ const char* Constraint::getAppTypeStr(ConstraintApp_tp t){
  *	@brief Print this constraint and its data to the standard output.
  */
 void Constraint::print() const {
-	printf("Constraint:\n  Type: %s\n  Applies to: %s (ID %d)\n  Data: {",
+	printf("%s Constraint:\n  Applies to: %s (ID %d)\n  Data: {",
 		getConTypeStr(type), getAppTypeStr(appType), id);
 	for(unsigned int n = 0; n < data.size(); n++){
 		printf("%12.5f ", data[n]);

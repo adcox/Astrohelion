@@ -12,10 +12,10 @@ double f = 7e-2;		// nondim
 double Isp = 1500;		// sec
 
 // Extent of family: move up to this much from initial H_lt value
-double H_range = 0.4;
+double H_range = 1.4;
 
 // Which angle to converge orbits at
-double alpha = 54*PI/180;	// rad
+double alpha = 133*PI/180;	// rad
 
 /**
  * @brief Construct an initial guess for a LTPO with a fixed alpha value from a 
@@ -129,7 +129,8 @@ int main(){
 	// law.setParams(std::vector<double> {sqrt(f), Isp});
 
 	std::vector<ControlLaw *> laws {};
-	sprintf(filename, "../../LowThrust/MiscExplorations/RobertCollab/guess_L4_a054.00.mat");
+	sprintf(filename, 
+		"../../LowThrust/MiscExplorations/RobertCollab/guess_L4_a133.00.mat");
 	Arcset_cr3bp_lt ltGuess = initGuessFromLTPO(filename, &ltSys, laws);
 	laws[0]->setType(ControlLaw_cr3bp_lt::CONST_MF_GENERAL);
 	laws[0]->setParams(std::vector<double> {sqrt(f), Isp});
@@ -151,31 +152,37 @@ int main(){
 
 	// Periodicity Constraint
 	int id0 = ltGuess.getNodeByIx(0).getID();
-	int idf = ltGuess.getNodeByIx(-1).getID();
+	double idf = static_cast<double>(ltGuess.getNodeByIx(-1).getID());
 	// std::vector<double> conData{ idf, idf, NAN, idf, NAN, NAN, NAN};
 	std::vector<double> conData{ idf, idf, NAN, NAN, idf, NAN, NAN};
 	Constraint periodicityCon(Constraint_tp::MATCH_CUST, id0, conData);
 	ltGuess.addConstraint(periodicityCon);
 
 	// Initial State Constraint
-	// For Lyapunovs, use first data with y free
-	// For L4/L5, constrain y to be fixed at the initial value
-	// std::vector<double> n0conData {NAN, NAN, 0, NAN, NAN, 0, 1};
-	double y0 = ltGuess.getStateByIx(0)[1];
-	std::vector<double> n0conData {NAN, y0, 0, NAN, NAN, 0, 1};
+	std::vector<double> n0conData {NAN, NAN, 0, 0, NAN, 0, 1};
 	Constraint n0con(Constraint_tp::STATE, ltGuess.getNodeByIx(0).getID(), 
 		n0conData);
 	ltGuess.addConstraint(n0con);
 
 	// Remove control from design vector; fix at desired value
-	std::vector<double> ctrlConData {1, 1};
 	std::vector<double> ctrl0 {alpha, 0};
 	for(unsigned int i = 0; i < ltGuess.getNumNodes(); i++){
 		Constraint con(Constraint_tp::RM_CTRL, ltGuess.getNodeByIx(i).getID(), 
-			ctrlConData);
+			nullptr, 0);
 		ltGuess.addConstraint(con);
 		ltGuess.getNodeRefByIx(i).setExtraParamVec(PARAMKEY_CTRL, ctrl0);
 	}
+
+	// // Fix initial control and continuity on all segments
+	// std::vector<double> ctrl0 {alpha, 0}, ctrlConData {1, 1};
+	// Constraint fixCtrlCon(Constraint_tp::CTRL, 
+	// 	ltGuess.getNodeByIx(0).getID(), ctrl0);
+	// ltGuess.addConstraint(fixCtrlCon);
+	// for(unsigned int i = 0; i < ltGuess.getNumSegs(); i++){
+	// 	Constraint contCon(Constraint_tp::CONT_CTRL, 
+	// 		ltGuess.getSegByIx(i).getID(), ctrlConData);
+	// 	ltGuess.addConstraint(contCon);
+	// }
 
 	// Do corrections
 	try{
@@ -193,31 +200,6 @@ int main(){
 	// Now, pull out the constraints and adjust them so that we can converge
 	// orbits over a range of H_lt but at the same alpha value
 	std::vector<Constraint> allCons = ltConverged.getAllConstraints();
-	// ltConverged.clearAllConstraints();
-	// for(unsigned int i = 0; i < allCons.size(); i++){
-	// 	if(allCons[i].getType() != Constraint_tp::RM_CTRL){
-	// 		ltConverged.addConstraint(allCons[i]);
-	// 	}
-	// }
-	//
-	// // Constraint control continuity along all segments
-	// // Thus, constraining control at initial node should propagate to all
-	// // later nodes/segments
-	// for(unsigned int i = 0; i < ltConverged.getNumSegs(); i++){
-	// 	Constraint con(Constraint_tp::CONT_CTRL,
-	// 		ltConverged.getSegRefByIx(i).getID(), ctrlConData);
-	// 	ltConverged.addConstraint(con);
-	// }
-
-	// // Create a new constraint to fix the thrust angle
-	
-	// Constraint ctrl0Con(Constraint_tp::CTRL, ltConverged.getNodeByIx(0).getID(),
-	// 	ctrl0);
-	// ltConverged.addConstraint(ctrl0Con);
-	
-	// Overwrite allCons with the constraints we want to apply to every orbit
-	// in the family
-	// allCons = ltConverged.getAllConstraints();
 
 	// Get the low-thrust Hamiltonian value; overwrite q0
 	std::vector<double> q0 = ltConverged.getSegRefByIx(0).getStateByRow(0);
@@ -246,7 +228,7 @@ int main(){
 	}
 	if(sqrt(diff) > shooter.getTol()){
 		printErr("Difference between q0 and qf is %e\n", sqrt(diff));
-		return EXIT_SUCCESS;
+		// return EXIT_SUCCESS;
 	}
 
 	waitForUser();
@@ -294,6 +276,9 @@ int main(){
 			}else{
 				break;
 			}
+		}catch(Exception &e){
+			printErr("Error:\n%s\n", e.what());
+			break;
 		}
 
 		// Insert arcs so they are in order w.r.t. alpha
@@ -317,7 +302,7 @@ int main(){
 
 	fam.sortEigs();	// Sort those eigenvalues and eigenvectors
 
-	sprintf(filename, "L1_Lyap_f%.1e_a%06.2f_law%d.mat", f,
+	sprintf(filename, "L4_Lyap_f%.1e_a%06.2f_law%d.mat", f,
 		alpha*180/PI, law.getType());
 	fam.saveToMat(filename);
 

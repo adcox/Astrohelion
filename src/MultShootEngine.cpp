@@ -306,12 +306,18 @@ MultShootData MultShootEngine::multShoot(const Arcset *pArcIn, Arcset *pArcOut){
 	it.pArcOut = pArcOut;
 	it.tofTp = tofTp;
 	
-	printVerb(verbosity >= Verbosity_tp::ALL_MSG, 
-		"Multiple Shooting Algorithm:\n");
-	printVerb(verbosity >= Verbosity_tp::ALL_MSG, 
-		"  it.numNodes = %zu\n", it.numNodes);
-	printVerb(verbosity >= Verbosity_tp::ALL_MSG, 
-		"  sysType = %s\n", pArcIn->getSysData()->getTypeStr().c_str());
+	if(verbosity >= Verbosity_tp::ALL_MSG){
+		printf("Multiple Shooting Algorithm:\n");
+		printf("  it.numNodes = %u\n", it.numNodes);
+		printf("  sysType = %s\n", pArcIn->getSysData()->getTypeStr().c_str());
+		printf("  TOF Type = %s\n", MSTOF_tp_cStr(tofTp));
+		printf("  Do full final prop? %s\n", bFullFinalProp ? "YES" : "NO");
+		printf("  Find event? %s\n", bFindEvent ? "YES" : "NO");
+		printf("  Ignore crash? %s\n", bIgnoreCrash ? "YES" : "NO");
+		printf("  Ignore diverge? %s\n", bIgnoreDiverge ? "YES" : "NO");
+		printf("  Do line search? %s\n", bLineSearchAttenFactor ? "YES" : "NO");
+	}
+	
 
 	// Get the model associated with the arcset
 	const DynamicsModel *pModel = pArcIn->getSysData()->getDynamicsModel();
@@ -531,7 +537,7 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 	}
 
 	// Define values for use in corrections loop
-	double errF = 10*tolF, errX = 10*tolX;
+	double errF = 10*tolF, errX = 10*tolX, errF_infty = 10*tolF;
 	unsigned int coreStateSize = 
 		it.pArcIn->getSysData()->getDynamicsModel()->getCoreStateSize();
 
@@ -582,6 +588,12 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 		}
 
 		// Check to see what the error is; if it's too high, update X and continue another iteration
+		errF_infty = std::abs(it.FX[0]);
+		for(unsigned int i = 1; i < it.FX.size(); i++){
+			if(std::abs(it.FX[i]) > errF_infty)
+				errF_infty = std::abs(errF_infty);
+		}
+
 		FX = Eigen::Map<Eigen::VectorXd>(&(it.FX[0]), it.totalCons, 1);
 		errF = FX.norm();
 
@@ -597,8 +609,10 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 		it.count++;
 		printVerbColor((bFindEvent && verbosity >= Verbosity_tp::ALL_MSG) || 
 			(!bFindEvent && verbosity > Verbosity_tp::NO_MSG),
-			YELLOW, "It %02d : ||F(X)|| = %6.4e / %4.2e : "
-			"||dX|| = %6.4e / %4.2e\n", it.count, errF, tolF, errX, tolX);
+			YELLOW, "It %02d : ||F(X)||_2 = %6.4e / %4.2e : "
+			"||F(X)||_inf = %6.4e / %4.2e : "
+			"||dX||_2 = %6.4e / %4.2e\n", it.count, errF, tolF, 
+			errF_infty, tolF, errX, tolX);
 
 		if(verbosity >= Verbosity_tp::ALL_MSG){
 			unsigned int conCount = 0;

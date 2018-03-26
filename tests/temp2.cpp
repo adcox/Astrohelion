@@ -11,7 +11,7 @@ int main(){
 
 	// Parameters to isolate the equilibria
 	double f = 7e-2;
-	double alpha = 54.0*PI/180.0;
+	double alpha = 55.0*PI/180.0;
 	SysData_cr3bp_lt sys("earth", "moon", 1);
 	std::vector<double> params {};
 	ControlLaw_cr3bp_lt law(ControlLaw::NO_CTRL, params);	// will be overwritten
@@ -29,7 +29,7 @@ int main(){
 	for(unsigned int i = 0; i < LPts.size()/3; i++){
 		dS = std::abs(sin(LPts[3*i]) - sin(alpha));
 		dC = std::abs(cos(LPts[3*i]) - cos(alpha));
-		if(dS + dC < minDiff && LPts[3*i+2] > 0){
+		if(dS + dC < minDiff && LPts[3*i+2] > 0.6){
 			minDiff = dS + dC;
 			eqPt[0] = LPts[3*i+1];
 			eqPt[1] = LPts[3*i+2];
@@ -56,17 +56,16 @@ int main(){
 	msEngine.setVerbosity(Verbosity_tp::SOME_MSG);
 	msEngine.setDoLineSearch(true);
 	msEngine.setMaxIts(200);
-	// msEngine.setTOFType(MSTOF_tp::VAR_FIXSIGN);
 	msEngine.setTOFType(MSTOF_tp::VAR_EQUALARC);
 
 	// Periodicity Constraint
 	double nf = linArc.getNumNodes() - 1;
-	std::vector<double> perConData {nf, nf, NAN, nf, nf, NAN};
+	std::vector<double> perConData {nf, nf, NAN, NAN, nf, NAN};
 	Constraint perCon(Constraint_tp::MATCH_CUST, 0, perConData);
 	linArc.addConstraint(perCon);
 
 	// Fix initial Mass
-	std::vector<double> stateConData {NAN, NAN, NAN, NAN, NAN, NAN, 1};
+	std::vector<double> stateConData {NAN, NAN, NAN, 0, NAN, NAN, 1};
 	Constraint stateCon(Constraint_tp::STATE, 0, stateConData);
 	linArc.addConstraint(stateCon);
 
@@ -152,7 +151,7 @@ int main(){
 	// nonlinArc2.print();
 
 	// Correct Again
-	msEngine.setVerbosity(Verbosity_tp::ALL_MSG);
+	// msEngine.setVerbosity(Verbosity_tp::ALL_MSG);
 	try{
 		msEngine.multShoot(&nonlinArc2, &nonlinArc3);
 

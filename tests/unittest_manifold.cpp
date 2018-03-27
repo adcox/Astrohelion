@@ -25,8 +25,10 @@ BOOST_AUTO_TEST_CASE(EIG_VEC_VAL){
 	double period = 2.7;
 	std::vector<unsigned int> fixedStates {0}; // only fix x
 
-	Arcset_cr3bp guess = cr3bp_propHalfPerSymPO(&emSys, ic, period, 3, 1, Mirror_tp::MIRROR_XZ, fixedStates);
-	Arcset_periodic temp = cr3bp_correctHalfPerSymPO(&guess, nullptr, Mirror_tp::MIRROR_XZ, 1e-12, nullptr);
+	Arcset_cr3bp guess = cr3bp_propHalfPerSymPO(&emSys, ic, period, 3, 1, 
+		Mirror_tp::MIRROR_XZ, fixedStates);
+	Arcset_periodic temp = cr3bp_correctHalfPerSymPO(&guess, nullptr, 
+		Mirror_tp::MIRROR_XZ, 1e-12, nullptr);
 	Arcset_cr3bp perOrbit = static_cast<Arcset_cr3bp>(temp);
 
 	ManifoldEngine engine;
@@ -36,21 +38,24 @@ BOOST_AUTO_TEST_CASE(EIG_VEC_VAL){
 	// **************************************
 	// Stable Eigenvector
 	// **************************************
-	MatrixXRd eigVecs = engine.eigVecValFromPeriodic(Manifold_tp::MAN_S_RIGHT, &perOrbit, &eigVals);
+	MatrixXRd eigVecs = engine.eigVecValFromPeriodic(Manifold_tp::MAN_S_RIGHT, 
+		&perOrbit, &eigVals);
 
 	BOOST_CHECK_EQUAL(eigVals.size(), 1);
 	BOOST_CHECK_LT(std::abs(eigVals[0]), 1);
 	BOOST_CHECK_EQUAL(eigVecs.cols(), 1);
 
 	eigVals.clear();
-	eigVecs = engine.eigVecValFromPeriodic(Manifold_tp::MAN_S_LEFT, &perOrbit, &eigVals);
+	eigVecs = engine.eigVecValFromPeriodic(Manifold_tp::MAN_S_LEFT, &perOrbit, 
+		&eigVals);
 
 	BOOST_CHECK_EQUAL(eigVals.size(), 1);
 	BOOST_CHECK_LT(std::abs(eigVals[0]), 1);
 	BOOST_CHECK_EQUAL(eigVecs.cols(), 1);
 
 	eigVals.clear();
-	eigVecs = engine.eigVecValFromPeriodic(Manifold_tp::MAN_S, &perOrbit, &eigVals);
+	eigVecs = engine.eigVecValFromPeriodic(Manifold_tp::MAN_S, &perOrbit, 
+		&eigVals);
 
 	BOOST_CHECK_EQUAL(eigVals.size(), 1);
 	BOOST_CHECK_LT(std::abs(eigVals[0]), 1);
@@ -98,8 +103,10 @@ BOOST_AUTO_TEST_CASE(Single_Manifold){
 	double period = 2.7;
 	std::vector<unsigned int> fixedStates {0}; // only fix x
 
-	Arcset_cr3bp guess = cr3bp_propHalfPerSymPO(&emSys, ic, period, 3, 1, Mirror_tp::MIRROR_XZ, fixedStates);
-	Arcset_periodic temp = cr3bp_correctHalfPerSymPO(&guess, nullptr, Mirror_tp::MIRROR_XZ, 1e-12, nullptr);
+	Arcset_cr3bp guess = cr3bp_propHalfPerSymPO(&emSys, ic, period, 3, 1, 
+		Mirror_tp::MIRROR_XZ, fixedStates);
+	Arcset_periodic temp = cr3bp_correctHalfPerSymPO(&guess, nullptr, 
+		Mirror_tp::MIRROR_XZ, 1e-12, nullptr);
 	Arcset_cr3bp perOrbit = static_cast<Arcset_cr3bp>(temp);
 	
 	ManifoldEngine engine;
@@ -108,8 +115,9 @@ BOOST_AUTO_TEST_CASE(Single_Manifold){
 	// **************************************
 	// Stable and Unstable Manifolds
 	// **************************************
-	std::vector<Arcset_cr3bp> manifolds = engine.computeSingleFromPeriodic(Manifold_tp::MAN_ALL,
-		&perOrbit, period, 1, Manifold_StepOff_tp::STEP_MATCH_JC);
+	std::vector<Arcset_cr3bp> manifolds = engine.computeSingleFromPeriodic(\
+		Manifold_tp::MAN_ALL, &perOrbit, period, 1, 
+		Manifold_StepOff_tp::STEP_MATCH_JC);
 
 	BOOST_CHECK_EQUAL(manifolds.size(), 4);
 
@@ -117,8 +125,10 @@ BOOST_AUTO_TEST_CASE(Single_Manifold){
 	for(unsigned int i = 0; i < manifolds.size(); i++){
 		numRev += manifolds[i].getTimeByIx(-1) < 0;
 		numFor += manifolds[i].getTimeByIx(-1) > 0;
-		BOOST_CHECK_SMALL(std::abs(std::abs(manifolds[i].getTimeByIx(-1)) - 1), 1e-8);
-		BOOST_CHECK_SMALL(std::abs(manifolds[i].getJacobiByIx(0) - perOrbit.getJacobiByIx(0)), 1e-8);
+		BOOST_CHECK_SMALL(std::abs(std::abs(manifolds[i].getTimeByIx(-1)) - 1), 
+			1e-8);
+		BOOST_CHECK_SMALL(std::abs(manifolds[i].getJacobiByIx(0) - 
+			perOrbit.getJacobiByIx(0)), 1e-8);
 	}
 
 	BOOST_CHECK_EQUAL(numRev, 2);
@@ -127,7 +137,8 @@ BOOST_AUTO_TEST_CASE(Single_Manifold){
 	// **************************************
 	// Stable Manifolds
 	// **************************************
-	manifolds = engine.computeSingleFromPeriodic(Manifold_tp::MAN_S, &perOrbit, period, 1, Manifold_StepOff_tp::STEP_MATCH_JC);
+	manifolds = engine.computeSingleFromPeriodic(Manifold_tp::MAN_S, &perOrbit, 
+		period, 1, Manifold_StepOff_tp::STEP_MATCH_JC);
 
 	BOOST_CHECK(manifolds.size() == 2);
 	numRev = 0;
@@ -135,8 +146,10 @@ BOOST_AUTO_TEST_CASE(Single_Manifold){
 	for(unsigned int i = 0; i < manifolds.size(); i++){
 		numRev += manifolds[i].getTimeByIx(-1) < 0;
 		numFor += manifolds[i].getTimeByIx(-1) > 0;
-		BOOST_CHECK_SMALL(std::abs(std::abs(manifolds[i].getTimeByIx(-1)) - 1), 1e-8);
-		BOOST_CHECK_SMALL(std::abs(manifolds[i].getJacobiByIx(0) - perOrbit.getJacobiByIx(0)), 1e-8);
+		BOOST_CHECK_SMALL(std::abs(std::abs(manifolds[i].getTimeByIx(-1)) - 1), 
+			1e-8);
+		BOOST_CHECK_SMALL(std::abs(manifolds[i].getJacobiByIx(0) - 
+			perOrbit.getJacobiByIx(0)), 1e-8);
 	}
 
 	BOOST_CHECK_EQUAL(numRev, 2);
@@ -145,7 +158,8 @@ BOOST_AUTO_TEST_CASE(Single_Manifold){
 	// **************************************
 	// Unstable Manifolds
 	// **************************************
-	manifolds = engine.computeSingleFromPeriodic(Manifold_tp::MAN_U, &perOrbit, period, 1, Manifold_StepOff_tp::STEP_MATCH_JC);
+	manifolds = engine.computeSingleFromPeriodic(Manifold_tp::MAN_U, &perOrbit, 
+		period, 1, Manifold_StepOff_tp::STEP_MATCH_JC);
 
 	BOOST_CHECK(manifolds.size() == 2);
 	numRev = 0;
@@ -153,8 +167,10 @@ BOOST_AUTO_TEST_CASE(Single_Manifold){
 	for(unsigned int i = 0; i < manifolds.size(); i++){
 		numRev += manifolds[i].getTimeByIx(-1) < 0;
 		numFor += manifolds[i].getTimeByIx(-1) > 0;
-		BOOST_CHECK_SMALL(std::abs(std::abs(manifolds[i].getTimeByIx(-1)) - 1), 1e-8);
-		BOOST_CHECK_SMALL(std::abs(manifolds[i].getJacobiByIx(0) - perOrbit.getJacobiByIx(0)), 1e-8);
+		BOOST_CHECK_SMALL(std::abs(std::abs(manifolds[i].getTimeByIx(-1)) - 1), 
+			1e-8);
+		BOOST_CHECK_SMALL(std::abs(manifolds[i].getJacobiByIx(0) - 
+			perOrbit.getJacobiByIx(0)), 1e-8);
 	}
 
 	BOOST_CHECK_EQUAL(numRev, 0);
@@ -167,8 +183,10 @@ BOOST_AUTO_TEST_CASE(Many_Manifold){
 	double period = 2.7;
 	std::vector<unsigned int> fixedStates {0}; // only fix x
 
-	Arcset_cr3bp guess = cr3bp_propHalfPerSymPO(&emSys, ic, period, 3, 1, Mirror_tp::MIRROR_XZ, fixedStates);
-	Arcset_periodic temp = cr3bp_correctHalfPerSymPO(&guess, nullptr, Mirror_tp::MIRROR_XZ, 1e-12, nullptr);
+	Arcset_cr3bp guess = cr3bp_propHalfPerSymPO(&emSys, ic, period, 3, 1, 
+		Mirror_tp::MIRROR_XZ, fixedStates);
+	Arcset_periodic temp = cr3bp_correctHalfPerSymPO(&guess, nullptr, 
+		Mirror_tp::MIRROR_XZ, 1e-12, nullptr);
 	Arcset_cr3bp perOrbit = static_cast<Arcset_cr3bp>(temp);
 	unsigned int numPts = 100;
 	
@@ -177,12 +195,14 @@ BOOST_AUTO_TEST_CASE(Many_Manifold){
 	sim.setVarStepSize(false);
 	sim.setNumSteps(numPts);
 	sim.setVerbosity(Verbosity_tp::NO_MSG);
-	sim.runSim_manyNodes(perOrbit.getStateByIx(0), perOrbit.getTotalTOF(), numPts+1, &discretizedOrbit);
+	sim.runSim_manyNodes(perOrbit.getStateByIx(0), perOrbit.getTotalTOF(), 
+		numPts+1, &discretizedOrbit);
 	// discretizedOrbit.saveToMat("data/discretizedOrbit.mat");
 
 	ManifoldEngine engine;
-	std::vector<Arcset_cr3bp> manifolds = engine.computeSetFromPeriodic(Manifold_tp::MAN_ALL,
-		&discretizedOrbit, numPts, 0.1, Manifold_StepOff_tp::STEP_MATCH_JC);
+	std::vector<Arcset_cr3bp> manifolds = engine.computeSetFromPeriodic(\
+		Manifold_tp::MAN_ALL, &discretizedOrbit, numPts, 0.1, 
+		Manifold_StepOff_tp::STEP_MATCH_JC);
 
 	BOOST_CHECK_EQUAL(manifolds.size(), 4*numPts);
 
@@ -196,11 +216,13 @@ BOOST_AUTO_TEST_CASE(Many_Manifold){
 			// Make sure the manifold initial condition is near the corresponding fixed point
 			std::vector<double> manifoldIC = manifolds[4*i+m].getStateByIx(0);
 			std::vector<double> orbitState = discretizedOrbit.getStateByIx(i);
-			double dist = sqrt(pow(manifoldIC[0] - orbitState[0], 2) + pow(manifoldIC[1] - orbitState[1], 2) + 
+			double dist = sqrt(pow(manifoldIC[0] - orbitState[0], 2) + 
+				pow(manifoldIC[1] - orbitState[1], 2) + 
 				pow(manifoldIC[2] - orbitState[2], 2));
 
 			allICs.insert(allICs.end(), manifoldIC.begin(), manifoldIC.end());
-			BOOST_CHECK_LT(std::abs(dist*emSys.getCharL() - engine.getStepOffDist()), 0.1);
+			BOOST_CHECK_LT(std::abs(dist*emSys.getCharL() - 
+				engine.getStepOffDist()), 0.1);
 		}
 	}
 
@@ -211,7 +233,3 @@ BOOST_AUTO_TEST_CASE(Many_Manifold){
 	BOOST_CHECK_EQUAL(numRev, 2*numPts);
 	BOOST_CHECK_EQUAL(numFor, 2*numPts);	
 }//====================================================
-
-
-
-

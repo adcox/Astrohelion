@@ -446,10 +446,11 @@ void Family_PO::getCoord(unsigned int coordIx, std::vector<double> *data) const{
 	if(data){
 		data->clear();
 		data->assign(members.size(), NAN);
+		std::vector<double> &dataRef = *data;
 		for(unsigned int i = 0; i < members.size(); i++){
 			std::vector<double> ic = members[i].getStateByIx(0);
 			if(coordIx < ic.size())
-				data[i] = ic[coordIx];
+				dataRef[i] = ic[coordIx];
 			else
 				throw Exception("Family_PO::getCoord: coordIx is larger than the state size");
 		}

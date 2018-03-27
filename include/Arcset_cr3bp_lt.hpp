@@ -66,7 +66,7 @@ public:
 	 *  \name Set and Get Functions
 	 *  \{
 	 */
-		// Nothing Here!
+		double getHltByIx(int);
 	//\}
 
 protected:

@@ -8,10 +8,10 @@
 using namespace astrohelion;
 
 // Define low-thrust parameters
-double f = 7e-2;		// nondim
-double Isp = 1500;		// sec
-double alpha0 = 0;		// rad
-
+double f = 7e-2;				// nondim
+double Isp = 1500;				// sec
+double alpha0 = 0;				// rad
+double alphaStep = PI/360.0;	// rad
 /**
  * @brief Construct an initial guess for a LTPO with a fixed alpha = 0 value 
  * from a natural orbit (e.g., a Lyapunov)
@@ -98,14 +98,15 @@ Arcset_cr3bp_lt initGuessFromLTFam_fixedAlpha(const char *ltpoFile, double H,
 
 	std::vector<Arcset_periodic> matches = fam.getMemberByH_lt(H);
 	if(matches.empty()){
-		printErr("Could not locate any orbits at Hlt = %f\n", H);
+		char msg[24];
+		sprintf(msg, "Could not locate any orbits at Hlt = %f\n", H);
 
 		for(auto p : laws){
 			delete p;
 			p = nullptr;
 		}
 
-		return EXIT_SUCCESS;
+		throw Exception(msg);
 	}
 
 	// Get the first guess
@@ -116,7 +117,8 @@ Arcset_cr3bp_lt initGuessFromLTFam_fixedAlpha(const char *ltpoFile, double H,
 	if(ctrl.size() == 2){
 		alpha0 = ctrl[0];
 	}else{
-		printErr("Expected ctrl at node 0 of family member to have size 2."
+		char msg[64];
+		sprintf(msg, "Expected ctrl at node 0 of family member to have size 2."
 			" Size is %zu\n", ctrl.size());
 
 		for(auto p : laws){
@@ -124,8 +126,11 @@ Arcset_cr3bp_lt initGuessFromLTFam_fixedAlpha(const char *ltpoFile, double H,
 			p = nullptr;
 		}
 
-		return EXIT_SUCCESS;
+		throw Exception(msg);
 	}
+
+	guess.clearAllConstraints();
+	return guess;
 }//====================================================
 
 /**
@@ -142,8 +147,9 @@ int main(){
 
 	// Load the L1 Lyapunov family
 	char filename[128];
-	sprintf(filename, "../../data/families/cr3bp_earth-moon/L1_Lyap.mat");
-
+	// sprintf(filename, "../../data/families/cr3bp_earth-moon/L1_Lyap.mat");
+	sprintf(filename, "../../LowThrust/MiscExplorations/LTPO_fixedAlpha/"
+		"L4_Lyap_f7.0e-02_a083.00_law105.mat");
 	/*
 	 *	Construct an initial guess from a natural orbit in a family at
 	 *	a specified Jacobi Constant value.
@@ -165,11 +171,14 @@ int main(){
 	law.setParams(std::vector<double> {sqrt(f), Isp});
 
 	// Create parameters and other data storage objects
-	// SysData_cr3bp_lt ltSys("earth", "moon", 1);	// Let M0 = 1
-	std::vector<double> ctrl0 {0, 0},
-		n0conData {NAN, NAN, 0, NAN, NAN, 0, 1},
-		ctrlConData {1, 1};
-	// ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::CONST_MF_GENERAL, ltParams);
+
+	/*
+	 *	Choose constraint data values
+	 *	- for L4/5 orbits, fix dx/dt = 0
+	 */
+	std::vector<double> ctrl0 {alpha0, 0}, ctrlConData {1, 1};
+	// std::vector<double> n0conData {NAN, NAN, 0, NAN, NAN, 0, 1};
+	std::vector<double> n0conData {NAN, NAN, 0, 0, NAN, 0, 1};
 
 	// Create Multiple shooting engine
 	MultShootEngine shooter;
@@ -180,16 +189,20 @@ int main(){
 	shooter.setMaxIts(200);
 	shooter.setDoLineSearch(true);
 	
-	printf("Converging at alpha = %.2f deg\n", alpha0*180/PI);
+	printf("Converging at alpha = %.2f deg\n", ctrl0[0]*180/PI);
 
-	ctrl0[0] = alpha0;
 	Arcset_cr3bp_lt ltConverged(&ltSys);
 
 	// Periodicity Constraint
 	int id0 = ltGuess.getNodeByIx(0).getID();
 	double idf = static_cast<double>(ltGuess.getNodeByIx(-1).getID());
 
-	std::vector<double> conData{ idf, idf, NAN, idf, NAN, NAN, NAN};
+	/*
+	 *	Periodicity constraint
+	 *	- For L4/5 orbits, let dx/dt be free
+	 */
+	// std::vector<double> conData{ idf, idf, NAN, idf, NAN, NAN, NAN};
+	std::vector<double> conData{ idf, idf, NAN, NAN, idf, NAN, NAN};
 	Constraint periodicityCon(Constraint_tp::MATCH_CUST, id0, conData);
 
 	ltGuess.addConstraint(periodicityCon);
@@ -205,6 +218,7 @@ int main(){
 		ltGuess.addConstraint(con);
 	}
 
+	printf("Converging again with family constraints");
 	try{
 		shooter.multShoot(&ltGuess, &ltConverged);
 	}catch(DivergeException &e){
@@ -250,9 +264,20 @@ int main(){
 		ctrl0);
 	ltConverged.addConstraint(ctrl0Con);	// only add so it shows up in file
 	
+	// Correct one final time with the family constraints
+	ltGuess = ltConverged;
+	ltConverged.reset();
+	try{
+		shooter.multShoot(&ltGuess, &ltConverged);
+	}catch(DivergeException &e){
+		printErr("Corrector diverged\n");
+		return EXIT_SUCCESS;
+	}
+
 	printColor(BOLDBLUE, "LT_CONVERGED\n");
+	printColor(BOLDBLUE, "Alpha0 = %.2f deg\n", alpha0*180/PI);
+	printColor(BOLDBLUE, "H_lt = %f\n", H_lt);
 	ltConverged.print();
-	printf("H_lt = %f\n", H_lt);
 	waitForUser();
 
 	// Reset Shooter to "normal" behavior
@@ -260,7 +285,6 @@ int main(){
 	shooter.setDoLineSearch(false);
 
 	// Loop through alpha and converge orbits for all values, at same H_lt value
-	double alphaStep = PI/180.0;
 	Arcset_cr3bp_lt ltDiffAlpha(&ltSys), guess = ltConverged;
 	std::vector<Arcset_cr3bp_lt> allArcs {ltConverged};
 	for(double alpha = alpha0 + alphaStep; std::abs(alpha) < PI; 

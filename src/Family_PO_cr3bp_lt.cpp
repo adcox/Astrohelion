@@ -28,6 +28,7 @@
 
 #include "Family_PO_cr3bp_lt.hpp"
 
+#include "Arcset_cr3bp_lt.hpp"
 #include "SysData_cr3bp_lt.hpp"
 
 namespace astrohelion{

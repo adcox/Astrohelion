@@ -39,4 +39,16 @@ namespace astrohelion{
  */
 Family_PO_cr3bp_lt::Family_PO_cr3bp_lt(const SysData_cr3bp_lt *pSys) : Family_PO_cr3bp(pSys) {}
 
+std::vector<Arcset_periodic> Family_PO_cr3bp_lt::getMemberByH_lt(double H) const{
+	std::vector<double> allH(members.size(), NAN);
+	for(unsigned int n = 0; n < members.size(); n++){
+		Arcset_cr3bp_lt temp(members[n]);
+		allH[n] = temp.getHltByIx(0);
+	}
+
+	Constraint con(Constraint_tp::HLT, 0, &H, 1);
+
+	return getMatchingMember(H, &allH, con);
+}//====================================================
+
 }// End of astrohelion namespace

@@ -52,10 +52,10 @@ Family_PO_cr3bp::Family_PO_cr3bp(const SysData_cr3bp *pSys) : Family_PO(pSys) {}
  */
 std::vector<Arcset_periodic> Family_PO_cr3bp::getMemberByJacobi(double JC) const {
 	// Get an array of all the jacobi values
-	std::vector<double> allJC;
+	std::vector<double> allJC(members.size(), NAN);
 	for(unsigned int n = 0; n < members.size(); n++){
 		Arcset_cr3bp temp(members[n]);
-		allJC.push_back(temp.getJacobiByIx(0));
+		allJC[n] = temp.getJacobiByIx(0);
 	}
 
 	Constraint jacobiCon(Constraint_tp::JC, 0, &JC, 1);

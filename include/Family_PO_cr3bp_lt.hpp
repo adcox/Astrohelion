@@ -49,7 +49,8 @@ class Family_PO_cr3bp_lt : public Family_PO_cr3bp{
 		/**
 		 *  \name Analysis Functions
 		 *  \
-		 */		
+		 */
+		std::vector<Arcset_periodic> getMemberByH_lt(double) const;		
 		std::vector<Arcset_periodic> getMemberByThrustMag(double) const;
 		std::vector<Arcset_periodic> getMemberByThrustAngle(double, double beta = 0) const;
 		//\}

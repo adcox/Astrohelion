@@ -60,12 +60,12 @@ int main(){
 
 	// Periodicity Constraint
 	double nf = linArc.getNumNodes() - 1;
-	std::vector<double> perConData {nf, nf, NAN, NAN, nf, NAN};
+	std::vector<double> perConData {nf, nf, NAN, nf, nf, NAN};
 	Constraint perCon(Constraint_tp::MATCH_CUST, 0, perConData);
 	linArc.addConstraint(perCon);
 
 	// Fix initial Mass
-	std::vector<double> stateConData {NAN, NAN, NAN, 0, NAN, NAN, 1};
+	std::vector<double> stateConData {NAN, NAN, NAN, NAN, NAN, NAN, 1};
 	Constraint stateCon(Constraint_tp::STATE, 0, stateConData);
 	linArc.addConstraint(stateCon);
 
@@ -117,11 +117,11 @@ int main(){
 
 	// Update periodicity constraint
 	nf = nonlinArc.getNodeByIx(-1).getID();
-	perConData = std::vector<double> {nf, nf, NAN, nf, nf, NAN};
+	perConData = std::vector<double> {nf, nf, NAN, NAN, nf, NAN};
 	perCon.setData(perConData);
 
 	// Update state consraint
-	stateConData = std::vector<double> {NAN, NAN, NAN, NAN, NAN, NAN, 1};
+	stateConData = std::vector<double> {NAN, NAN, NAN, 0, NAN, NAN, 1};
 	stateCon.setData(stateConData);
 
 	nonlinArc.addConstraint(perCon);
@@ -150,7 +150,7 @@ int main(){
 
 	// nonlinArc2.print();
 
-	// Correct Again
+	// Correct Again for periodicity with fixed thrust angle
 	// msEngine.setVerbosity(Verbosity_tp::ALL_MSG);
 	try{
 		msEngine.multShoot(&nonlinArc2, &nonlinArc3);

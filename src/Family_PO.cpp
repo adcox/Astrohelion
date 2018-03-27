@@ -162,9 +162,9 @@ std::vector<Arcset_periodic> Family_PO::getMemberByState(double val, unsigned in
  *  @return a vector of family members with matching times-of-flight
  */
 std::vector<Arcset_periodic> Family_PO::getMemberByTOF(double tof) const{
-	std::vector<double> allTOF;
+	std::vector<double> allTOF(members.size(), NAN);
 	for(unsigned int n = 0; n < members.size(); n++){
-		allTOF.push_back(members[n].getTotalTOF());
+		allTOF[n] = members[n].getTotalTOF();
 	}
 
 	Constraint tofCon(Constraint_tp::TOF_TOTAL, 0, &tof, 1);
@@ -445,10 +445,11 @@ std::vector<Arcset_periodic> Family_PO::getMatchingMember(double val,
 void Family_PO::getCoord(unsigned int coordIx, std::vector<double> *data) const{
 	if(data){
 		data->clear();
+		data->assign(members.size(), NAN);
 		for(unsigned int i = 0; i < members.size(); i++){
 			std::vector<double> ic = members[i].getStateByIx(0);
 			if(coordIx < ic.size())
-				data->push_back(ic[coordIx]);
+				data[i] = ic[coordIx];
 			else
 				throw Exception("Family_PO::getCoord: coordIx is larger than the state size");
 		}

@@ -165,7 +165,7 @@ const std::vector<double>& ControlLaw::getParamsRef_const() const {
  * 
  *  @param id an ID number identifying the control law type
  */
-void ControlLaw::setLawType(unsigned int id){
+void ControlLaw::setType(unsigned int id){
 	lawType = id;
 	init();
 }//====================================================

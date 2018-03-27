@@ -26,6 +26,9 @@
 
 namespace astrohelion{
 
+// Forward Declarations
+class SysData_cr3bp_lt;
+
 /**
  *  \ingroup fam cr3bp_lt
  *  @brief [brief description]
@@ -37,9 +40,17 @@ namespace astrohelion{
 class Family_PO_cr3bp_lt : public Family_PO_cr3bp{
 	public:
 		/**
+		 *  \name *structors
+		 *  \{
+		 */
+		Family_PO_cr3bp_lt(const SysData_cr3bp_lt*);
+		//\}
+		
+		/**
 		 *  \name Analysis Functions
 		 *  \
-		 */		
+		 */
+		std::vector<Arcset_periodic> getMemberByH_lt(double) const;		
 		std::vector<Arcset_periodic> getMemberByThrustMag(double) const;
 		std::vector<Arcset_periodic> getMemberByThrustAngle(double, double beta = 0) const;
 		//\}

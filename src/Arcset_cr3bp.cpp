@@ -267,15 +267,20 @@ void Arcset_cr3bp::saveCmds_toStruct(matvar_t *pStruct, unsigned int ix, Save_tp
 /**
  *  @brief Execute commands to read data from a Matlab file
  *  @param pMatFile pointer to an open Matlab file
- *  @param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
- *  from the Matlab file, unique control laws are constructed and allocated on the stack.
- *  The user must manually delete the ControlLaw objects to avoid memory leaks.
+ *  @param refLaws Reference to a vector of ControlLaw pointers. As control laws 
+ *  are read from the Matlab file, unique control laws are constructed and 
+ *  allocated on the stack. The user must manually delete the ControlLaw objects 
+ *  to avoid memory leaks.
  */
-void Arcset_cr3bp::readCmds_fromFile(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws){
+void Arcset_cr3bp::readCmds_fromFile(mat_t *pMatFile, 
+	std::vector<ControlLaw*> &refLaws){
+
 	Arcset::readCmds_fromFile(pMatFile, refLaws);
 
 	matvar_t *pJacobi = Mat_VarRead(pMatFile, VARNAME_JACOBI);
-	if(readVar_NodeExtraParam(pJacobi, PARAMKEY_JACOBI, Save_tp::SAVE_ALL)){ Mat_VarFree(pJacobi); }
+	if(readVar_NodeExtraParam(pJacobi, PARAMKEY_JACOBI, Save_tp::SAVE_ALL)){
+		Mat_VarFree(pJacobi);
+	}
 }//====================================================
 
 /**
@@ -283,15 +288,20 @@ void Arcset_cr3bp::readCmds_fromFile(mat_t *pMatFile, std::vector<ControlLaw*> &
  * 
  *  @param pStruct Pointer to the structure array variable
  *  @param ix index of this arcset within the structure array
- * 	@param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
- *  from the Matlab file, unique control laws are constructed and allocated on the stack.
- *  The user must manually delete the ControlLaw objects to avoid memory leaks.
+ * 	@param refLaws Reference to a vector of ControlLaw pointers. As control laws 
+ * 	are read from the Matlab file, unique control laws are constructed and 
+ * 	allocated on the stack. The user must manually delete the ControlLaw objects
+ * 	to avoid memory leaks.
  */
-void Arcset_cr3bp::readCmds_fromStruct(matvar_t *pStruct, unsigned int ix, std::vector<ControlLaw*> &refLaws){
+void Arcset_cr3bp::readCmds_fromStruct(matvar_t *pStruct, unsigned int ix, 
+	std::vector<ControlLaw*> &refLaws){
+
 	Arcset::readCmds_fromStruct(pStruct, ix, refLaws);
 
 	matvar_t *pJacobi = Mat_VarGetStructFieldByName(pStruct, VARNAME_JACOBI, ix);
-	if(readVar_NodeExtraParam(pJacobi, PARAMKEY_JACOBI, Save_tp::SAVE_ALL)){ Mat_VarFree(pJacobi); }
+	if(readVar_NodeExtraParam(pJacobi, PARAMKEY_JACOBI, Save_tp::SAVE_ALL)){
+		Mat_VarFree(pJacobi);
+	}
 }//====================================================
 
 

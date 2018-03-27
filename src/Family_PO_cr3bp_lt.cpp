@@ -1,9 +1,9 @@
 /**
- *  @file Family_PO_cr3bp.cpp
+ *  @file Family_PO_cr3bp_lt.cpp
  *	@brief 
  *	
  *	@author Andrew Cox
- *	@version October 18, 2017
+ *	@version March 8, 2018
  *	@copyright GNU GPL v3.0
  */
 /*
@@ -26,41 +26,30 @@
  *  along with Astrohelion.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Family_PO_cr3bp.hpp"
+#include "Family_PO_cr3bp_lt.hpp"
 
-#include "Arcset_cr3bp.hpp"
-#include "Arcset_periodic.hpp"
-#include "Constraint.hpp"
-#include "SysData_cr3bp.hpp"
+#include "Arcset_cr3bp_lt.hpp"
+#include "SysData_cr3bp_lt.hpp"
 
 namespace astrohelion{
 
 /**
- * @brief Construct a CR3BP family of periodic orbits
+ * @brief Construct a CR3BP-LT family of periodic orbits
  * 
- * @param pSys pointer to a CR3BP system data object
+ * @param pSys pointer to a CR3BP-LT system data object
  */
-Family_PO_cr3bp::Family_PO_cr3bp(const SysData_cr3bp *pSys) : Family_PO(pSys) {}
+Family_PO_cr3bp_lt::Family_PO_cr3bp_lt(const SysData_cr3bp_lt *pSys) : Family_PO_cr3bp(pSys) {}
 
-/**
- * @brief Retrieve all family members that have Jacobi constant values matching
- * the specified value
- * 
- * @param JC Desired Jacobi constant value
- * @return A vector of all matches located. If no matches are located, an empty
- * vector is returned.
- */
-std::vector<Arcset_periodic> Family_PO_cr3bp::getMemberByJacobi(double JC) const {
-	// Get an array of all the jacobi values
-	std::vector<double> allJC(members.size(), NAN);
+std::vector<Arcset_periodic> Family_PO_cr3bp_lt::getMemberByH_lt(double H) const{
+	std::vector<double> allH(members.size(), NAN);
 	for(unsigned int n = 0; n < members.size(); n++){
-		Arcset_cr3bp temp(members[n]);
-		allJC[n] = temp.getJacobiByIx(0);
+		Arcset_cr3bp_lt temp(members[n]);
+		allH[n] = temp.getHltByIx(0);
 	}
 
-	Constraint jacobiCon(Constraint_tp::JC, 0, &JC, 1);
+	Constraint con(Constraint_tp::HLT, 0, &H, 1);
 
-	return getMatchingMember(JC, &allJC, jacobiCon);
+	return getMatchingMember(H, &allH, con);
 }//====================================================
 
 }// End of astrohelion namespace

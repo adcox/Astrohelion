@@ -8,200 +8,160 @@
 using namespace astrohelion;
 
 int main(){
-	// Load the L1 Lyapunov family
-	char filename[128];
-	sprintf(filename, "../../data/families/cr3bp_earth-moon/L1_Lyap.mat");
-	printf("Opening %s\n", filename);
-	SysData_cr3bp crSys(filename);
 
-	Family_PO lyapFam(&crSys);
-	std::vector<ControlLaw*> loadedLaws {};
-	lyapFam.readFromMat(filename, loadedLaws);
-
-	unsigned int ix0 = 10;
-
-	Arcset_periodic lyap = lyapFam.getMember(ix0);
-
-	// Define low-thrust parameters
+	// Parameters to isolate the equilibria
 	double f = 7e-2;
-	double Isp = 1500;
+	double alpha = 55.0*PI/180.0;
+	SysData_cr3bp_lt sys("earth", "moon", 1);
+	std::vector<double> params {};
+	ControlLaw_cr3bp_lt law(ControlLaw::NO_CTRL, params);	// will be overwritten
 
-	// Create parameters and other data storage objects
-	SysData_cr3bp_lt ltSys("earth", "moon", 1);	// Let M0 = 1
-	std::vector<double> ltParams {sqrt(f), Isp},
-		ctrl0 {0, 0},
-		n0conData {NAN, NAN, 0, NAN, NAN, 0, 1},
-		ctrlConData {1, 1};
-	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::CONST_MF_GENERAL, ltParams);
+	// For f = 7e-2, L3, L4, and L5 are all the same ZAC
+	std::vector<double> LPts;
+	DynamicsModel_cr3bp_lt::getEquilibPt(&sys, 3, f, 1e-6, &LPts);
 
-	// Create sim engine and storage arcset
-	SimEngine sim;
-	sim.setVerbosity(Verbosity_tp::NO_MSG);
-	Arcset_cr3bp_lt ltGuess(&ltSys), ltConverged(&ltSys);
+	// Find Eq pt closest to the desired angle
+	double minDiff = 4, dS = 0, dC = 0;
+	double eqPt[3] = {0};
 
-	// Create Multiple shooting engine
-	MultShootEngine shooter;
-	shooter.setVerbosity(Verbosity_tp::ALL_MSG);
-	shooter.setTOFType(MSTOF_tp::VAR_EQUALARC);
-	Family_PO fam(&ltSys);
-
-	double alpha = 0;
-	
-	printf("Converging at alpha = %.2f deg\n", alpha*180/PI);
-
-	ctrl0[0] = alpha;
-	ltGuess.reset();
-	ltConverged.reset();
-
-	// Fill the storage arcset with arcs propagated from the natural Lyapunov nodes
-	// with the specified low-thrust parameters
-	double m = 1;
-	std::vector<double> q0 {};
-	for(unsigned int i = 0; i < lyap.getNumSegs(); i++){
-		q0 = lyap.getStateByIx(i);
-		q0.push_back(m);
-		if(i == 0){
-			sim.runSim(q0, ctrl0, 0, lyap.getTOF(i), &ltGuess, &law);
-			
-		}else{
-			Arcset_cr3bp_lt temp(&ltSys);
-			sim.runSim(q0, ctrl0, 0, lyap.getTOF(i), &temp, &law);
-			ltGuess.appendSetAtNode(&temp, ltGuess.getNodeByIx(-1).getID(), 0, 0);
+	// Find the equilibrium solution that is closes to the desired angle
+	// and also above the x-axis (Looking for L4-like points)
+	for(unsigned int i = 0; i < LPts.size()/3; i++){
+		dS = std::abs(sin(LPts[3*i]) - sin(alpha));
+		dC = std::abs(cos(LPts[3*i]) - cos(alpha));
+		if(dS + dC < minDiff && LPts[3*i+2] > 0.6){
+			minDiff = dS + dC;
+			eqPt[0] = LPts[3*i+1];
+			eqPt[1] = LPts[3*i+2];
 		}
-
-		m = ltGuess.getStateByIx(-1).back();
 	}
+
+	if(minDiff == 4){
+		throw Exception("Did not find eq pt near desired angle");
+	}
+
+	LinMotionEngine_cr3bp_lt linEngine;
+	linEngine.setVerbosity(Verbosity_tp::ALL_MSG);
+	Arcset_cr3bp_lt linArc(&sys);
+
+	double x0[] = {0.0075, 0, 0};	// Step off of equilibria
+	linEngine.getLinear(eqPt, sqrt(f), alpha, x0, LinMotion_tp::OSC,
+		&linArc, &law, 5);
+
+	law.setType(ControlLaw_cr3bp_lt::CONST_MF_GENERAL);
+
+	linArc.saveToMat("linArc.mat");
+
+	MultShootEngine msEngine;
+	msEngine.setVerbosity(Verbosity_tp::SOME_MSG);
+	msEngine.setDoLineSearch(true);
+	msEngine.setMaxIts(200);
+	msEngine.setTOFType(MSTOF_tp::VAR_EQUALARC);
 
 	// Periodicity Constraint
-	int id0 = ltGuess.getNodeByIx(0).getID();
-	int idf = ltGuess.getNodeByIx(-1).getID();
+	double nf = linArc.getNumNodes() - 1;
+	std::vector<double> perConData {nf, nf, NAN, nf, nf, NAN};
+	Constraint perCon(Constraint_tp::MATCH_CUST, 0, perConData);
+	linArc.addConstraint(perCon);
 
-	std::vector<double> conData{ idf, idf, NAN, idf, NAN, NAN, NAN};
-	Constraint periodicityCon(Constraint_tp::MATCH_CUST, id0, conData);
+	// Fix initial Mass
+	std::vector<double> stateConData {NAN, NAN, NAN, NAN, NAN, NAN, 1};
+	Constraint stateCon(Constraint_tp::STATE, 0, stateConData);
+	linArc.addConstraint(stateCon);
 
-	ltGuess.addConstraint(periodicityCon);
-
-	// Fix initial state components
-	Constraint n0con(Constraint_tp::STATE, ltGuess.getNodeByIx(0).getID(), n0conData);
-	ltGuess.addConstraint(n0con);
-
-	// Remove control from design vector; always fixed
-	for(unsigned int i = 0; i < ltGuess.getNumNodes(); i++){
-		Constraint con(Constraint_tp::RM_CTRL, ltGuess.getNodeByIx(i).getID(), ctrlConData);
-		ltGuess.addConstraint(con);
-	}
+	Arcset_cr3bp_lt nonlinArc(&sys), nonlinArc2(&sys), nonlinArc3(&sys);
 
 	try{
-		shooter.multShoot(&ltGuess, &ltConverged);
+		msEngine.multShoot(&linArc, &nonlinArc);
+
+		// nonlinArc.print();
+		// char filename[128];
+		// sprintf(filename, "guess_L4_a%06.2f.mat", alpha*180/PI);
+		// nonlinArc.saveToMat(filename);
 	}catch(DivergeException &e){
-		printErr("Corrector diverged\n");
+		printErr("Failed to converge: %s\n", e.what());
+		return EXIT_SUCCESS;
 	}
 
-	ltConverged.putInChronoOrder();
+	// Propagate to xdot = 0
+	std::vector<double> stateEvtData {3, 0};
+	Event stateEvt(Event_tp::STATE_PLANE, 0, true, stateEvtData);
+	SimEngine sim;
+	// sim.setVerbosity(Verbosity_tp::ALL_MSG);
+	sim.addEvent(stateEvt);
+	Arcset_cr3bp_lt arc(&sys);
+	bool foundPt = false;
+	for(unsigned int n = 0; n < nonlinArc.getNumNodes(); n++){
+		arc.reset();
+		std::vector<double> q0 = nonlinArc.getStateByIx(n);
+		std::vector<double> ctrl0 = nonlinArc.getNodeRefByIx(n).getExtraParamVec(PARAMKEY_CTRL);
+		double tof = nonlinArc.getTOFByIx(n);
+		sim.runSim(q0, ctrl0, 0, tof, &arc, &law);
 
-	// ltGuess.print();
-	// ltConverged.print();
-
-	// Now, pull out the constraints and adjust them so that we can converge
-	// orbits over a range of alpha but at the same H_lt value
-	std::vector<Constraint> allCons = ltConverged.getAllConstraints();
-	ltConverged.clearAllConstraints();
-	for(unsigned int i = 0; i < allCons.size(); i++){
-		if(allCons[i].getType() == Constraint_tp::RM_CTRL){
-			if(allCons[i].getID() != ltConverged.getNodeByIx(0).getID()){
-				ltConverged.addConstraint(allCons[i]);
-			}
-		}else{
-			ltConverged.addConstraint(allCons[i]);
+		if(arc.getNodeByIx(-1).getTriggerEvent() == Event_tp::STATE_PLANE){
+			// Great! Use this state as a new initial state for an arcset
+			foundPt = true;
+			q0 = arc.getStateByIx(-1);
+			nonlinArc.reset();
+			sim.clearEvents();
+			sim.runSim_manyNodes(q0, ctrl0, 0, linArc.getTotalTOF(), 5, 
+				&nonlinArc, &law);
+			break;
 		}
 	}
 
-	// Get the low-thrust Hamiltonian value; overwrite q0
-	q0 = ltConverged.getSegRefByIx(0).getStateByRow(0);
-	double H_lt = DynamicsModel_cr3bp_lt::getHamiltonian(0, &(q0[0]), &ltSys,
-		&law);
-
-
-	// Create a constraint to fix the low-thrust Hamiltonian
-	Constraint HltCon(Constraint_tp::HLT, ltConverged.getNodeByIx(0).getID(),
-		&H_lt, 1);
-	ltConverged.addConstraint(HltCon);
-
-	// Overwrite allCons with the constraints we want to apply to every orbit
-	allCons = ltConverged.getAllConstraints();
-
-	// Create a new constraint to fix the thrust angle
-	Constraint ctrl0Con(Constraint_tp::CTRL, ltConverged.getNodeByIx(0).getID(),
-		ctrl0);
-	ltConverged.addConstraint(ctrl0Con);	// only add so it shows up in file
-	
-	// Add the converged member to the family
-	fam.addMember(ltConverged);
-
-	printColor(BOLDBLUE, "LT_CONVERGED\n");
-	ltConverged.print();
-
-	// Loop through alpha and converge orbits for all values, at same H_lt value
-	double alphaStep = PI/180.0;
-	Arcset_cr3bp_lt ltDiffAlpha(&ltSys), guess = ltConverged;
-	for(alpha = alphaStep; std::abs(alpha) < PI; alpha += alphaStep){
-		ctrl0[0] = alpha;
-		ctrl0Con.setData(ctrl0);
-
-		guess.clearAllConstraints();
-		for(unsigned int i = 0; i < allCons.size(); i++){
-			guess.addConstraint(allCons[i]);
-		}
-		guess.addConstraint(ctrl0Con);
-
-		ltDiffAlpha.reset();
-		try{
-			printf("Converging at alpha = %.2f deg\n", alpha*180/PI);
-			shooter.multShoot(&guess, &ltDiffAlpha);
-
-			q0 = ltDiffAlpha.getSegRefByIx(0).getStateByRow(0);
-			double H = DynamicsModel_cr3bp_lt::getHamiltonian(0, &(q0[0]),
-				&ltSys, &law);
-			printf("Err in H_lt = %.2e\n", std::abs(H - H_lt));
-
-			guess = ltDiffAlpha;	// Update initiial guess
-			
-			printColor(BOLDBLUE, "GUESS\n");
-			guess.print();
-			printColor(BOLDBLUE, "LT_DIFF_ALPHA\n");
-			ltDiffAlpha.print();
-
-			waitForUser();
-		}catch(DivergeException &e){
-			printErr("Corrector diverged for alpha = %.2f deg\n", alpha*180/PI);
-			if(alphaStep > 0){
-				alphaStep *= -1;
-				alpha = 0;
-				guess = ltConverged;
-				continue;
-			}else{
-				break;
-			}
-		}
-		fam.addMember(ltDiffAlpha);
-
-		// Go back to zero and reverse direction if you make it to PI
-		if(alphaStep > 0 && std::abs(alpha + alphaStep) >= PI){
-			alphaStep *= -1;
-			alpha = 0;
-			guess = ltConverged;
-		}
+	if(!foundPt){
+		printErr("Did not find dx/dt = 0\n");
+		return EXIT_SUCCESS;
 	}
 
-	fam.sortEigs();
+	// Update periodicity constraint
+	nf = nonlinArc.getNodeByIx(-1).getID();
+	perConData = std::vector<double> {nf, nf, NAN, NAN, nf, NAN};
+	perCon.setData(perConData);
 
-	sprintf(filename, "L1_Lyap_f%.1e_Hlt_%.3f_law%d.mat", f,
-		H_lt, law.getType());
-	fam.saveToMat(filename);
+	// Update state consraint
+	stateConData = std::vector<double> {NAN, NAN, NAN, 0, NAN, NAN, 1};
+	stateCon.setData(stateConData);
 
-	// Free memory
-	for(ControlLaw *p : loadedLaws){
-		delete p;
-		p = nullptr;
+	nonlinArc.addConstraint(perCon);
+	nonlinArc.addConstraint(stateCon);
+
+	// Correct again for periodicity
+	try{
+		msEngine.multShoot(&nonlinArc, &nonlinArc2);
+		nonlinArc2.saveToMat("nonlin2.mat");
+	}catch(DivergeException &e){
+		printErr("Failed to converge: %s\n", e.what());
+		return EXIT_SUCCESS;
 	}
+	// nonlinArc2.print();
+
+	// Remove control from the free variables; it remains fixed
+	std::vector<double> ctrl0 {alpha, 0}, ctrlCont {1, 1};
+	Constraint fixCtrlCon(Constraint_tp::CTRL, 
+		nonlinArc2.getNodeByIx(0).getID(), ctrl0);
+	nonlinArc2.addConstraint(fixCtrlCon);
+	for(unsigned int i = 0; i < nonlinArc2.getNumSegs(); i++){
+		Constraint contCon(Constraint_tp::CONT_CTRL, 
+			nonlinArc2.getSegByIx(i).getID(), ctrlCont);
+		nonlinArc2.addConstraint(contCon);
+	}
+
+	// nonlinArc2.print();
+
+	// Correct Again for periodicity with fixed thrust angle
+	// msEngine.setVerbosity(Verbosity_tp::ALL_MSG);
+	try{
+		msEngine.multShoot(&nonlinArc2, &nonlinArc3);
+
+		char filename[128];
+		sprintf(filename, "guess_L4_a%06.2f.mat", alpha*180/PI);
+		nonlinArc3.saveToMat(filename);
+	}catch(DivergeException &e){
+		printErr("Failed to converge: %s\n", e.what());
+		return EXIT_SUCCESS;
+	}
+
+	return EXIT_SUCCESS;
 }

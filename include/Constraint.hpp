@@ -170,13 +170,15 @@ enum class Constraint_tp : int{
 							 *	family member. At the end of the data vector, append a double that represents
 							 *	the continuation step size.
 							 */
-	CONT_CTRL = 500, 		/*!< Constrain a segment to be continuous with its terminal node in
-							 * 	the specified control states. The `id` value specificies 
-							 * 	the ID of the segment and the `data` field specifies 
-							 * 	which states must be continuous. For example, to constrain the 
-							 * 	first control state but not the second, the `data` field 
-							 * 	would contain `[1 NAN]`. Values of NAN tell the algorithm 
-							 * 	not to force continuity in that state.
+	CONT_CTRL = 500, 		/*!< Constrain a segment to be continuous with its 
+							 * 	terminal node in the specified control states. 
+							 * 	The `id` value specificies the ID of the segment 
+							 * 	and the `data` field specifies which states must 
+							 * 	be continuous. For example, to constrain the 
+							 * 	second control state but not the first, the 
+							 * 	`data` field would contain `[NAN, 1]`. Values of 
+							 * 	NAN tell the algorithm not to force continuity 
+							 * 	in that state.
 							 */
  	CONT_PV = 501,			/*!< Constrain a segment to be continuous with its terminal node in 
 							 * the specified position and velocity states. The

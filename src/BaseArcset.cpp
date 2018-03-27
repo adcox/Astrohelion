@@ -2114,8 +2114,13 @@ matvar_t* BaseArcset::createVar_NodeState(Save_tp saveTp, const char *pVarName) 
 	for(unsigned int r = 0; r < numNodes; r++){
 		std::vector<double> state = nodes[r].getState();
 
-		if(state.size() < stateSize)
-			throw Exception("BaseArcset::createVar_NodeStates: state vector doesn't match core state size");
+		if(state.size() < stateSize){
+			char msg[256];
+			sprintf(msg, "BaseArcset::createVar_NodeStates: "
+				"State vector, length %zu, is less than core state size: %u",
+				state.size(), stateSize);
+			throw Exception(msg);
+		}
 
 		for(unsigned int c = 0; c < stateSize; c++){
 			posVel[c*numNodes + r] = state[c];
@@ -2303,7 +2308,8 @@ matvar_t* BaseArcset::createVar_NodeCtrl(Save_tp saveTp, const char *pVarName) c
 			Mat_VarSetCell(pMatVar, n, cell_element);
 		else{
 			Mat_VarFree(pMatVar);
-			throw Exception("BaseArcset::saveNodeCtrl: Could not create cell array variable\n");
+			throw Exception("BaseArcset::saveNodeCtrl: "
+				"Could not create cell array variable\n");
 		}
 	}
 
@@ -2341,7 +2347,14 @@ matvar_t* BaseArcset::createVar_SegState(Save_tp saveTp, const char *pVarName) c
 		std::vector<double> segStates = segs[s].getStateVector();
 		if(segStates.size() % full_size != 0){
 			Mat_VarFree(pMatVar);
-			throw Exception("BaseArcset:saveSegStates: Segment state vector size is not a multiple of the core state size; cannot proceed");
+			char msg[256];
+			sprintf(msg, "BaseArcset::saveSegState: "
+				"segStates has length %zu; expecting full_size = %u\n"
+				"\tRemainder = %zu THUS segStates is not multiple of full_size\n"
+				"\tSegState width = %u",
+				segStates.size(), full_size, segStates.size() % full_size,
+				segs[s].getStateWidth());
+			throw Exception(msg);
 		}
 
 		std::vector<double> segStates_trans;
@@ -2979,7 +2992,8 @@ bool BaseArcset::readVar_NodeExtraParamVec(matvar_t *pVar, std::string varKey, s
 bool BaseArcset::readVar_SegState(matvar_t *pVar, Save_tp saveTp){
 	(void) saveTp;
 	if(pVar == nullptr){
-		printErr("BaseArcset::readVar_SegState: Could not read state data vector");
+		printErr("BaseArcset::readVar_SegState: "
+			"Could not read state data vector");
 		return false;
 	}else{
 		unsigned int coreDim = pSysData->getDynamicsModel()->getCoreStateSize();
@@ -2988,24 +3002,30 @@ bool BaseArcset::readVar_SegState(matvar_t *pVar, Save_tp saveTp){
 		
 		if(segs.size() != numSegs){
 			Mat_VarFree(pVar);
-			throw Exception("BaseArcset::readVar_SegState: Segment vector has been initialized to a different size than the file has data for");
+			throw Exception("BaseArcset::readVar_SegState:\n"
+				"\tSegment vector has been initialized to a different size than "
+				"the file has data for");
 		}
 
 		if(pVar->class_type != MAT_C_CELL || pVar->data_type != MAT_T_CELL){
 			Mat_VarFree(pVar);
-			throw Exception("BaseArcset::readVar_SegState: Segment state variable is not a cell array.");
+			throw Exception("BaseArcset::readVar_SegState: "
+				"Segment state variable is not a cell array.");
 		}
 
 		matvar_t **cell_elements = static_cast<matvar_t **>(pVar->data);
 
 		for(unsigned int s = 0; s < numSegs; s++){
 			if(cell_elements[s] != nullptr && 
-				cell_elements[s]->class_type == MAT_C_DOUBLE && cell_elements[s]->data_type == MAT_T_DOUBLE){
+				cell_elements[s]->class_type == MAT_C_DOUBLE && 
+				cell_elements[s]->data_type == MAT_T_DOUBLE){
 
-				unsigned int ctrlDim = segs[s].getCtrlLaw() ? segs[s].getCtrlLaw()->getNumStates() : 0;
+				unsigned int ctrlDim = segs[s].getCtrlLaw() ? \
+					segs[s].getCtrlLaw()->getNumStates() : 0;
 
 				// If all data is read, this is the expected width
-				unsigned int expectedWidth = coreDim + (coreDim+ctrlDim)*(coreDim+ctrlDim) + extraDim + ctrlDim;
+				unsigned int expectedWidth = coreDim + 
+					(coreDim+ctrlDim)*(coreDim+ctrlDim) + extraDim + ctrlDim;
 				std::vector<double> fillerStates;
 
 
@@ -3015,15 +3035,17 @@ bool BaseArcset::readVar_SegState(matvar_t *pVar, Save_tp saveTp){
 
 				if(expectedWidth < width){
 					char msg[128];
-					sprintf(msg, "BaseArcset::readVar_SegState: expected width, %u, is less than data width, %u. Cannot proceed",
+					sprintf(msg, "BaseArcset::readVar_SegState: "
+						"expected width, %u, is less than data width, %u. "
+						"Cannot proceed",
 						expectedWidth, width);
 					throw Exception(msg);
 				}
 
-				// If some states are missing from the data file (e.g., if a conservative save method was used)
-				// append a "filler state" full of zeros
+				// If some states are missing from the data file (e.g., if a 
+				// conservative save method was used) append a "filler state" 
+				// full of zeros
 				if(expectedWidth - width > 0){
-					// printf("Segment %u: filling states with %u zeros\n", s, expectedWidth - width);
 					fillerStates.assign(expectedWidth - width, 0);
 				}
 
@@ -3042,7 +3064,8 @@ bool BaseArcset::readVar_SegState(matvar_t *pVar, Save_tp saveTp){
 				}
 			}else{
 				Mat_VarFree(pVar);
-				throw Exception("BaseArcset::readVar_SegState: Cell element is not a double array.");
+				throw Exception("BaseArcset::readVar_SegState: "
+					"Cell element is not a double array.");
 			}
 		}
 
@@ -3099,16 +3122,20 @@ bool BaseArcset::readVar_SegTime(matvar_t *pVar, Save_tp saveTp){
 /**
  *  @brief Read segment control law data from a matio variable
  * 
- *  @param pVar a pointer to a structure array variable that stores the segment control laws
- *  @param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
- *  from the matio variable, unique control laws are constructed and allocated on the stack.
- *  The user must manually delete the ControlLaw objects to avoid memory leaks.
+ *  @param pVar a pointer to a structure array variable that stores the segment 
+ *  control laws
+ *  @param refLaws Reference to a vector of ControlLaw pointers. As control laws 
+ *  are read from the matio variable, unique control laws are constructed and 
+ *  allocated on the stack. The user must manually delete the ControlLaw objects 
+ *  to avoid memory leaks.
  *  @param saveTp Describes the amount of detail that was saved to the file
  * 
  *  @return whether or not the matio variable needs to be freed
  *  @throws Exception if there are any errors while importing the data
  */
-bool BaseArcset::readVar_SegCtrlLaw(matvar_t *pVar, std::vector<ControlLaw*> &refLaws, Save_tp saveTp){
+bool BaseArcset::readVar_SegCtrlLaw(matvar_t *pVar, 
+	std::vector<ControlLaw*> &refLaws, Save_tp saveTp){
+
 	(void) saveTp;
 	if(pVar == nullptr){
 		printErr("BaseArcset::readVar_SegCtrlLaw: Could not read data vector");
@@ -3119,12 +3146,14 @@ bool BaseArcset::readVar_SegCtrlLaw(matvar_t *pVar, std::vector<ControlLaw*> &re
 
 		if(segs.size() == 0){
 			Mat_VarFree(pVar);
-			throw Exception("BaseArcset::readVar_SegCtrlLaw: Segment vector has not been initialized");
+			throw Exception("BaseArcset::readVar_SegCtrlLaw: "
+				"Segment vector has not been initialized");
 		}
 
 		if(numStructs != segs.size()){
 			Mat_VarFree(pVar);
-			throw Exception("BaseArcset::readVar_SegCtrlLaw: Control Law vector has different size"
+			throw Exception("BaseArcset::readVar_SegCtrlLaw: "
+				"Control Law vector has different size"
 				" than the initialized segment evctor");
 		}
 
@@ -3146,8 +3175,11 @@ bool BaseArcset::readVar_SegCtrlLaw(matvar_t *pVar, std::vector<ControlLaw*> &re
 							switch(f){
 								case 0: // lawType
 								{
-									if(oneField->class_type == MAT_C_INT32 && oneField->data_type == MAT_T_INT32){
-										unsigned int *intData = static_cast<unsigned int *>(oneField->data);
+									if(oneField->class_type == MAT_C_INT32 && 
+										oneField->data_type == MAT_T_INT32){
+										
+										unsigned int *intData = \
+											static_cast<unsigned int *>(oneField->data);
 
 										if(intData)
 											id = intData[0];
@@ -3163,25 +3195,31 @@ bool BaseArcset::readVar_SegCtrlLaw(matvar_t *pVar, std::vector<ControlLaw*> &re
 									break;
 								}//-----------------------------------
 								case 1: // numStates
-									// No need to read this in; will be populated when ControlLaw is constructed
+									// No need to read this in; will be 
+									// populated when ControlLaw is constructed
 									break;
 								//-----------------------------------
 								case 2: // params
 								{
-									if(oneField->class_type == MAT_C_DOUBLE && oneField->data_type == MAT_T_DOUBLE){
-										double *doubleData = static_cast<double *>(oneField->data);
+									if(oneField->class_type == MAT_C_DOUBLE && 
+										oneField->data_type == MAT_T_DOUBLE){
+										
+										double *doubleData = 
+											static_cast<double *>(oneField->data);
 
 										if(doubleData){
 											unsigned int len = oneField->dims[0] * oneField->dims[1];
 											params.insert(params.begin(), doubleData, doubleData + len);	
 										}else{
 											Mat_VarFree(pVar);
-											throw Exception("BaseArcset::readVar_SegCtrlLaw: controller params data is nullptr");
+											throw Exception("BaseArcset::readVar_SegCtrlLaw: "
+												"controller params data is nullptr");
 										}
 									}else{
 										Mat_VarFree(pVar);
-										throw Exception("BaseArcset::readVar_SegCtrlLaw: controller params"
-											" field has wrong class type or data type");
+										throw Exception("BaseArcset::readVar_SegCtrlLaw: "
+											"controller params field has wrong "
+											"class type or data type");
 									}
 									break;
 								}//-----------------------------------

@@ -75,7 +75,7 @@ public:
 	std::vector<double> getParams() const;
 	const std::vector<double>& getParamsRef_const() const;
 
-	void setLawType(unsigned int);
+	void setType(unsigned int);
 	void setParam(int, double);
 	void setParams(const double*, unsigned int);
 	void setParams(const std::vector<double>&);

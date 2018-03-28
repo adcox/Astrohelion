@@ -98,7 +98,7 @@ Arcset_cr3bp_lt initGuessFromLTFam_fixedAlpha(const char *ltpoFile, double H,
 
 	std::vector<Arcset_periodic> matches = fam.getMemberByH_lt(H);
 	if(matches.empty()){
-		char msg[24];
+		char msg[64];
 		sprintf(msg, "Could not locate any orbits at Hlt = %f\n", H);
 
 		for(auto p : laws){

@@ -852,15 +852,18 @@ void MultShootEngine::solveUpdateEq(MultShootData& it, const Eigen::VectorXd& ol
 				SparseMatXCd JT = J.transpose();
 				SparseMatXCd G = J*JT;		// G will always be symmetric
 
-				// toCSV(J, "DF_cpp.csv");
-				// toCSV(FX, "FX_cpp.csv");
-				// toCSV(oldX, "X_cpp.csv");
-
 				// Solve the system Gw = b
 				G.makeCompressed();
 				Eigen::VectorXd w(G.cols(), 1);
 				factorizeJacobian(G, FX, w, true);
 				fullStep = JT*w;
+
+				// MatrixXRd mJ(J), mFX(FX), mStep(fullStep);
+				// toCSV(mJ, "DF_cpp.csv");
+				// toCSV(mFX, "FX_cpp.csv");
+				// toCSV(mStep, "dX_cpp.csv");
+				// waitForUser();
+				// toCSV(oldX, "X_cpp.csv");
 
 				// Alternative Method: SVD
 				// NOTE: This takes approximately five times as much 
@@ -1157,7 +1160,8 @@ void MultShootEngine::chooseStep_LineSearch(MultShootData& it, const Eigen::Vect
 		if(lambda < minLambda){
 			// Apparently, the "optimal" attenuation factor is approaching zero
 			// Thus, the update delta X is zero, i.e., we've converged on X_old
-			printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, RED, "  Line search decreased past minimum bound.\n");
+			printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, RED, 
+				"  Line search decreased past minimum bound.\n");
 			newX = oldX;
 			checkLocalMin = true;
 			return;
@@ -1165,7 +1169,9 @@ void MultShootEngine::chooseStep_LineSearch(MultShootData& it, const Eigen::Vect
 
 
 		if(f <= f_old + ls_alpha*lambda*initROD){
-			printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, BLUE, "  Line Search: attenuation factor = %.4e (%u its)\n", lambda, count);
+			printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, BLUE, 
+				"  Line Search: attenuation factor = %.4e (%u its)\n", lambda,
+				count);
 			return;	// We're all set, so return!
 		}else{	// Need to backtrack
 			if(count == 0){
@@ -1432,9 +1438,9 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, MultShoo
     }
     
     if(writeToFile){
-        astrohelion::toCSV(DFest, "FiniteDiff_DFest.csv");
-        astrohelion::toCSV(diff, "FiniteDiff_Diff.csv"); 
-        astrohelion::toCSV(relDiff, "FiniteDiff_RelDiff.csv");
+        toCSV(DFest, "FiniteDiff_DFest.csv");
+        toCSV(diff, "FiniteDiff_Diff.csv"); 
+        toCSV(relDiff, "FiniteDiff_RelDiff.csv");
     }
 
     // Compute the largest coefficient in each row and column

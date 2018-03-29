@@ -83,7 +83,7 @@ int main(){
 		 */
 		MultShootData it(&natArc);
 		try{
-			it = shooter.multShoot(&natArc, &transfer);
+			shooter.multShoot(&natArc, &transfer, &it);
 
 			// Save {f_f, alpha_f, beta_f, it_count}
 			std::vector<double> ctrlf = transfer.getNodeRefByIx(0).\

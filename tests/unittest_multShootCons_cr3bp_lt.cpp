@@ -16,7 +16,6 @@
 #include "MultShootEngine.hpp"
 #include "ControlLaw_cr3bp_lt.hpp"
 #include "Exceptions.hpp"
-#include "MultShootData.hpp"
 #include "SimEngine.hpp"
 #include "SysData_cr3bp_lt.hpp"
 #include "Utilities.hpp"

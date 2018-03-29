@@ -1184,7 +1184,7 @@ Arcset_periodic cr3bp_correctHalfPerSymPO(const Arcset_cr3bp *halfPerGuess, Arcs
     
     try{
         // Try once with the standard multiple-shooting parameters
-        *pItData = corrector.multShoot(halfPerGuess, halfPerCorrected);
+        corrector.multShoot(halfPerGuess, halfPerCorrected, pItData);
         // halfPerCorrected.print();
         // halfPerCorrected.saveToMat("data/temp_halfPerCorrected.mat");
     }catch(DivergeException &e){

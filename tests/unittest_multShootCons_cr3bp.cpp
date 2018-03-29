@@ -374,7 +374,7 @@ BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_MaxDeltaV, data::make(tofTypes)
 
 	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
 	MultShootData itData(correctedSet);
-	BOOST_CHECK_NO_THROW(itData = corrector->multShoot(halfLyapSet, correctedSet));
+	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet, &itData));
 
 	double totalDV = MultShootEngine::getTotalDV(itData);
 	BOOST_CHECK_LE(totalDV, maxDVConData);
@@ -399,7 +399,7 @@ BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_DeltaV, data::make(tofTypes), t
 	
 	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
 	MultShootData itData(correctedSet);
-	BOOST_CHECK_NO_THROW(itData = corrector->multShoot(halfLyapSet, correctedSet));
+	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet, &itData));
 
 	double totalDV = MultShootEngine::getTotalDV(itData);
 	BOOST_CHECK_SMALL(totalDV - maxDVConData, 1e-10);
@@ -572,7 +572,7 @@ BOOST_DATA_TEST_CASE(CR3BP_EM_SegCont_PV, data::make(tofTypes), tofTp){
 
 	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&doubleSrcLyap, corrector, Verbosity_tp::NO_MSG));
 	MultShootData it(&correctedSet);
-	BOOST_CHECK_NO_THROW(it = corrector.multShoot(&doubleSrcLyap, &correctedSet));
+	BOOST_CHECK_NO_THROW(corrector.multShoot(&doubleSrcLyap, &correctedSet, &it));
 
 	Arcset forwardTraj = it.propSegs[correctedSet.getSegIx(contCon.getID())];
 	Arcset reverseTraj = it.propSegs[correctedSet.getSegIx(contData[0])];

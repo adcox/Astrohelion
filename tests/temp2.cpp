@@ -43,26 +43,36 @@ int main(){
 
 	// Target a final state
 	// std::vector<double> qf {0, 0.3, NAN, NAN, NAN, NAN, NAN};
-	std::vector<double> qf {0.9, -0.3, NAN, NAN, NAN, NAN, NAN};
-	Constraint finalStateCon(Constraint_tp::STATE, natArc.getNodeByIx(-1).getID(),
-		qf);
-	natArc.addConstraint(finalStateCon);
+	// std::vector<double> qf {0.9, -0.3, NAN, NAN, NAN, NAN, NAN};
+	std::vector<double> qf {1.05, -0.3, NAN, NAN, NAN, NAN, NAN};
+	// Constraint finalStateCon(Constraint_tp::STATE, natArc.getNodeByIx(-1).getID(),
+	// 	qf);
+	// natArc.addConstraint(finalStateCon);
 
-	Constraint rmFinalCtrl(Constraint_tp::RM_CTRL, natArc.getNodeByIx(-1).getID(),
-		nullptr, 0);
+	Constraint rmFinalCtrl(Constraint_tp::RM_CTRL, 
+		natArc.getNodeByIx(-1).getID(), nullptr, 0);
 	natArc.addConstraint(rmFinalCtrl);
 
+	Constraint endSegCon(Constraint_tp::ENDSEG_STATE, 
+		natArc.getSegByIx(-1).getID(), qf);
+	natArc.addConstraint(endSegCon);
+
+	Constraint rmFinalState(Constraint_tp::RM_STATE, 
+		natArc.getNodeByIx(-1).getID(), nullptr, 0);
+
 	MultShootEngine shooter;
-	shooter.setVerbosity(Verbosity_tp::NO_MSG);
+	// shooter.setVerbosity(Verbosity_tp::NO_MSG);
+	shooter.setSaveEachIt(true);
 	shooter.setMaxIts(200);
 	shooter.setDoLineSearch(true);
-	ctrl0[0] = sqrt(1e-4);
+	// ctrl0[0] = sqrt(1e-4);
+	ctrl0[0] = 0;
 	ctrl0[2] = 0;
 
 	std::map<double, std::vector<double> > allData;
 	const std::vector<double> nanData {NAN, NAN, NAN};
 	double alpha0 = 0;
-	unsigned int numSteps = 10;
+	unsigned int numSteps = 1;
 	double alphaStep = 2*PI/numSteps;
 	
 	#pragma omp parallel for firstprivate(ctrl0, natArc, shooter) schedule(dynamic)
@@ -109,8 +119,8 @@ int main(){
 		std::copy(d.begin(), d.end(), outData.begin() + 5*i+1);
 		i++;
 	}
-	saveMatrixToFile("MultShootResults.mat", "results", outData, 
-		outData.size()/5, 5);
+	// saveMatrixToFile("MultShootResults.mat", "results", outData, 
+	// 	outData.size()/5, 5);
 
 	return EXIT_SUCCESS;
 }

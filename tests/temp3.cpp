@@ -363,4 +363,6 @@ int main(){
 		delete p;
 		p = nullptr;
 	}
+
+	return EXIT_SUCCESS;
 }

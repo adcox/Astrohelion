@@ -878,11 +878,11 @@ void MultShootEngine::solveUpdateEq(MultShootData& it, const Eigen::VectorXd& ol
 				factorizeJacobian(G, FX, w, true);
 				fullStep = JT*w;
 
-				MatrixXRd mJ(J), mFX(FX), mStep(fullStep);
-				toCSV(mJ, "DF_cpp.csv");
-				toCSV(mFX, "FX_cpp.csv");
-				toCSV(mStep, "dX_cpp.csv");
-				waitForUser();
+				// MatrixXRd mJ(J), mFX(FX), mStep(fullStep);
+				// toCSV(mJ, "DF_cpp.csv");
+				// toCSV(mFX, "FX_cpp.csv");
+				// toCSV(mStep, "dX_cpp.csv");
+				// waitForUser();
 				// toCSV(oldX, "X_cpp.csv");
 
 				// Alternative Method: SVD

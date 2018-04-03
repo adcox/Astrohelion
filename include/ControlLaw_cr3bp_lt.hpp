@@ -132,7 +132,9 @@ class SysData_cr3bp_lt;
  *  several of the blocks from the \f$ \mathbf{A} \f$ matrix above:
  *  \f[
  *  	\dpd{\vec{q}}{\vec{\gamma}} = \begin{bmatrix}
- *  		\vec{0}_{3\times n} \\ \mathbf{D_{a,v}} \\[0.5em] \dpd{\dot{m}}{\vec{\gamma}}
+ *  		\vec{0}_{3\times n} \\ 
+ *  		\mathbf{D_{a,v}} \\[0.5em] 
+ *  		\dpd{\dot{m}}{\vec{\gamma}}
  *  	\end{bmatrix}
  *  \f]
  *  Note that the top quadrant is practically always zero as the velocity EOMs 
@@ -171,13 +173,14 @@ public:
 	 *  \name Analysis Functions
 	 *  \{
 	 */
-	double get_dmdt(double t, const double *s, const SysData *pSys) const;
-	void getOutput(double t, const double *s, const SysData *sysData, 
-		double *law, unsigned int len) const override;
-	void getPartials_EOMsWRTCtrlState(double t, const double *s, 
-		const SysData *pSys, double *partials, unsigned int len) const override;	
-	void getPartials_OutputWRTCoreState(double t, const double *s, 
-		const SysData *pSys, double *partials, unsigned int len) const override;
+	double get_dmdt(double, const double*, const SysData*) const;
+	double getThrustMag(double, const double*, const SysData*) const;
+	void getOutput(double, const double*, const SysData*, 
+		double*, unsigned int) const override;
+	void getPartials_EOMsWRTCtrlState(double, const double*, 
+		const SysData*, double*, unsigned int) const override;	
+	void getPartials_OutputWRTCoreState(double, const double*, 
+		const SysData*, double*, unsigned int) const override;
 	
 	//\}
 
@@ -191,6 +194,175 @@ public:
 	static double thrust_nondim2dim(double, SysData_cr3bp_lt*);
 	static void pointingVecToAngles(Eigen::Vector3d, double*, double*);
 	void print() const;
+	//\}
+
+	/**	
+	 *	\name Control Law ID
+	 *	
+	 *	Low-Thrust Control Law IDs are generated via bitwise operations
+	 *	
+	 *	The ID is an unsigned int, which stores 16 bits, or 2 bytes. The bits
+	 *	are split into four sections:
+	 *	
+	 *	ID = [ BASE | F_MAG | M | OPTIONS ]
+	 *	
+	 *	* BASE: 5-bits, represents the general law, usually a pointing strategy
+	 *	* F_MAG: 3-bits, represents the thrust parameterization
+	 *	* M: 2-bits, represents the mass parameterization
+	 *	* OPTIONS: 6-bits, represents a series of options for the control law
+	 *	
+	 *	\{
+	 */
+
+	/** \brief masks 5 bits that represent base type */
+	static const unsigned int BASE_MASK = 31 << 11;		// 11111 000 00 000000
+
+	/** \brief masks 3 bits that represent the thrust parameterization */
+	static const unsigned int F_MASK = 7 << 8;			// 00000 111 00 000000
+
+	/** \brief masks 2 bits that represent the mass parameterization */
+	static const unsigned int M_MASK = 3 << 6;			// 00000 000 11 000000
+
+	/** \brief masks the 6 bits that represent the options */
+	static const unsigned int OP_MASK = 63;				// 00000 000 00 111111
+
+	/** \brief masks the first option */
+	static const unsigned int OP1_MASK = 1 << 5;		// 00000 000 00 100000
+
+	/** \brief masks the second option */
+	static const unsigned int OP2_MASK = 1 << 4;		// 00000 000 00 010000
+
+	/** \brief masks the third option */
+	static const unsigned int OP3_MASK = 1 << 3;		// 00000 000 00 001000
+
+	/** \brief masks the fourth option */
+	static const unsigned int OP4_MASK = 1 << 2;		// 00000 000 00 000100
+
+	/** \brief masks the fifth option */
+	static const unsigned int OP5_MASK = 1 << 1;		// 00000 000 00 000010
+
+	/** \brief masks the sixth option */
+	static const unsigned int OP6_MASK = 1 << 0;		// 00000 000 00 000001
+
+	/** \brief Represents a control law with arbitrary pointing in 3D space.
+	 *	
+	 *	Constant parameters: `params = {}`
+	 *	
+	 *	Variable control states: `ctrl = {alpha, beta}`
+	 *	
+	 *	where alpha represents the in-plane pointing angle and beta represents 
+	 *	the out-of-plane pointing angle (i.e., spherical coordinates). Alpha is 
+	 *	zero when the thrust is in the XZ-plane with a positive x-component and 
+	 *	increases with right-handed rotation about z. Beta is zero when the 
+	 *	thrust is in the XY-plane and is positive when the z-component is 
+	 *	positive.
+	 */
+	static const unsigned int GENERAL = 1 << 11;		// 00010 000 00 000000
+
+	/** \brief Represents a control law with thrust aligned with the velocity 
+	 * 	vector.
+	 * 
+	 * 	Constant parameters: `params = {}`
+	 * 	
+	 * 	Variable control states: `ctrl = {}`
+	 * 	
+	 * 	To set the pointing to pro-velocity or anti-velocity, include the
+	 * 	`VEL_PRO` or `VEL_ANTI` flags in the ID.
+	 */
+	static const unsigned int VEL_PT = 2 << 11;			// 00100 000 00 000000
+
+	/** \brief Represents a control law that preserves the natural Hamiltonian, 
+	 * 	i.e., the Jacobi Constant.
+	 * 	
+	 * 	Constant parameters: `params = {}`
+	 * 	
+	 * 	Variable control states: `ctrl = {}`
+	 * 	
+	 * 	To set the pointing to be left or right w.r.t. the velocity vector,
+	 * 	include the `VEL_LEFT` or `VEL_RIGHT` flags in the ID.
+	 */
+	static const unsigned int CONST_C_2D = 3 << 11;		// 00110 000 00 000000
+	
+
+	/** \brief Represents a control law with constant thrust magnitude
+	 * 
+	 * 	The nondimensional thrust magnitude is appended to the vector of 
+	 * 	constant parameters, e.g., `params = {f}`
+	 */
+	static const unsigned int CONST_F = 0 << 8;			// 00000 000 00 000000
+
+	/** \brief Represents variable thrust with implicit bounds.
+	 * 	
+	 * 	The nondimensional maximum thrust magnitude is appended to the vector
+	 * 	of constant parameters, e.g., `params = {fmax}`
+	 * 	
+	 * 	The nondimensional thrust magnitude is modeled via a sine function,
+	 * 	\f[ f = \frac{1}{2} f_{\text{max}} \left( \sin\psi + 1 \right)\,, \f]
+	 * 	where \f$\psi\f$, the control variable, is unbounded.
+	 * 	Accordingly, the \f$\psi\f$ is added to the control state vector, e.g.,
+	 * 	`ctrl = {alpha, beta, psi}`.
+	 * 	
+	 * 	The thrust magnitude is zero when 
+	 * 	\f$\psi = -\frac{\pi}{2} \pm 2n\pi,~n=0,1,2,\dots\f$ and is maximized when
+	 * 	\f$\psi = +\frac{\pi}{2} \pm 2n\pi,~n=0,1,2,\dots\f$.
+	 * 	
+	 * 	Due to the formulation, if the thrust is set to zero on an arc in a 
+	 * 	multiple-shooting process, the thrust will never be updated. To avoid
+	 * 	this feature, use small, nonzero magnitudes, e.g., 
+	 * 	\f$\psi = -\pi/2 + \epsilon\f$
+	 */
+	static const unsigned int VAR_F_BND = 1 << 8;		// 00000 001 00 000000
+
+	/** \brief Represents variable thrust with no implicit upper bound
+	 * 
+	 * 	No additional parameters are required for this formulation.
+	 * 	
+	 * 	The nondimensional thrust magnitude is modeled via an exponential 
+	 * 	function, \f[ f = 10^{4 g}\,, \f] where `g` is the control variable and
+	 * 	is appended to the control state vector, e.g.,
+	 * 	`ctrl = {alpha, beta, g}`.
+	 * 	
+	 * 	In this formulation, thrust magnitude tends to zero as `g` tends to
+	 * 	negative infinity, but the magnitude is never *exactly* zero.
+	 * 	Practically, the magnitude is *numerically* zero when `g = -4`. There is 
+	 * 	no upper bound on the thrust magnitude.
+	 */
+	static const unsigned int VAR_F_UBND = 2 << 8;		// 00000 010 00 000000
+	
+	/** \brief Represents a variable mass parameterization for a CSI engine
+	 * 
+	 * 	Mass is modeled for a CSI engine with the differential equation,
+	 * 	\f[ \dot{m} = \frac{-f}{I_{sp} g_0}\,, \f] where `f` is the 
+	 * 	nondimensional thrust magnitude, `Isp` is the constant specific impulse,
+	 * 	and `g0` is the average Earth gravitational constant. Append `Isp` to
+	 * 	the parameter vector, e.g., `params = {f, Isp}`.
+	 * 	
+	 * 	No control states are required for this formulation
+	 */
+	static const unsigned int CSI_VAR_M = 0 << 6;		// 00000 000 00 000000
+
+	/** \brief Represents a constant mass parameterization.
+	 *
+	 *	The model is quite simple, \f[ \dot{m} = 0 \f]
+	 *	
+	 *	No additional constant parameters or variable control states are 
+	 *	required for this formulation
+	 * 
+	 */
+	static const unsigned int CONST_M = 1 << 6;		// 00000 000 01 000000
+	
+	/** \brief Option for VEL_PT control to orient thrust with +v vector */
+	static const unsigned int VEL_PRO = 0 << 5;			// 00000 000 00 000000
+
+	/** \brief Option for VEL_PT control to orient thrust with -v vector */	
+	static const unsigned int VEL_ANTI = 1 << 5;		// 00000 000 00 100000
+	
+	/** \brief Option for CONST_C_2D control to orient thrust left of v vector */
+	static const unsigned int VEL_LEFT = 0 << 5;		// 00000 000 00 000000
+
+	/** \brief Option for CONST_C_2D control to orient thrust right of v vector */
+	static const unsigned int VEL_RIGHT = 1 << 5;		// 00000 000 00 100000
+
 	//\}
 
 	/**
@@ -216,70 +388,17 @@ public:
 	 *  	that switchboard
 	 */
 	enum Law_tp : unsigned int{
-		CONST_FC_2D_LEFT = 1,		/*!< Jacobi-Preserving (constant C), 
-									 * two-dimensional (xy-planar) control,
-									 * thrust left w.r.t. velocity direction. 
-									 * Thrust magnitude is constant.
-									 * - params: { thrust (nondim), Isp (seconds) }
-									 * - ctrlStates: {} (None)
-									 */
-		CONST_FC_2D_RIGHT = 2,		/*!< Jacobi-Preserving (constant C), 
-									 * two-dimensional (xy-planar) control, 
-									 * thrust right w.r.t. velocity direction. 
-									 * Thrust magnitude is constant.
-									 * - params: { thrust (nondim), Isp (seconds) }
-									 * - ctrlStates: {} (None)
-									 */
-		CONST_F_PRO_VEL = 3,		/*!< Thrust along velocity vector 
-									 * (maximum energy increase). Thrust
-									 * 	magnitude is constant.
-									 * - params: { thrust (nondim), Isp (seconds) }
-									 * - ctrlStates: {} (None)
-									 */
-		CONST_F_ANTI_VEL = 4,		/*!< Thrust along anti-velocity vector 
-									 * (maximum energy decrease). Thrust
-									 * 	magnitude is constant.
-									 * - params: { thrust (nondim), Isp (seconds) }
-									 * - ctrlStates: {} (None)
-									 */
-		CONST_F_GENERAL = 5,		/*!< Thrust in an arbitrary direction. 
-									 * Thrust magnitude is constant.
-									 * - params: { thrust (nondim), Isp (seconds) }
-									 * - ctrlStates: {alpha (rad), beta (rad)}
-									 */
-		CONST_MF_GENERAL = 105,		/*!< Thrust in an arbitrary direction. 
-									 * Thrust magnitude and mass
-									 * are constant.
-									 * - params: {thrust (nondim), Isp (seconds)}
-									 * - ctrlStates: {alpha (rad), beta (rad)}
-									 */
-		VAR_F_CONST_C_2D_LEFT = 1001,/*!< Jacobi-preserving (constant C), 
-									 * two-dimensional (xy-planar) control,
-									 * thrust left w.r.t. velocity direction.
-									 * - params: {Isp (seconds)}
-									 * - ctrlStates: {sqrt(f) (nondim)}
-									 */
-		VAR_F_CONST_C_2D_RIGHT = 1002,/*!< Jacobi-preserving (constant C), 
-									 * two-dimensional (xy-planar) control,
-									 * thrust right w.r.t. velocity direction.
-									 * - params: {Isp (seconds)}
-									 * - ctrlStates: {sqrt(f) (nondim)}
-									 */
-		VAR_F_PRO_VEL = 1003,		/*!< Thrust along velocity vector 
-									 * (maximum energy increase).
-									 * - params: {Isp (seconds)}
-									 * - ctrlStates: {sqrt(f) (nondim)}
-									 */
-		VAR_F_ANTI_VEL = 1004,		/*!< Thrust along anti-velocity vector 
-									 * (maximum energy decrease).
-									 * - params: {Isp (seconds)}
-									 * - ctrlStates: {sqrt(f) (nondim)}
-									 */
-		VAR_F_GENERAL = 1005,		/*!< Thrust in an arbitrary direction.
-									 * - params: {Isp (seconds)}
-									 * - ctrlStates: {sqrt(f) (nondim), 
-									 * alpha (rad), beta (rad)}
-									 */
+		CONST_FC_2D_LEFT = CONST_C_2D | CONST_F | CSI_VAR_M | VEL_LEFT,
+		CONST_FC_2D_RIGHT = CONST_C_2D | CONST_F | CSI_VAR_M | VEL_RIGHT,
+		CONST_F_PRO_VEL = VEL_PT | CONST_F | CSI_VAR_M | VEL_PRO,
+		CONST_F_ANTI_VEL = VEL_PT | CONST_F | CSI_VAR_M | VEL_ANTI,
+		CONST_F_GENERAL = GENERAL | CONST_F | CSI_VAR_M,
+		CONST_MF_GENERAL = GENERAL | CONST_F | CONST_M,
+		VAR_F_CONST_C_2D_LEFT = CONST_C_2D | VAR_F_BND | CSI_VAR_M | VEL_LEFT,
+		VAR_F_CONST_C_2D_RIGHT = CONST_C_2D | VAR_F_BND | CSI_VAR_M | VEL_RIGHT,
+		VAR_F_PRO_VEL = VEL_PT | VAR_F_BND | CSI_VAR_M | VEL_PRO,
+		VAR_F_ANTI_VEL = VEL_PT | VAR_F_BND | CSI_VAR_M | VEL_ANTI,
+		VAR_F_GENERAL = GENERAL | VAR_F_BND | CSI_VAR_M
 	};
 protected:
 

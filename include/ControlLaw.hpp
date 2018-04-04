@@ -103,6 +103,7 @@ public:
 	 */
 	static std::string typeToString(unsigned int);
 	virtual void print() const;
+	static void convertID(unsigned int&);
 	//\}
 	
 	/** Value to use for the control law ID when no control law is implemented*/

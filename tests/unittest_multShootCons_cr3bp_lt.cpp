@@ -22,24 +22,23 @@
 
 using namespace astrohelion;
 using namespace boost::unit_test;
+using ltlaw = astrohelion::ControlLaw_cr3bp_lt;
 
 std::vector<double> emL1Lyap_ic {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
 std::vector<double> emL3Lyap_ic {-0.628097117249632, 0, 0, 0, -0.87229410151913, 0, 1};	// EM L3
 double emL1Lyap_T = 3.02797;	// EM L1 Period
 double emL3Lyap_T = 6.2238;
 
-// All the different control laws to test
-std::vector<ControlLaw_cr3bp_lt::Law_tp> constF_lawTypes = 
-	{ControlLaw_cr3bp_lt::Law_tp::CONST_FC_2D_LEFT,
-	ControlLaw_cr3bp_lt::Law_tp::CONST_FC_2D_RIGHT,
-	ControlLaw_cr3bp_lt::Law_tp::CONST_F_PRO_VEL, 
-	ControlLaw_cr3bp_lt::Law_tp::CONST_F_ANTI_VEL};
+// All combinations of the control laws that require 0 control states
+std::vector<unsigned int> law_bases = { 
+	ltlaw::VEL_PT | ltlaw::VEL_PRO, ltlaw::VEL_PT | ltlaw::VEL_ANTI, 
+	ltlaw::CONST_C_2D | ltlaw::VEL_LEFT, ltlaw::CONST_C_2D | ltlaw::VEL_RIGHT};
 
-std::vector<ControlLaw_cr3bp_lt::Law_tp> varF_lawTypes = 
-	{ControlLaw_cr3bp_lt::Law_tp::VAR_F_CONST_C_2D_LEFT,
-	ControlLaw_cr3bp_lt::Law_tp::VAR_F_CONST_C_2D_RIGHT, 
-	ControlLaw_cr3bp_lt::Law_tp::VAR_F_PRO_VEL, 
-	ControlLaw_cr3bp_lt::Law_tp::VAR_F_ANTI_VEL};
+// All variable thrust parameterizations
+std::vector<unsigned int> law_varF = {ltlaw::VAR_F_BND, ltlaw::VAR_F_UBND};
+
+// Define the basic control law for every single case
+const unsigned int basicLaw = ltlaw::CSI_VAR_M;
 
 // All the different ways to parameterize time in the multiple shooting algorithm
 std::vector<MSTOF_tp> tofTypes {MSTOF_tp::VAR_FREE, MSTOF_tp::VAR_FIXSIGN,
@@ -76,10 +75,13 @@ bool stateDiffBelowTol(std::vector<double> data, std::vector<double> correct,
 //************************************************************
 //* CR3BP Earth-Moon Constraints, Constant Thrust Laws
 //************************************************************
-BOOST_AUTO_TEST_SUITE(CR3BP_LT_CONST_F)
+BOOST_AUTO_TEST_SUITE(CONST_F)
 
 BOOST_DATA_TEST_CASE(test_continuity, 
-	data::make(constF_lawTypes) * data::make(tofTypes), lawType, tofType){
+	data::make(law_bases) * data::make(tofTypes), baseType, tofType){
+
+	// Use the specified base and set thrust to be constant
+	unsigned int lawType = basicLaw | baseType | ltlaw::CONST_F;
 
 	SysData_cr3bp_lt sys("earth", "moon", 14);
 	std::vector<double> ltParams {0.3, 1500};
@@ -116,14 +118,15 @@ BOOST_DATA_TEST_CASE(test_continuity,
 	}
 }//====================================================
 
-BOOST_DATA_TEST_CASE(test_stateConstraint, data::make(constF_lawTypes) * 
-	data::make(tofTypes), lawType, tofType){
+BOOST_DATA_TEST_CASE(test_stateConstraint, data::make(law_bases) * 
+	data::make(tofTypes), baseType, tofType){
+
+	// Use the specified base and set thrust to be constant
+	unsigned int lawType = basicLaw | baseType | ltlaw::CONST_F;
 
 	SysData_cr3bp_lt sys("earth", "moon", 500);
 	std::vector<double> ltParams {9e-3, 1500};
 	ControlLaw_cr3bp_lt law(lawType, ltParams);
-
-	//printf("test_stateConstraint, law = %d, tof = %d\n", to_underlying(lawType), to_underlying(tofType));
 
 	Arcset_cr3bp_lt halfLyapArcset(&sys), correctedSet(&sys);
 	SimEngine sim;
@@ -147,8 +150,12 @@ BOOST_DATA_TEST_CASE(test_stateConstraint, data::make(constF_lawTypes) *
 	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
 }//====================================================
 
-BOOST_DATA_TEST_CASE(test_endSegCon, data::make(constF_lawTypes) * 
-	data::make(tofTypes), lawType, tofType){
+BOOST_DATA_TEST_CASE(test_endSegCon, data::make(law_bases) * 
+	data::make(tofTypes), baseType, tofType){
+
+	// Use the specified base and set thrust to be constant
+	unsigned int lawType = basicLaw | baseType | ltlaw::CONST_F;
+
 	SysData_cr3bp_lt sys("earth", "moon", 500);
 	std::vector<double> ltParams {9e-3, 1500};
 	ControlLaw_cr3bp_lt law(lawType, ltParams);
@@ -179,8 +186,12 @@ BOOST_DATA_TEST_CASE(test_endSegCon, data::make(constF_lawTypes) *
 	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
 }//====================================================
 
-BOOST_DATA_TEST_CASE(test_rmState, data::make(constF_lawTypes) * 
-	data::make(tofTypes), lawType, tofType){
+BOOST_DATA_TEST_CASE(test_rmState, data::make(law_bases) * 
+	data::make(tofTypes), baseType, tofType){
+
+	// Use the specified base and set thrust to be constant
+	unsigned int lawType = basicLaw | baseType | ltlaw::CONST_F;
+
 	SysData_cr3bp_lt sys("earth", "moon", 14);
 	std::vector<double> ltParams {0.3, 1500};
 	ControlLaw_cr3bp_lt law(lawType, ltParams);
@@ -213,7 +224,11 @@ BOOST_DATA_TEST_CASE(test_rmState, data::make(constF_lawTypes) *
 	// correctedSet.saveToMat("data/lt_correctedSet.mat");
 }//====================================================
 
-BOOST_DATA_TEST_CASE(test_HLTConstraint, data::make(constF_lawTypes), lawType){
+BOOST_DATA_TEST_CASE(test_HLTConstraint, data::make(law_bases), baseType){
+
+	// Use the specified base and set thrust to be constant
+	unsigned int lawType = basicLaw | baseType | ltlaw::CONST_F;
+
 	SysData_cr3bp_lt sys("earth", "moon", 500);
 	std::vector<double> ltParams {9e-3, 1500};
 	ControlLaw_cr3bp_lt law(lawType, ltParams);
@@ -245,327 +260,438 @@ BOOST_AUTO_TEST_SUITE_END()
 
 
 //------------------------------------------------------------------------------
-// BOOST_AUTO_TEST_SUITE(CR3BP_LT_GENERAL_DIR_CONST_F)
+BOOST_AUTO_TEST_SUITE(CR3BP_LT_GENERAL_DIR_CONST_F)
 
-// auto randAlphaGen = data::random(-PI, PI);
-// auto randBetaGen = data::random(-PI/2, PI/2);
+auto randAlphaGen = data::random(-PI, PI);
+auto randBetaGen = data::random(-PI/2, PI/2);
 
-// BOOST_DATA_TEST_CASE(test_continuity, 
-// 	randAlphaGen ^ randBetaGen ^ data::xrange(5) * data::make(tofTypes), 
-// 	alpha, beta, index, tofType){
+BOOST_DATA_TEST_CASE(test_continuity, 
+	randAlphaGen ^ randBetaGen ^ data::xrange(5) * data::make(tofTypes), 
+	alpha, beta, index, tofType){
 
-// 	(void) index;
+	(void) index;
+	unsigned int lawType = basicLaw | ltlaw::GENERAL | ltlaw::CONST_F;
 
-// 	SysData_cr3bp_lt sys("earth", "moon", 14);
-// 	std::vector<double> ltParams {sqrt(0.3), 1500};
-// 	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::CONST_F_GENERAL, ltParams);
-// 	std::vector<double> thrustAngles {alpha, beta};
+	SysData_cr3bp_lt sys("earth", "moon", 14);
+	std::vector<double> ltParams {0.3, 1500};
+	ControlLaw_cr3bp_lt law(lawType, ltParams);
+	std::vector<double> thrustAngles {alpha, beta};
 	
-// 	Arcset_cr3bp_lt halfLyapNodeset(&sys), correctedSet(&sys);
-// 	SimEngine sim;
-// 	sim.setVerbosity(Verbosity_tp::NO_MSG);
-// 	sim.runSim_manyNodes(emL1Lyap_ic, thrustAngles, 0, emL1Lyap_T, 2, &halfLyapNodeset, &law);
+	Arcset_cr3bp_lt halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
+	sim.runSim_manyNodes(emL1Lyap_ic, thrustAngles, 0, emL1Lyap_T, 2, 
+		&halfLyapNodeset, &law);
 
-// 	// Add control continuity constraint for full-rank Jacobian (check ALL the available partials)
-// 	std::vector<double> conData(law.getNumStates(), 1);
-// 	Constraint ctrlCon(Constraint_tp::CONT_CTRL, 0, conData);
-// 	halfLyapNodeset.addConstraint(ctrlCon);
+	// Add control continuity constraint for full-rank Jacobian 
+	// (check ALL the available partials)
+	std::vector<double> conData(law.getNumStates(), 1);
+	Constraint ctrlCon(Constraint_tp::CONT_CTRL, 0, conData);
+	halfLyapNodeset.addConstraint(ctrlCon);
 
-// 	//printf("general dir test_continuity, tofType = %d, alpha = %f, beta = %f\n", to_underlying(tofType), alpha, beta);
 
-// 	MultShootEngine corrector;
-// 	corrector.setVerbosity(Verbosity_tp::NO_MSG);
-// 	// corrector.setVerbosity(Verbosity_tp::NO_MSG);
-// 	corrector.setTOFType(tofType);
-// 	corrector.setTol(1e-11);
+	MultShootEngine corrector;
+	corrector.setVerbosity(Verbosity_tp::NO_MSG);
+	// corrector.setVerbosity(Verbosity_tp::NO_MSG);
+	corrector.setTOFType(tofType);
+	corrector.setTol(1e-11);
 
-// 	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
-// 	// BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, 
+		corrector, Verbosity_tp::NO_MSG));
+	// BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
 
-// 	try{
-// 		corrector.multShoot(&halfLyapNodeset, &correctedSet);
-// 	}catch(Exception &e){
-// 		printErr("Error: %s\n", e.what());
-// 	}
+	try{
+		corrector.multShoot(&halfLyapNodeset, &correctedSet);
+	}catch(Exception &e){
+		printErr("Error: %s\n", e.what());
+	}
 
-// 	for(unsigned int n = 0; n < correctedSet.getNumNodes(); n++){
-// 		BOOST_CHECK_NO_THROW(correctedSet.getNodeByIx(n).getExtraParamVec(PARAMKEY_CTRL));
-// 		std::vector<double> ctrlState = correctedSet.getNodeByIx(n).getExtraParamVec(PARAMKEY_CTRL);
-// 		BOOST_CHECK(ctrlState.size() == law.getNumStates());
-// 	}
-// }//====================================================
+	for(unsigned int n = 0; n < correctedSet.getNumNodes(); n++){
+		BOOST_CHECK_NO_THROW(correctedSet.getNodeByIx(n).getExtraParamVec(PARAMKEY_CTRL));
+		std::vector<double> ctrlState = 
+			correctedSet.getNodeByIx(n).getExtraParamVec(PARAMKEY_CTRL);
+		BOOST_CHECK(ctrlState.size() == law.getNumStates());
+	}
+}//====================================================
 
-// BOOST_DATA_TEST_CASE(test_stateConstraint, 
-// 	randAlphaGen ^ randBetaGen ^ data::xrange(5) * data::make(tofTypes), 
-// 	alpha, beta, index, tofType){
+BOOST_DATA_TEST_CASE(test_stateConstraint, 
+	randAlphaGen ^ randBetaGen ^ data::xrange(5) * data::make(tofTypes), 
+	alpha, beta, index, tofType){
 
-// 	(void) index;
+	(void) index;
+	unsigned int lawType = basicLaw | ltlaw::GENERAL | ltlaw::CONST_F;
 
-// 	SysData_cr3bp_lt sys("earth", "moon", 500);
-// 	std::vector<double> ltParams {sqrt(9e-3), 1500};
-// 	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::CONST_F_GENERAL, 
-// 		ltParams);
-// 	std::vector<double> thrustAngles {alpha, beta};
+	SysData_cr3bp_lt sys("earth", "moon", 500);
+	std::vector<double> ltParams {9e-3, 1500};
+	ControlLaw_cr3bp_lt law(lawType, ltParams);
+	std::vector<double> thrustAngles {alpha, beta};
+
+	Arcset_cr3bp_lt halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
+	sim.runSim_manyNodes(emL1Lyap_ic, thrustAngles, 0, emL1Lyap_T/2, 2, 
+		&halfLyapNodeset, &law);
+
+	// Add control continuity constraint for full-rank Jacobian 
+	// (check ALL the available partials)
+	std::vector<double> conData(law.getNumStates(), 1);
+	Constraint ctrlCon(Constraint_tp::CONT_CTRL, 0, conData);
+
+	std::vector<double> stateConData {0.78, 0, NAN, NAN, NAN, NAN, NAN};
+	Constraint stateCon(Constraint_tp::STATE, 1, stateConData);
+
+	halfLyapNodeset.addConstraint(ctrlCon);
+	halfLyapNodeset.addConstraint(stateCon);
+
+	MultShootEngine corrector;
+	corrector.setVerbosity(Verbosity_tp::NO_MSG);
+	// corrector.setVerbosity(Verbosity_tp::NO_MSG);
+	corrector.setTOFType(tofType);
+	corrector.setTol(1e-11);
 	
-// 	//printf("general dir test_stateConstraint, tofType = %d, alpha = %f, beta = %f\n", to_underlying(tofType), alpha, beta);
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, 
+		corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
+}//====================================================
 
-// 	Arcset_cr3bp_lt halfLyapNodeset(&sys), correctedSet(&sys);
-// 	SimEngine sim;
-// 	sim.setVerbosity(Verbosity_tp::NO_MSG);
-// 	sim.runSim_manyNodes(emL1Lyap_ic, thrustAngles, 0, emL1Lyap_T/2, 2, 
-// 		&halfLyapNodeset, &law);
+BOOST_DATA_TEST_CASE(test_HLTConstraint, 
+	randAlphaGen ^ randBetaGen ^ data::xrange(5), 
+	alpha, beta, index){
 
-// 	// Add control continuity constraint for full-rank Jacobian 
-// 	// (check ALL the available partials)
-// 	std::vector<double> conData(law.getNumStates(), 1);
-// 	Constraint ctrlCon(Constraint_tp::CONT_CTRL, 0, conData);
+	(void) index;
+	unsigned int lawType = basicLaw | ltlaw::GENERAL | ltlaw::CONST_F;
 
-// 	std::vector<double> stateConData {0.78, 0, NAN, NAN, NAN, NAN, NAN};
-// 	Constraint stateCon(Constraint_tp::STATE, 1, stateConData);
+	SysData_cr3bp_lt sys("earth", "moon", 500);
+	std::vector<double> ltParams {9e-3, 1500};
+	ControlLaw_cr3bp_lt law(lawType, ltParams);
+	std::vector<double> thrustAngles {alpha, beta};
 
-// 	halfLyapNodeset.addConstraint(ctrlCon);
-// 	halfLyapNodeset.addConstraint(stateCon);
+	Arcset_cr3bp_lt halfLyapArcset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
+	sim.runSim_manyNodes(emL1Lyap_ic, thrustAngles, 0, emL1Lyap_T/2, 3, 
+		&halfLyapArcset, &law);
 
-// 	MultShootEngine corrector;
-// 	corrector.setVerbosity(Verbosity_tp::NO_MSG);
-// 	// corrector.setVerbosity(Verbosity_tp::NO_MSG);
-// 	corrector.setTOFType(tofType);
-// 	corrector.setTol(1e-11);
-	
-// 	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, 
-// 		corrector, Verbosity_tp::NO_MSG));
-// 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
-// }//====================================================
+	MultShootEngine corrector;
+	// corrector.setVerbosity(Verbosity_tp::SOME_MSG);
+	corrector.setVerbosity(Verbosity_tp::NO_MSG);
 
-// BOOST_DATA_TEST_CASE(test_HLTConstraint, 
-// 	randAlphaGen ^ randBetaGen ^ data::xrange(5), 
-// 	alpha, beta, index){
+	double hltConData[] = {-1.6};
+	Constraint hltCon(Constraint_tp::HLT, 2, hltConData, 1);
+	halfLyapArcset.addConstraint(hltCon);
 
-// 	(void) index;
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapArcset,
+		corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapArcset, &correctedSet));
 
-// 	SysData_cr3bp_lt sys("earth", "moon", 500);
-// 	std::vector<double> ltParams {sqrt(9e-3), 1500};
-// 	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::CONST_F_GENERAL, ltParams);
-// 	std::vector<double> thrustAngles {alpha, beta};
-
-// 	Arcset_cr3bp_lt halfLyapArcset(&sys), correctedSet(&sys);
-// 	SimEngine sim;
-// 	sim.setVerbosity(Verbosity_tp::NO_MSG);
-// 	sim.runSim_manyNodes(emL1Lyap_ic, thrustAngles, 0, emL1Lyap_T/2, 3, 
-// 		&halfLyapArcset, &law);
-
-// 	MultShootEngine corrector;
-// 	// corrector.setVerbosity(Verbosity_tp::SOME_MSG);
-// 	corrector.setVerbosity(Verbosity_tp::NO_MSG);
-
-// 	double hltConData[] = {-1.6};
-// 	Constraint hltCon(Constraint_tp::HLT, 2, hltConData, 1);
-// 	halfLyapArcset.addConstraint(hltCon);
-
-// 	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapArcset,
-// 		corrector, Verbosity_tp::NO_MSG));
-// 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapArcset, &correctedSet));
-
-// 	std::vector<double> q = correctedSet.getState(hltCon.getID());
-// 	std::vector<double> g = correctedSet.getNode(hltCon.getID()).getExtraParamVec(PARAMKEY_CTRL);
-// 	q.insert(q.end(), g.begin(), g.end());
-// 	double H = DynamicsModel_cr3bp_lt::getHamiltonian(0, &(q[0]), &sys, &law);
-// 	BOOST_CHECK_SMALL(H - hltConData[0], 1e-12);
-// }//====================================================
-// BOOST_AUTO_TEST_SUITE_END()
+	std::vector<double> q = correctedSet.getState(hltCon.getID());
+	std::vector<double> g = 
+		correctedSet.getNode(hltCon.getID()).getExtraParamVec(PARAMKEY_CTRL);
+	q.insert(q.end(), g.begin(), g.end());
+	double H = DynamicsModel_cr3bp_lt::getHamiltonian(0, &(q[0]), &sys, &law);
+	BOOST_CHECK_SMALL(H - hltConData[0], 1e-12);
+}//====================================================
+BOOST_AUTO_TEST_SUITE_END()
 //-----------------------------------------------------------------------------
 
-// //************************************************************
-// //* CR3BP Earth-Moon Constraints, Variable Thrust Laws
-// //************************************************************
-// BOOST_AUTO_TEST_SUITE(CR3BP_LT_VAR_F)
+//************************************************************
+//* CR3BP Earth-Moon Constraints, Variable Thrust Laws
+//************************************************************
+BOOST_AUTO_TEST_SUITE(CR3BP_LT_VAR_F)
+// The vector varF_lawTypes does not include general pointing,
+// so params = {fmax, Isp} and ctrl = {g} where f = fmax/2*(sin(g) + 1)
 
-// BOOST_DATA_TEST_CASE(test_continuity, 
-// 	data::make(varF_lawTypes) * data::make(tofTypes), lawType, tofType){
+BOOST_DATA_TEST_CASE(test_continuity, 
+	data::make(law_bases) * data::make(law_varF) * data::make(tofTypes), 
+	baseType, fType, tofType){
 
-// 	SysData_cr3bp_lt sys("earth", "moon", 14);
-// 	std::vector<double> ltParams {3000}, ctrlState {sqrt(1e-2)};
+	// Construct the ID
+	unsigned int lawType = basicLaw | baseType | fType;
 
-// 	//printf("varF test_continuity, tofType = %d, lawType = %d\n", to_underlying(tofType), to_underlying(lawType));
+	// Set the parameters and states
+	std::vector<double> ltParams {}, ctrlState {};
+	switch(fType){
+		case ltlaw::VAR_F_BND:
+			ltParams = std::vector<double> {1e-1, 3000};	// {fmax, Isp}
+			ctrlState.push_back(-0.9273);	// yields f = 1e-2
+			break;
+		case ltlaw::VAR_F_UBND:
+			ltParams.push_back(3000);	// {Isp}
+			ctrlState.push_back(-0.5);	// yields f = 1e-2
+			break;
+		default: break;
+	}
+	SysData_cr3bp_lt sys("earth", "moon", 14);
 
-// 	ControlLaw_cr3bp_lt law(lawType, ltParams);
+	ControlLaw_cr3bp_lt law(lawType, ltParams);
 
-// 	Arcset_cr3bp_lt halfLyapArcset(&sys), correctedSet(&sys);
-// 	SimEngine sim;
-// 	sim.setVerbosity(Verbosity_tp::NO_MSG);
-// 	sim.runSim_manyNodes(emL3Lyap_ic, ctrlState, 0, emL3Lyap_T, 2, &halfLyapArcset, &law);
+	Arcset_cr3bp_lt halfLyapArcset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
+	sim.runSim_manyNodes(emL3Lyap_ic, ctrlState, 0, emL3Lyap_T, 2, 
+		&halfLyapArcset, &law);
 
-// 	// Remove final ctrl state; no constraints on final ctrl state, results in column of zeros
-// 	Constraint rmEndCtrl(Constraint_tp::RM_CTRL, halfLyapArcset.getNodeByIx(-1).getID(), nullptr, 0);
-// 	halfLyapArcset.addConstraint(rmEndCtrl);
+	// Remove final ctrl state; no constraints on final ctrl state, 
+	// results in column of zeros
+	Constraint rmEndCtrl(Constraint_tp::RM_CTRL, 
+		halfLyapArcset.getNodeByIx(-1).getID(), nullptr, 0);
+	halfLyapArcset.addConstraint(rmEndCtrl);
 
-// 	MultShootEngine corrector;
-// 	corrector.setVerbosity(Verbosity_tp::NO_MSG);
-// 	corrector.setTOFType(tofType);
+	MultShootEngine corrector;
+	corrector.setVerbosity(Verbosity_tp::NO_MSG);
+	corrector.setTOFType(tofType);
 
-// 	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapArcset, corrector, Verbosity_tp::NO_MSG, false));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapArcset, 
+		corrector, Verbosity_tp::NO_MSG, false));
 
-// 	try{
-// 		corrector.multShoot(&halfLyapArcset, &correctedSet);
-// 	}catch(Exception &e){
-// 		printErr("Error (%s, %s): %s\n", ControlLaw_cr3bp_lt::typeToString(lawType).c_str(),
-// 			MSTOF_tp_cStr(tofType), e.what());
-// 		char filename[128];
-// 		sprintf(filename, "%s_%s_input.mat", ControlLaw_cr3bp_lt::typeToString(lawType).c_str(),
-// 			MSTOF_tp_cStr(tofType));
-// 		halfLyapArcset.saveToMat(filename);
+	try{
+		corrector.multShoot(&halfLyapArcset, &correctedSet);
+	}catch(Exception &e){
+		printErr("Error (%s, %s): %s\n", 
+			ControlLaw_cr3bp_lt::typeToString(lawType).c_str(),
+			MSTOF_tp_cStr(tofType), e.what());
+		char filename[128];
+		sprintf(filename, "%s_%s_input.mat", 
+			ControlLaw_cr3bp_lt::typeToString(lawType).c_str(),
+			MSTOF_tp_cStr(tofType));
+		halfLyapArcset.saveToMat(filename);
 
-// 		sprintf(filename, "%s_%s_corrected.mat", ControlLaw_cr3bp_lt::typeToString(lawType).c_str(),
-// 			MSTOF_tp_cStr(tofType));
-// 		correctedSet.saveToMat(filename);
-// 	}
+		sprintf(filename, "%s_%s_corrected.mat", 
+			ControlLaw_cr3bp_lt::typeToString(lawType).c_str(),
+			MSTOF_tp_cStr(tofType));
+		correctedSet.saveToMat(filename);
+	}
+}//====================================================
 
-// }//====================================================
+BOOST_DATA_TEST_CASE(test_fullContinuity, 
+	data::make(law_bases) * data::make(law_varF) * data::make(tofTypes), 
+	baseType, fType, tofType){
 
-// BOOST_DATA_TEST_CASE(test_fullContinuity, data::make(varF_lawTypes) * data::make(tofTypes), lawType, tofType){
-// 	SysData_cr3bp_lt sys("earth", "moon", 14);
-// 	std::vector<double> ltParams {3000}, ctrlState {sqrt(1e-2)};
+	// Construct the ID
+	unsigned int lawType = basicLaw | baseType | fType;
 
-// 	//printf("varF test_fullContinuity, tofType = %d, lawType = %d\n", to_underlying(tofType), to_underlying(lawType));
+	// Set the parameters and states
+	std::vector<double> ltParams {}, ctrlState {};
+	switch(fType){
+		case ltlaw::VAR_F_BND:
+			ltParams = std::vector<double> {1e-1, 3000};	// {fmax, Isp}
+			ctrlState.push_back(-0.9273);	// yields f = 1e-2
+			break;
+		case ltlaw::VAR_F_UBND:
+			ltParams.push_back(3000);	// {Isp}
+			ctrlState.push_back(-0.5);	// yields f = 1e-2
+			break;
+		default: break;
+	}
 
-// 	ControlLaw_cr3bp_lt law(lawType, ltParams);
+	SysData_cr3bp_lt sys("earth", "moon", 14);
 
-// 	Arcset_cr3bp_lt halfLyapArcset(&sys), correctedSet(&sys);
-// 	SimEngine sim;
-// 	sim.setVerbosity(Verbosity_tp::NO_MSG);
-// 	sim.runSim_manyNodes(emL3Lyap_ic, ctrlState, 0, emL3Lyap_T, 3, &halfLyapArcset, &law);
+	ControlLaw_cr3bp_lt law(lawType, ltParams);
 
-// 	// Constrain the control to be continuous between the final segment and final node
-// 	std::vector<double> ctrlContData(1, law.getNumStates());
-// 	Constraint ctrlCont(Constraint_tp::CONT_CTRL, 1, ctrlContData);
-// 	halfLyapArcset.addConstraint(ctrlCont);
+	Arcset_cr3bp_lt halfLyapArcset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
+	sim.runSim_manyNodes(emL3Lyap_ic, ctrlState, 0, emL3Lyap_T, 3, 
+		&halfLyapArcset, &law);
 
-// 	MultShootEngine corrector;
-// 	corrector.setVerbosity(Verbosity_tp::NO_MSG);
-// 	corrector.setTOFType(tofType);
+	// Constrain the control to be continuous between the final segment and 
+	// final node
+	std::vector<double> ctrlContData(1, law.getNumStates());
+	Constraint ctrlCont(Constraint_tp::CONT_CTRL, 1, ctrlContData);
+	halfLyapArcset.addConstraint(ctrlCont);
 
-// 	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapArcset, corrector, Verbosity_tp::NO_MSG, false));
+	MultShootEngine corrector;
+	corrector.setVerbosity(Verbosity_tp::NO_MSG);
+	corrector.setTOFType(tofType);
 
-// 	try{
-// 		corrector.multShoot(&halfLyapArcset, &correctedSet);
-// 	}catch(Exception &e){
-// 		printErr("Error (%s, %s): %s\n", ControlLaw_cr3bp_lt::typeToString(lawType).c_str(),
-// 			MSTOF_tp_cStr(tofType), e.what());
-// 		char filename[128];
-// 		sprintf(filename, "%s_%s_input.mat", ControlLaw_cr3bp_lt::typeToString(lawType).c_str(),
-// 			MSTOF_tp_cStr(tofType));
-// 		halfLyapArcset.saveToMat(filename);
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapArcset, 
+		corrector, Verbosity_tp::NO_MSG, false));
 
-// 		sprintf(filename, "%s_%s_corrected.mat", ControlLaw_cr3bp_lt::typeToString(lawType).c_str(),
-// 			MSTOF_tp_cStr(tofType));
-// 		correctedSet.saveToMat(filename);
-// 	}
-// }//====================================================
+	try{
+		corrector.multShoot(&halfLyapArcset, &correctedSet);
+	}catch(Exception &e){
+		printErr("Error (%s, %s): %s\n", 
+			ControlLaw_cr3bp_lt::typeToString(lawType).c_str(),
+			MSTOF_tp_cStr(tofType), e.what());
+		char filename[128];
+		sprintf(filename, "%s_%s_input.mat", 
+			ControlLaw_cr3bp_lt::typeToString(lawType).c_str(),
+			MSTOF_tp_cStr(tofType));
+		halfLyapArcset.saveToMat(filename);
 
-// BOOST_DATA_TEST_CASE(test_stateConstraint, data::make(varF_lawTypes) * data::make(tofTypes), lawType, tofType){
-// 	SysData_cr3bp_lt sys("earth", "moon", 500);
-// 	std::vector<double> ltParams {1500}, ctrlState{sqrt(9e-3)};
-// 	ControlLaw_cr3bp_lt law(lawType, ltParams);
+		sprintf(filename, "%s_%s_corrected.mat", 
+			ControlLaw_cr3bp_lt::typeToString(lawType).c_str(),
+			MSTOF_tp_cStr(tofType));
+		correctedSet.saveToMat(filename);
+	}
+}//====================================================
 
-// 	//printf("varF test_stateConstraint, tofType = %d, lawType = %d\n", to_underlying(tofType), to_underlying(lawType));
+BOOST_DATA_TEST_CASE(test_stateConstraint, 
+	data::make(law_bases) * data::make(law_varF) * data::make(tofTypes), 
+	baseType, fType, tofType){
 
-// 	Arcset_cr3bp_lt halfLyapArcset(&sys), correctedSet(&sys);
-// 	SimEngine sim;
-// 	sim.setVerbosity(Verbosity_tp::NO_MSG);
-// 	sim.runSim_manyNodes(emL1Lyap_ic, ctrlState, 0, emL1Lyap_T/2, 3, &halfLyapArcset, &law);
+	// Construct the ID
+	unsigned int lawType = basicLaw | baseType | fType;
 
-// 	MultShootEngine corrector;
-// 	corrector.setVerbosity(Verbosity_tp::NO_MSG);
-// 	corrector.setTOFType(tofType);
-// 	corrector.setFullFinalProp(false);
-// 	// corrector.setVerbosity(Verbosity_tp::NO_MSG);
+	// Set the parameters and states
+	std::vector<double> ltParams {}, ctrlState {};
+	switch(fType){
+		case ltlaw::VAR_F_BND:
+			ltParams = std::vector<double> {1e-1, 1500};	// {fmax, Isp}
+			ctrlState.push_back(-0.9614);	// yields f = 9e-3
+			break;
+		case ltlaw::VAR_F_UBND:
+			ltParams.push_back(1500);	// {Isp}
+			ctrlState.push_back(-0.5114);	// yields f = 9e-3
+			break;
+		default: break;
+	}
 
-// 	double stateConData[] = {0.78, 0, NAN, NAN, NAN, NAN, NAN};
-// 	Constraint stateCon(Constraint_tp::STATE, 2, stateConData, 7);
-// 	halfLyapArcset.addConstraint(stateCon);
+	SysData_cr3bp_lt sys("earth", "moon", 500);
+	ControlLaw_cr3bp_lt law(lawType, ltParams);
 
-// 	// Remove final ctrl state; no constraints on final ctrl state, results in column of zeros
-// 	Constraint rmEndCtrl(Constraint_tp::RM_CTRL, halfLyapArcset.getNodeByIx(-1).getID(), nullptr, 0);
-// 	halfLyapArcset.addConstraint(rmEndCtrl);
+	Arcset_cr3bp_lt halfLyapArcset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
+	sim.runSim_manyNodes(emL1Lyap_ic, ctrlState, 0, emL1Lyap_T/2, 3, 
+		&halfLyapArcset, &law);
 
-// 	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapArcset, corrector, Verbosity_tp::NO_MSG));
-// 	BOOST_REQUIRE_NO_THROW(corrector.multShoot(&halfLyapArcset, &correctedSet));
+	MultShootEngine corrector;
+	corrector.setVerbosity(Verbosity_tp::NO_MSG);
+	corrector.setTOFType(tofType);
+	corrector.setFullFinalProp(false);
+	// corrector.setVerbosity(Verbosity_tp::NO_MSG);
 
-// 	std::vector<double> finalState = correctedSet.getState(stateCon.getID());
-// 	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
-// }//====================================================
+	double stateConData[] = {0.78, 0, NAN, NAN, NAN, NAN, NAN};
+	Constraint stateCon(Constraint_tp::STATE, 2, stateConData, 7);
+	halfLyapArcset.addConstraint(stateCon);
 
-// BOOST_DATA_TEST_CASE(test_endSegCon, data::make(varF_lawTypes) * data::make(tofTypes), lawType, tofType){
-// 	SysData_cr3bp_lt sys("earth", "moon", 500);
-// 	std::vector<double> ltParams {1500}, ctrlState{sqrt(9e-3)};
-// 	ControlLaw_cr3bp_lt law(lawType, ltParams);
+	// Remove final ctrl state; no constraints on final ctrl state, results in 
+	// column of zeros
+	Constraint rmEndCtrl(Constraint_tp::RM_CTRL, 
+		halfLyapArcset.getNodeByIx(-1).getID(), nullptr, 0);
+	halfLyapArcset.addConstraint(rmEndCtrl);
 
-// 	//printf("varF test_endSegCon, tofType = %d, lawType = %d\n", to_underlying(tofType), to_underlying(lawType));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapArcset, 
+		corrector, Verbosity_tp::NO_MSG));
+	BOOST_REQUIRE_NO_THROW(corrector.multShoot(&halfLyapArcset, &correctedSet));
 
-// 	Arcset_cr3bp_lt halfLyapArcset(&sys), correctedSet(&sys);
-// 	SimEngine sim;
-// 	sim.setVerbosity(Verbosity_tp::NO_MSG);
-// 	sim.runSim_manyNodes(emL1Lyap_ic, ctrlState, 0, emL1Lyap_T/2, 3, &halfLyapArcset, &law);
-// 	halfLyapArcset.deleteNode(2);
+	std::vector<double> finalState = correctedSet.getState(stateCon.getID());
+	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
+}//====================================================
 
-// 	MultShootEngine corrector;
-// 	corrector.setVerbosity(Verbosity_tp::NO_MSG);
-// 	corrector.setTOFType(tofType);
-// 	corrector.setFullFinalProp(false);
-// 	// corrector.setVerbosity(Verbosity_tp::NO_MSG);
+BOOST_DATA_TEST_CASE(test_endSegCon, 
+	data::make(law_bases) * data::make(law_varF) * data::make(tofTypes), 
+	baseType, fType, tofType){
 
-// 	double stateConData[] = {0.78, 0, NAN, NAN, NAN, NAN, NAN};
-// 	Constraint stateCon(Constraint_tp::ENDSEG_STATE, 1, stateConData, 7);
-// 	halfLyapArcset.addConstraint(stateCon);
+	// Construct the ID
+	unsigned int lawType = basicLaw | baseType | fType;
 
-// 	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapArcset, corrector, Verbosity_tp::NO_MSG, true));
-// 	BOOST_REQUIRE_NO_THROW(corrector.multShoot(&halfLyapArcset, &correctedSet));
+	// Set the parameters and states
+	std::vector<double> ltParams {}, ctrlState {};
+	switch(fType){
+		case ltlaw::VAR_F_BND:
+			ltParams = std::vector<double> {1e-1, 1500};	// {fmax, Isp}
+			ctrlState.push_back(-0.9614);	// yields f = 9e-3
+			break;
+		case ltlaw::VAR_F_UBND:
+			ltParams.push_back(1500);	// {Isp}
+			ctrlState.push_back(-0.5114);	// yields f = 9e-3
+			break;
+		default: break;
+	}
 
-// 	std::vector<double> fullState = correctedSet.getSegByIx(stateCon.getID()).getStateByRow(-1);
-// 	std::vector<double> finalState(fullState.begin(), fullState.begin()+7);
-// 	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
-// }//====================================================
+	SysData_cr3bp_lt sys("earth", "moon", 500);
+	ControlLaw_cr3bp_lt law(lawType, ltParams);
 
-// BOOST_DATA_TEST_CASE(test_rmState, data::make(varF_lawTypes) * data::make(tofTypes), lawType, tofType){
-// 	SysData_cr3bp_lt sys("earth", "moon", 14);
-// 	std::vector<double> ltParams {1500}, ctrlState{sqrt(1e-2)};
-// 	ControlLaw_cr3bp_lt law(lawType, ltParams);
+	Arcset_cr3bp_lt halfLyapArcset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
+	sim.runSim_manyNodes(emL1Lyap_ic, ctrlState, 0, emL1Lyap_T/2, 3, 
+		&halfLyapArcset, &law);
+	halfLyapArcset.deleteNode(2);
 
-// 	//printf("varF test_rmState, tofType = %d, lawType = %d\n", to_underlying(tofType), to_underlying(lawType));
+	MultShootEngine corrector;
+	corrector.setVerbosity(Verbosity_tp::NO_MSG);
+	corrector.setTOFType(tofType);
+	corrector.setFullFinalProp(false);
+	// corrector.setVerbosity(Verbosity_tp::NO_MSG);
 
-// 	Arcset_cr3bp_lt halfLyapArcset(&sys), correctedSet(&sys);
-// 	SimEngine sim;
-// 	sim.setVerbosity(Verbosity_tp::NO_MSG);
-// 	sim.runSim_manyNodes(emL1Lyap_ic, ctrlState, 0, emL1Lyap_T/2, 3, &halfLyapArcset, &law);
+	double stateConData[] = {0.78, 0, NAN, NAN, NAN, NAN, NAN};
+	Constraint stateCon(Constraint_tp::ENDSEG_STATE, 1, stateConData, 7);
+	halfLyapArcset.addConstraint(stateCon);
 
-// 	MultShootEngine corrector;
-// 	corrector.setVerbosity(Verbosity_tp::NO_MSG);
-// 	corrector.setTOFType(tofType);
-// 	corrector.setTol(1e-11);
-// 	corrector.setFullFinalProp(false);
-// 	// corrector.setVerbosity(Verbosity_tp::NO_MSG);
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapArcset, 
+		corrector, Verbosity_tp::NO_MSG, true));
+	BOOST_REQUIRE_NO_THROW(corrector.multShoot(&halfLyapArcset, &correctedSet));
 
-// 	double stateConData[] = {NAN, 0, NAN, NAN, NAN, NAN, NAN};
-// 	Constraint stateCon(Constraint_tp::STATE, 2, stateConData, 7);
-// 	halfLyapArcset.addConstraint(stateCon);
+	std::vector<double> fullState = 
+		correctedSet.getSegByIx(stateCon.getID()).getStateByRow(-1);
+	std::vector<double> finalState(fullState.begin(), fullState.begin()+7);
+	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
+}//====================================================
 
-// 	Constraint rmState(Constraint_tp::RM_STATE, 0, nullptr, 0);
-// 	halfLyapArcset.addConstraint(rmState);
+BOOST_DATA_TEST_CASE(test_rmState, 
+	data::make(law_bases) * data::make(law_varF) * data::make(tofTypes), 
+	baseType, fType, tofType){
 
-// 	// Remove final ctrl state; no constraints on final ctrl state, results in column of zeros
-// 	Constraint rmEndCtrl(Constraint_tp::RM_CTRL, halfLyapArcset.getNodeByIx(-1).getID(), nullptr, 0);
-// 	halfLyapArcset.addConstraint(rmEndCtrl);
+	// Construct the ID
+	unsigned int lawType = basicLaw | baseType | fType;
 
-// 	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapArcset, corrector, Verbosity_tp::NO_MSG));
-// 	BOOST_REQUIRE_NO_THROW(corrector.multShoot(&halfLyapArcset, &correctedSet));
+	// Set the parameters and states
+	std::vector<double> ltParams {}, ctrlState {};
+	switch(fType){
+		case ltlaw::VAR_F_BND:
+			ltParams = std::vector<double> {1e-1, 3000};	// {fmax, Isp}
+			ctrlState.push_back(-0.9273);	// yields f = 1e-2
+			break;
+		case ltlaw::VAR_F_UBND:
+			ltParams.push_back(3000);	// {Isp}
+			ctrlState.push_back(-0.5);	// yields f = 1e-2
+			break;
+		default: break;
+	}
 
-// 	std::vector<double> finalState = correctedSet.getState(stateCon.getID());
-// 	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
+	SysData_cr3bp_lt sys("earth", "moon", 14);
+	ControlLaw_cr3bp_lt law(lawType, ltParams);
 
-// 	// correctedSet.saveToMat("data/lt_correctedSet.mat");
-// }//====================================================
+	Arcset_cr3bp_lt halfLyapArcset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
+	sim.runSim_manyNodes(emL1Lyap_ic, ctrlState, 0, emL1Lyap_T/2, 3, 
+		&halfLyapArcset, &law);
 
-// BOOST_AUTO_TEST_SUITE_END()
-//-----------------------------------------------------------------------------------------
+	MultShootEngine corrector;
+	corrector.setVerbosity(Verbosity_tp::NO_MSG);
+	corrector.setTOFType(tofType);
+	corrector.setTol(1e-11);
+	corrector.setFullFinalProp(false);
+	// corrector.setVerbosity(Verbosity_tp::NO_MSG);
+
+	double stateConData[] = {NAN, 0, NAN, NAN, NAN, NAN, NAN};
+	Constraint stateCon(Constraint_tp::STATE, 2, stateConData, 7);
+	halfLyapArcset.addConstraint(stateCon);
+
+	Constraint rmState(Constraint_tp::RM_STATE, 0, nullptr, 0);
+	halfLyapArcset.addConstraint(rmState);
+
+	// Remove final ctrl state; no constraints on final ctrl state, results in 
+	// column of zeros
+	Constraint rmEndCtrl(Constraint_tp::RM_CTRL, 
+		halfLyapArcset.getNodeByIx(-1).getID(), nullptr, 0);
+	halfLyapArcset.addConstraint(rmEndCtrl);
+
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapArcset, 
+		corrector, Verbosity_tp::NO_MSG));
+	BOOST_REQUIRE_NO_THROW(corrector.multShoot(&halfLyapArcset, &correctedSet));
+
+	std::vector<double> finalState = correctedSet.getState(stateCon.getID());
+	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
+
+	// correctedSet.saveToMat("data/lt_correctedSet.mat");
+}//====================================================
+
+BOOST_AUTO_TEST_SUITE_END()
+//------------------------------------------------------------------------------
 
 

@@ -113,5 +113,5 @@ static const char PARAMKEY_STATE_EPOCH_DERIV[] = "dqdT";	//!< ExtraParam map key
 // Timestamps for file versioning
 static const char T_V1_9[] = "19:15:00UTC 02/02/2018";		// Switch all low-thrust magnitudes to store as sqrt(f)
 static const char T_V2_0[] = "00:00:00UTC 26/02/2018";		// Introduced timestamps to files
-
+static const char T_V2_1[] = "21:54:00UTC 03/04/2018";		// Changed low-thrust control to new ID with various thrust parameterizations
 }// END of Astrohelion namespace

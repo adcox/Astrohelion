@@ -184,6 +184,9 @@ calcTest: $(OBJECTS)
 conicTest: $(OBJECTS)
 	$(COMP) -I $(INC) $(INC_SYS) $^ test_2bp.cpp $(LDFLAGS) -o $(BIN)/$@
 
+convertLT: $(OBJECTS)
+	$(COMP) -I $(INC) $(INC_SYS) $^  convertLTFiles.cpp $(LDFLAGS) -o $(BIN)/$@	
+
 famGen: $(OBJECTS)
 	$(COMP) -I $(INC) $(INC_SYS) $^ test_famGeneration.cpp $(LDFLAGS) -o $(BIN)/$@
 

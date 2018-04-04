@@ -257,7 +257,7 @@ public:
 	 *	thrust is in the XY-plane and is positive when the z-component is 
 	 *	positive.
 	 */
-	static const unsigned int GENERAL = 1 << 11;		// 00010 000 00 000000
+	static const unsigned int GENERAL = 1 << 11;		// 00001 000 00 000000
 
 	/** \brief Represents a control law with thrust aligned with the velocity 
 	 * 	vector.
@@ -269,7 +269,7 @@ public:
 	 * 	To set the pointing to pro-velocity or anti-velocity, include the
 	 * 	`VEL_PRO` or `VEL_ANTI` flags in the ID.
 	 */
-	static const unsigned int VEL_PT = 2 << 11;			// 00100 000 00 000000
+	static const unsigned int VEL_PT = 2 << 11;			// 00010 000 00 000000
 
 	/** \brief Represents a control law that preserves the natural Hamiltonian, 
 	 * 	i.e., the Jacobi Constant.
@@ -281,7 +281,7 @@ public:
 	 * 	To set the pointing to be left or right w.r.t. the velocity vector,
 	 * 	include the `VEL_LEFT` or `VEL_RIGHT` flags in the ID.
 	 */
-	static const unsigned int CONST_C_2D = 3 << 11;		// 00110 000 00 000000
+	static const unsigned int CONST_C_2D = 3 << 11;		// 00011 000 00 000000
 	
 
 	/** \brief Represents a control law with constant thrust magnitude

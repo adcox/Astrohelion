@@ -98,12 +98,13 @@ double ControlLaw_cr3bp_lt::get_dmdt(double t, const double *s,
 					return -params[0]*pSys->getCharL()/
 						(pSys->getCharT()*params[1]*G_GRAV_0);
 				case VAR_F_BND:
+					// params : {fmax, Isp}
+					// s = {x, y, z, vx, vy, vz, m, g, ...}
+					return -getThrustMag(t, s, pSys)*pSys->getCharL()/
+						(pSys->getCharT()*params[1]*G_GRAV_0);
 				case VAR_F_UBND:
-					// These laws store Isp as a constant parameter and some 
-					// sort of variable to describe the thrust magnitude in 
-					// the state vector,
-					// params : [Isp]
-					// s = {x, y, z, vx, vy, vz, m, f}
+					// params : {Isp}
+					// s = {x, y, z, vx, vy, vz, m, g, ...}
 					return -getThrustMag(t, s, pSys)*pSys->getCharL()/
 						(pSys->getCharT()*params[0]*G_GRAV_0);
 			}
@@ -162,21 +163,23 @@ double ControlLaw_cr3bp_lt::getThrustMag(double t, const double *s,
 		// Variable-Thrust Laws; First, get the thrust magnitude variable
 		switch(lawType & BASE_MASK){
 			case GENERAL:
-				// params = {fmax, ...}
 				// s = {x, y, z, vx, vy, vz, m, alpha, beta, g, ...}
 				g = s[9];
 				break;
 			case VEL_PT:
 			case CONST_C_2D:
-				// params = {fmax, ...}
 				// s = {x, y, z, vx, vy, vz, m, g, ...}
 				g = s[7];
 				break;
 		}
 	}
 	switch(lawType & F_MASK){	
-		case VAR_F_BND: return 0.5*params[0]*(sin(g) + 1);
-		case VAR_F_UBND: return pow(10, 4*g);
+		case VAR_F_BND: 
+			// params = {fmax, ...}
+			return 0.5*params[0]*(sin(g) + 1);
+		case VAR_F_UBND: 
+			// params = {...} (first parameter is likely Isp)
+			return pow(10.0, 4.0*g);
 		default:
 			throw Exception("ControlLaw_cr3bp_lt::getThrustMag: "
 				"Control has unrecognized combo of BASE and F types");
@@ -404,7 +407,7 @@ void ControlLaw_cr3bp_lt::getAccel_ConstC_2D(double t, const double *s,
 		law[1] = -sign*(f/s[6])*s[3]/v;
 		law[2] = 0;
 	}else{
-		printWarn("ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_ConstC_2D: "
+		throw Exception("ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_ConstC_2D: "
 			"Law type is not one of the Const-C types");
 	}
 	
@@ -471,7 +474,7 @@ void ControlLaw_cr3bp_lt::getAccel_AlongVel(double t, const double *s,
 		law[1] = sign*(f/s[6])*s[4]/v;
 		law[2] = sign*(f/s[6])*s[5]/v;
 	}else{
-		printWarn("ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_AlongVel: "
+		throw Exception("ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_AlongVel: "
 			"Law type is not one of the parallel-to-velocity types");
 	}
 
@@ -533,7 +536,7 @@ void ControlLaw_cr3bp_lt::getAccel_GeneralDir(double t, const double *s,
 		law[1] = (f/s[6])*cos(s[8])*sin(s[7]);	// a_y
 		law[2] = (f/s[6])*sin(s[8]);			// a_z
 	}else{
-		printWarn("ControlLaw_cr3bp_lt::getAccel_GeneralDir: "
+		throw Exception("ControlLaw_cr3bp_lt::getAccel_GeneralDir: "
 			"Law type is not general direction");
 	}
 
@@ -807,26 +810,34 @@ void ControlLaw_cr3bp_lt::getPartials_EOMsWRTCtrl_VarF(double t, const double *s
 			// params = {fmax, Isp}
 			double dfdg = 0.5*params[0]*cos(s[7]);
 			if(f > 0){
-				partials[numStates*3 + 0] = dfdg*a_lt[0]/f;
-				partials[numStates*4 + 0] = dfdg*a_lt[1]/f;
-				partials[numStates*5 + 0] = dfdg*a_lt[2]/f;
+				// partials of xddot (3), yddot (4), zddot(5) and mdot (5)
+				// w.r.t. g
+				partials[numStates*3 + 0] = dfdg*a_lt[0]/(f*s[6]);
+				partials[numStates*4 + 0] = dfdg*a_lt[1]/(f*s[6]);
+				partials[numStates*5 + 0] = dfdg*a_lt[2]/(f*s[6]);
 				partials[numStates*6 + 0] = -1*dfdg*pSys->getCharL()/
 					(params[1]*G_GRAV_0*pSys->getCharT());
 			}
 		}else if( (lawType & F_MASK) == VAR_F_UBND){
 			// a_lt = 10^(4g)*u
 			// params = {Isp}
-			partials[numStates*3 + 0] = 4*a_lt[0];
-			partials[numStates*4 + 0] = 4*a_lt[1];
-			partials[numStates*5 + 0] = 4*a_lt[2];
-			partials[numStates*6 + 0] = -4*f*pSys->getCharL()/
+			double coeff = log(10)*4;
+			// partials of xddot (3), yddot (4), zddot(5) and mdot (5) w.r.t. g
+			partials[numStates*3 + 0] = coeff*a_lt[0];
+			partials[numStates*4 + 0] = coeff*a_lt[1];
+			partials[numStates*5 + 0] = coeff*a_lt[2];
+			partials[numStates*6 + 0] = -coeff*f*pSys->getCharL()/
 				(params[0]*G_GRAV_0*pSys->getCharT());
 		}else{
-			printWarn("ControlLaw_cr3bp_lt::getPartials_EOMsWRTCtrl_VarF: "
+			printErr("Control Law: \n");
+			print();
+			throw Exception("ControlLaw_cr3bp_lt::getPartials_EOMsWRTCtrl_VarF: "
 				"thrust parameterization is not supported.");
 		}
 	}else{
-		printWarn("ControlLaw_cr3bp_lt::getPartials_EOMsWRTCtrl_VarF: "
+		printErr("Control Law: \n");
+		print();
+		throw Exception("ControlLaw_cr3bp_lt::getPartials_EOMsWRTCtrl_VarF: "
 			"Law type does not match this function");
 	}
 }//====================================================
@@ -876,43 +887,51 @@ void ControlLaw_cr3bp_lt::getPartials_EOMsWRTCtrl_GeneralDir(double t,
 		 *		row 6 = partialx of mdot w.r.t. ctrl
 		 */
 		
-		partials[numStates*3 + 0] = -f/s[6] * cos(s[8])*sin(s[7]);		// partial of xddot w.r.t. alpha
-		partials[numStates*3 + 1] = -f/s[6] * sin(s[8])*cos(s[7]);		// partial of xddot w.r.t. beta
-		partials[numStates*4 + 0] = f/s[6] * cos(s[8]) * cos(s[7]);		// partial of yddot w.r.t. alpha
-		partials[numStates*4 + 1] = -f/s[6] * sin(s[8])*sin(s[7]);		// partial of yddot w.r.t. beta
-		partials[numStates*5 + 1] = f/s[6] * cos(s[8]);					// partial of zddot w.r.t. beta
+		// Partials of xddot (3), yddot (4), zddot (5), and mdot (6) w.r.t.
+		// alpha (0) and beta (1)
+		partials[numStates*3 + 0] = -f/s[6] * cos(s[8])*sin(s[7]);
+		partials[numStates*3 + 1] = -f/s[6] * sin(s[8])*cos(s[7]);
+		partials[numStates*4 + 0] = f/s[6] * cos(s[8]) * cos(s[7]);
+		partials[numStates*4 + 1] = -f/s[6] * sin(s[8])*sin(s[7]);
+		partials[numStates*5 + 1] = f/s[6] * cos(s[8]);
 
-		double dfdg = 0;
-		if((lawType & F_MASK) == VAR_F_BND){
-			// a_lt = (1/2)*fmax*(sin(g) + 1)*u
-			// params = {fmax, Isp}
-			dfdg = 0.5*params[0]*cos(s[7]);
-			
-			// partial of mdot w.r.t. g
-			partials[numStates*6 + 2] = -dfdg*pSys->getCharL()/
-				(params[1]*G_GRAV_0*pSys->getCharT());
-		}else if( (lawType & F_MASK) == VAR_F_UBND){
-			// a_lt = 10^(4g)*u,
-			// params = {Isp}
-			dfdg = 4*f;
+		// Additional partials for variable-thrust paramaterizations
+		if( (lawType & F_MASK) != CONST_F){
+			double dfdg = 0;
+			if((lawType & F_MASK) == VAR_F_BND){
+				// a_lt = (1/2)*fmax*(sin(g) + 1)*u
+				// params = {fmax, Isp}
+				dfdg = 0.5*params[0]*cos(s[7]);
+				
+				// partial of mdot w.r.t. g
+				partials[numStates*6 + 2] = -dfdg*pSys->getCharL()/
+					(params[1]*G_GRAV_0*pSys->getCharT());
+			}else if( (lawType & F_MASK) == VAR_F_UBND){
+				// a_lt = 10^(4g)*u,
+				// params = {Isp}
+				dfdg = 4*f;
 
-			// partial of mdot w.r.t. g
-			partials[numStates*6 + 2] = -dfdg*pSys->getCharL()/
-				(params[1]*G_GRAV_0*pSys->getCharT());
-		}else{
-			printWarn("ControlLaw_cr3bp_lt::getPartials_EOMsWRTCtrl_VarF: "
-				"thrust parameterization is not supported.");
+				// partial of mdot w.r.t. g
+				partials[numStates*6 + 2] = -dfdg*pSys->getCharL()/
+					(params[1]*G_GRAV_0*pSys->getCharT());
+			}else{
+				printErr("Control Law:\n");
+				print();
+				throw Exception("ControlLaw_cr3bp_lt::getPartials_EOMsWRTCtrl_VarF: "
+					"thrust parameterization is not supported.");
+			}
+
+			if(dfdg != 0){
+				// partials of xddot (3), yddot (4), and zddot (5) w.r.t. g
+				partials[numStates*3 + 2] = dfdg*cos(s[8])*cos(s[7])/s[6];
+				partials[numStates*4 + 2] = dfdg*cos(s[8])*sin(s[7])/s[6];
+				partials[numStates*5 + 2] = dfdg*sin(s[8])/s[6];
+			}
 		}
-
-		if(dfdg != 0){
-			// partials of xddot (3), yddot (4), and zddot (5) w.r.t. g
-			partials[numStates*3 + 2] = dfdg*cos(s[8])*cos(s[7])/s[6];
-			partials[numStates*4 + 2] = dfdg*cos(s[8])*sin(s[7])/s[6];
-			partials[numStates*5 + 2] = dfdg*sin(s[8])/s[6];
-		}
-
 	}else{
-		printWarn("ControlLaw_cr3bp_lt::getAccel_GeneralDir: "
+		printErr("Control Law:\n");
+		print();
+		throw Exception("ControlLaw_cr3bp_lt::getAccel_GeneralDir: "
 			"Law type is not general direction");
 	}
 
@@ -997,11 +1016,11 @@ void ControlLaw_cr3bp_lt::init(){
 	// }
 
 	if(params.size() != numParams){
-		char msg[128];
-		sprintf(msg, "ControlLaw_cr3bp_lt::init: "
-			"Expect %d input params, but received %zu", numParams,
-			params.size());
-		throw Exception(msg);
+		// char msg[128];
+		// sprintf(msg, "ControlLaw_cr3bp_lt::init: "
+		// 	"Expect %d input params, but received %zu", numParams,
+		// 	params.size());
+		// throw Exception(msg);
 	}
 }//====================================================
 

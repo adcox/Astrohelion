@@ -3162,7 +3162,8 @@ bool BaseArcset::readVar_SegCtrlLaw(matvar_t *pVar,
 			
 			if(fields){
 
-				// Loop through the controllers; should be same as number of segs (checked above)
+				// Loop through the controllers; should be same as number of 
+				// segs (checked above)
 				for(unsigned int s = 0; s < numStructs; s++){
 					unsigned int id = 0;
 					std::vector<double> params;
@@ -3179,18 +3180,23 @@ bool BaseArcset::readVar_SegCtrlLaw(matvar_t *pVar,
 										oneField->data_type == MAT_T_INT32){
 										
 										unsigned int *intData = \
-											static_cast<unsigned int *>(oneField->data);
+											static_cast<unsigned int *>(
+												oneField->data);
 
 										if(intData)
 											id = intData[0];
 										else{
 											Mat_VarFree(pVar);
-											throw Exception("BaseArcset::readVar_SegCtrlLaw: controller ID data is nullptr");
+											throw Exception("BaseArcset::"
+												"readVar_SegCtrlLaw: controller "
+												"ID data is nullptr");
 										}
 									}else{
 										Mat_VarFree(pVar);
-										throw Exception("BaseArcset::readVar_SegCtrlLaw: controller ID field has"
-											" wrong class type or data type");
+										throw Exception("BaseArcset::"
+											"readVar_SegCtrlLaw: controller ID "
+											"field has wrong class type or "
+											"data type");
 									}
 									break;
 								}//-----------------------------------
@@ -3208,8 +3214,11 @@ bool BaseArcset::readVar_SegCtrlLaw(matvar_t *pVar,
 											static_cast<double *>(oneField->data);
 
 										if(doubleData){
-											unsigned int len = oneField->dims[0] * oneField->dims[1];
-											params.insert(params.begin(), doubleData, doubleData + len);	
+											unsigned int len = 
+												oneField->dims[0] * 
+												oneField->dims[1];
+											params.insert(params.begin(), 
+												doubleData, doubleData + len);	
 										}else{
 											Mat_VarFree(pVar);
 											throw Exception("BaseArcset::readVar_SegCtrlLaw: "
@@ -3230,10 +3239,17 @@ bool BaseArcset::readVar_SegCtrlLaw(matvar_t *pVar,
 					// Only proceed if the control is nontrivial
 					if(id != ControlLaw::NO_CTRL){
 
-						// Allocate a new control law on the stack; by using a function in 
-						// the DynamicsModel, we ensure that the system-specific derived class
-						// is constructed rather than the base class ControlLaw.
-						ControlLaw *newLaw = pSysData->getDynamicsModel()->createControlLaw(id, params);
+						if(id < (1<<11)){
+							// likely saved with old IDs
+							ControlLaw::convertID(id);
+						}
+						// Allocate a new control law on the stack; by using a 
+						// function in the DynamicsModel, we ensure that the 
+						// system-specific derived class is constructed rather 
+						// than the base class ControlLaw.
+						ControlLaw *newLaw = 
+							pSysData->getDynamicsModel()->createControlLaw(id, 
+								params);
 
 						// Check to see if the controller has been loaded already
 						bool foundDuplicate = false;

@@ -112,32 +112,6 @@ double ControlLaw_cr3bp_lt::get_dmdt(double t, const double *s,
 		default:
 			return 0;
 	}
-	// switch(lawType){
-	// 	case Law_tp::CONST_FC_2D_LEFT:
-	// 	case Law_tp::CONST_FC_2D_RIGHT:
-	// 	case Law_tp::CONST_F_PRO_VEL:
-	// 	case Law_tp::CONST_F_ANTI_VEL:
-	// 	case Law_tp::CONST_F_GENERAL:
-	// 		// These laws all store thrust magnitude and Isp as cosntant parameters
-	// 		// params : [f, Isp]
-	// 		// nondimensional mass flow rate; simplified a bit by cancelling some of the constants
-	// 		return -params[0]*pSys->getCharL()/
-	// 			(pSys->getCharT()*params[1]*G_GRAV_0);
-	// 	case Law_tp::VAR_F_CONST_C_2D_LEFT:
-	// 	case Law_tp::VAR_F_CONST_C_2D_RIGHT:
-	// 	case Law_tp::VAR_F_PRO_VEL:
-	// 	case Law_tp::VAR_F_ANTI_VEL:
-	// 	case Law_tp::VAR_F_GENERAL:
-	// 		// These laws all store thrust magnitude as s[7] and Isp as a constant parameter
-	// 		// params: {Isp}
-	// 		// s: {x, y, z, vx, vy, vz, m, sqrt(f), ...}
-	// 		assert(pSys->getDynamicsModel()->getCoreStateSize() == 7);
-	// 		return -s[7]*s[7]*pSys->getCharL()/
-	// 			(pSys->getCharT()*params[0]*G_GRAV_0);
-	// 	case Law_tp::CONST_MF_GENERAL:
-	// 	default:
-	// 		return 0;
-	// }
 }//====================================================
 
 /**
@@ -224,31 +198,6 @@ void ControlLaw_cr3bp_lt::getOutput(double t, const double *s,
 		default:
 			ControlLaw::getOutput(t, s, pSysData, output, len);
 	}
-	// switch(lawType){
-	// 	case Law_tp::CONST_FC_2D_LEFT:
-	// 	case Law_tp::VAR_F_CONST_C_2D_LEFT:
-	// 		getAccel_ConstC_2D(t, s, pSysData_lt, output, len);
-	// 		break;
-	// 	case Law_tp::CONST_FC_2D_RIGHT:
-	// 	case Law_tp::VAR_F_CONST_C_2D_RIGHT:
-	// 		getAccel_ConstC_2D(t, s, pSysData_lt, output, len);
-	// 		break;
-	// 	case Law_tp::CONST_F_PRO_VEL:
-	// 	case Law_tp::VAR_F_PRO_VEL:
-	// 		getAccel_AlongVel(t, s, pSysData_lt, output, len);
-	// 		break;
-	// 	case Law_tp::CONST_F_ANTI_VEL:
-	// 	case Law_tp::VAR_F_ANTI_VEL:
-	// 		getAccel_AlongVel(t, s, pSysData_lt, output, len);
-	// 		break;
-	// 	case Law_tp::CONST_F_GENERAL:
-	// 	case Law_tp::VAR_F_GENERAL:
-	// 	case Law_tp::CONST_MF_GENERAL:
-	// 		getAccel_GeneralDir(t, s, pSysData_lt, output, len);
-	// 		break;
-	// 	default:
-	// 		ControlLaw::getOutput(t, s, pSysData, output, len);
-	// }
 }//====================================================
 
 /**
@@ -289,31 +238,6 @@ void ControlLaw_cr3bp_lt::getPartials_OutputWRTCoreState(double t,
 				partials, len);
 	}
 
-	// switch(lawType){
-	// 	case Law_tp::CONST_FC_2D_LEFT:
-	// 	case Law_tp::VAR_F_CONST_C_2D_LEFT:
-	// 		getPartials_AccelWRTCore_ConstC_2D(t, s, pSysData_lt, partials, len);
-	// 		break;
-	// 	case Law_tp::CONST_FC_2D_RIGHT:
-	// 	case Law_tp::VAR_F_CONST_C_2D_RIGHT:
-	// 		getPartials_AccelWRTCore_ConstC_2D(t, s, pSysData_lt, partials, len);
-	// 		break;
-	// 	case Law_tp::CONST_F_PRO_VEL:
-	// 	case Law_tp::VAR_F_PRO_VEL:
-	// 		getPartials_AccelWRTCore_AlongVel(t, s, pSysData_lt, partials, len);
-	// 		break;
-	// 	case Law_tp::CONST_F_ANTI_VEL:
-	// 	case Law_tp::VAR_F_ANTI_VEL:
-	// 		getPartials_AccelWRTCore_AlongVel(t, s, pSysData_lt, partials, len);
-	// 		break;
-	// 	case Law_tp::CONST_F_GENERAL:
-	// 	case Law_tp::VAR_F_GENERAL:
-	// 	case Law_tp::CONST_MF_GENERAL:
-	// 		getPartials_AccelWRTCore_GeneralDir(t, s, pSysData_lt, partials, len);
-	// 		break;
-	// 	default:
-	// 		ControlLaw::getPartials_OutputWRTCoreState(t, s, pSys, partials, len);
-	// }
 }//====================================================
 
 /**
@@ -356,22 +280,6 @@ void ControlLaw_cr3bp_lt::getPartials_EOMsWRTCtrlState(double t,
 		ControlLaw::getPartials_EOMsWRTCtrlState(t, s, pSys, partials, len);
 	}
 	
-	// switch(lawType){
-	// 	case Law_tp::CONST_F_GENERAL:
-	// 	case Law_tp::CONST_MF_GENERAL:
-	// 	case Law_tp::VAR_F_GENERAL:
-	// 		getPartials_EOMsWRTCtrl_GeneralDir(t, s, pSysData_lt, partials, len);
-	// 		break;
-	// 	case Law_tp::VAR_F_CONST_C_2D_LEFT:
-	// 	case Law_tp::VAR_F_CONST_C_2D_RIGHT:
-	// 	case Law_tp::VAR_F_PRO_VEL:
-	// 	case Law_tp::VAR_F_ANTI_VEL:
-	// 		getPartials_EOMsWRTCtrl_VarF(t, s, pSysData_lt, partials, len);
-	// 		break;
-	// 	default:
-	// 		// Other control laws default to the base behavior (all partials are zero)
-	// 		ControlLaw::getPartials_EOMsWRTCtrlState(t, s, pSys, partials, len);	
-	// }
 }//====================================================
 
 //-----------------------------------------------------------------------------
@@ -411,36 +319,6 @@ void ControlLaw_cr3bp_lt::getAccel_ConstC_2D(double t, const double *s,
 			"Law type is not one of the Const-C types");
 	}
 	
-	// if(	lawType == Law_tp::CONST_FC_2D_LEFT || 
-	// 	lawType == Law_tp::CONST_FC_2D_RIGHT || 
-	// 	lawType == Law_tp::VAR_F_CONST_C_2D_LEFT ||
-	// 	lawType == Law_tp::VAR_F_CONST_C_2D_RIGHT){
-
-	// 	// Laws with type < 1000 are constant thrust, so f is in params;
-	// 	// above 1000, thrust is a control state
-	// 	double f = lawType < 1000 ? params[0] : s[7];
-
-	// 	if(lawType == Law_tp::VAR_F_CONST_C_2D_RIGHT ||
-	// 		lawType == Law_tp::VAR_F_CONST_C_2D_LEFT){
-	// 		f *= f;	// we store sqrt(f), so square it.
-	// 	}
-
-	// 	// +1 for RIGHT, -1 for LEFT
-	// 	int sign = (lawType == Law_tp::CONST_FC_2D_RIGHT || 
-	// 		lawType == Law_tp::VAR_F_CONST_C_2D_RIGHT) ? 1 : -1;
-
-	// 	if(len < numOutputs)
-	// 		throw Exception("ControlLaw_cr3bp_lt::getLaw_ConstC_2D: "
-	// 			"law data length must be at least 3!");
-
-	// 	double v = sqrt(s[3]*s[3] + s[4]*s[4]);
-	// 	law[0] = sign*(f/s[6])*s[4]/v;
-	// 	law[1] = -sign*(f/s[6])*s[3]/v;
-	// 	law[2] = 0;
-	// }else{
-	// 	printWarn("ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_ConstC_2D: "
-	// 		"Law type is not one of the Const-C types");
-	// }
 	(void) pSys;
 	(void) t;
 }//====================================================
@@ -478,32 +356,6 @@ void ControlLaw_cr3bp_lt::getAccel_AlongVel(double t, const double *s,
 			"Law type is not one of the parallel-to-velocity types");
 	}
 
-	// if(lawType == Law_tp::CONST_F_PRO_VEL ||
-	// 	lawType == Law_tp::CONST_F_ANTI_VEL ||
-	// 	lawType == Law_tp::VAR_F_PRO_VEL ||
-	// 	lawType == Law_tp::VAR_F_ANTI_VEL){
-
-	// 	// Laws with type < 1000 are constant thrust, so f is in params; above 1000, thrust is a control state
-	// 	double f = lawType < 1000 ? params[0] : s[7];
-	// 	f *= f;	// we store sqrt(f), so square it.
-
-	// 	// +1 for PRO, -1 for ANTI
-	// 	int sign = (lawType == Law_tp::CONST_F_PRO_VEL ||
-	// 		lawType == Law_tp::VAR_F_PRO_VEL) ? 1 : -1;
-
-	// 	if(len < numOutputs)
-	// 		throw Exception("ControlLaw_cr3bp_lt::getLaw_CONST_F_PRO_VEL: "
-	// 			"law data length must be at least 3!");
-
-	// 	double v = sqrt(s[3]*s[3] + s[4]*s[4] + s[5]*s[5]);
-	// 	law[0] = sign*(f/s[6])*s[3]/v;
-	// 	law[1] = sign*(f/s[6])*s[4]/v;
-	// 	law[2] = sign*(f/s[6])*s[5]/v;
-	// }else{
-	// 	printWarn("ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_AlongVel: "
-	// 		"Law type is not one of the parallel-to-velocity types");
-	// }
-
 	(void) pSys;
 	(void) t;
 }//====================================================
@@ -539,31 +391,6 @@ void ControlLaw_cr3bp_lt::getAccel_GeneralDir(double t, const double *s,
 		throw Exception("ControlLaw_cr3bp_lt::getAccel_GeneralDir: "
 			"Law type is not general direction");
 	}
-
-	// if(lawType == Law_tp::CONST_F_GENERAL ||
-	// 	lawType == Law_tp::VAR_F_GENERAL ||
-	// 	lawType == Law_tp::CONST_MF_GENERAL){
-
-	// 	// Laws with type < 1000 are constant thrust, so f is in params; 
-	// 	// above 1000, thrust is a control state
-	// 	double f = lawType < 1000 ? params[0] : s[7];
-	// 	f *= f;	// we store sqrt(f), so square it.
-
-	// 	// Direction is stored in the state variables after the core states
-	// 	double alpha = lawType < 1000 ? s[7] : s[8];
-	// 	double beta = lawType < 1000 ? s[8] : s[9];
-
-	// 	if(len < numOutputs)
-	// 		throw Exception("ControlLaw_cr3bp_lt::getLaw_GeneralDir: "
-	// 			"law data length must be at least 3!");
-
-	// 	law[0] = (f/s[6])*cos(beta)*cos(alpha);	// a_x
-	// 	law[1] = (f/s[6])*cos(beta)*sin(alpha);	// a_y
-	// 	law[2] = (f/s[6])*sin(beta);			// a_z
-	// }else{
-	// 	printWarn("ControlLaw_cr3bp_lt::getAccel_GeneralDir: "
-	// 		"Law type is not general direction");
-	// }
 
 	(void) pSys;
 	(void) t;
@@ -984,43 +811,12 @@ void ControlLaw_cr3bp_lt::init(){
 			break;
 	}
 
-	// switch(lawType){
-	// 	case Law_tp::CONST_FC_2D_LEFT:
-	// 	case Law_tp::CONST_FC_2D_RIGHT:
-	// 	case Law_tp::CONST_F_PRO_VEL:
-	// 	case Law_tp::CONST_F_ANTI_VEL:
-	// 		numParams = 2;	// {f, Isp}
-	// 		numStates = 0;	// dir is fcn of other state var; no need for states
-	// 		numOutputs = 3;	// {ax, ay, az}
-	// 		break;
-	// 	case Law_tp::CONST_F_GENERAL:
-	// 	case Law_tp::CONST_MF_GENERAL:
-	// 		numParams = 2;	// {f, Isp}
-	// 		numStates = 2;	// {alpha, beta} orient vector in 3D space
-	// 		numOutputs = 3;	// {ax, ay, az}
-	// 		break;
-	// 	case Law_tp::VAR_F_CONST_C_2D_LEFT:
-	// 	case Law_tp::VAR_F_CONST_C_2D_RIGHT:
-	// 	case Law_tp::VAR_F_PRO_VEL:
-	// 	case Law_tp::VAR_F_ANTI_VEL:
-	// 		numParams = 1;	// {Isp}
-	// 		numStates = 1;	// {f}; dir is fcn of other state variables
-	// 		numOutputs = 3;	// {ax, ay, az}
-	// 		break;
-	// 	case Law_tp::VAR_F_GENERAL:
-	// 		numParams = 1;	// {Isp}
-	// 		numStates = 3;	// {f, alpha, beta}
-	// 		numOutputs = 3;	// {ax, ay, az}
-	// 	default:
-	// 		ControlLaw::init();
-	// }
-
 	if(params.size() != numParams){
-		// char msg[128];
-		// sprintf(msg, "ControlLaw_cr3bp_lt::init: "
-		// 	"Expect %d input params, but received %zu", numParams,
-		// 	params.size());
-		// throw Exception(msg);
+		char msg[128];
+		sprintf(msg, "ControlLaw_cr3bp_lt::init: "
+			"Expect %d input params, but received %zu", numParams,
+			params.size());
+		throw Exception(msg);
 	}
 }//====================================================
 
@@ -1058,22 +854,6 @@ std::string ControlLaw_cr3bp_lt::typeToString(unsigned int id){
 	}
 
 	return out;
-
-	// switch(id){
-	// 	case Law_tp::CONST_FC_2D_LEFT: return "Const. Thrust, Jacobi-Preserving, 2D, Left";
-	// 	case Law_tp::CONST_FC_2D_RIGHT: return "Const. Thrust, Jacobi-Preserving, 2D, Right";
-	// 	case Law_tp::CONST_F_PRO_VEL: return "Const. Thrust, Prograde Velocity";
-	// 	case Law_tp::CONST_F_ANTI_VEL: return "Const. Thrust, Anti-Velocity";
-	// 	case Law_tp::CONST_F_GENERAL: return "Const. Thrust, General Direction";
-	// 	case Law_tp::VAR_F_CONST_C_2D_LEFT: return "Var. Thrust, Jacobi-Preserving, 2D, Left";
-	// 	case Law_tp::VAR_F_CONST_C_2D_RIGHT: return "Var. Thrust, Jacobi-Preserving, 2D, Right";
-	// 	case Law_tp::VAR_F_PRO_VEL: return "Var. Thrust, Prograde Velocity";
-	// 	case Law_tp::VAR_F_ANTI_VEL: return "Var. Thrust, Anti-Velocity";
-	// 	case Law_tp::VAR_F_GENERAL: return "Var. Thrust, General Direction";
-	// 	case Law_tp::CONST_MF_GENERAL: return "Const. Thrust & Mass, General Direction";
-	// 	default:
-	// 		return ControlLaw::typeToString(id);
-	// }
 }//====================================================
 
 /**

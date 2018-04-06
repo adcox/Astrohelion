@@ -571,7 +571,7 @@ void ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_GeneralDir(double t,
 		 */
 		partials[7*0 + 6] = -f*cos(s[8])*cos(s[7])/(s[6]*s[6]);	// dax/dm
 		partials[7*1 + 6] = -f*cos(s[8])*sin(s[7])/(s[6]*s[6]);	// day/dm
-		partials[7*2 + 6] = -f*sin(s[8])/(s[6]*s[6]);				// daz/dm
+		partials[7*2 + 6] = -f*sin(s[8])/(s[6]*s[6]);			// daz/dm
 	}else{
 		printWarn("ControlLaw_cr3bp_lt::getAccel_GeneralDir: "
 			"Law type is not general direction");
@@ -736,7 +736,7 @@ void ControlLaw_cr3bp_lt::getPartials_EOMsWRTCtrl_GeneralDir(double t,
 			}else if( (lawType & F_MASK) == VAR_F_UBND){
 				// a_lt = 10^(4g)*u,
 				// params = {Isp}
-				dfdg = 4*f;
+				dfdg = log(10)*4*f;
 
 				// partial of mdot w.r.t. g
 				partials[numStates*6 + 2] = -dfdg*pSys->getCharL()/

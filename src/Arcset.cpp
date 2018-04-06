@@ -527,10 +527,10 @@ void Arcset::saveToMat(const char* filename, Save_tp saveTp) const{
 	}else{
 		try{
 			saveCmds_toFile(matfp, saveTp);
-		}catch(Exception &E){
+		}catch(const Exception &E){
 			Mat_Close(matfp);
 			throw E;
-		}catch(std::exception &e){
+		}catch(const std::exception &e){
 			Mat_Close(matfp);
 			throw e;
 		}
@@ -554,43 +554,47 @@ void Arcset::saveToStruct(matvar_t *pStruct, unsigned int ix, Save_tp saveTp) co
  *  @param pMatFile pointer to an open Matlab file
  */
 void Arcset::saveCmds_toFile(mat_t* pMatFile, Save_tp saveTp) const{
-	matvar_t *pLinkTable = createVar_LinkTable(VARNAME_LINKTABLE);
-	saveVar(pMatFile, pLinkTable, VARNAME_LINKTABLE, MAT_COMPRESSION_NONE);
+	try{
+		matvar_t *pLinkTable = createVar_LinkTable(VARNAME_LINKTABLE);
+		saveVar(pMatFile, pLinkTable, VARNAME_LINKTABLE, MAT_COMPRESSION_NONE);
 
-	matvar_t *pNodeState = createVar_NodeState(saveTp, VARNAME_NODESTATE);
-	saveVar(pMatFile, pNodeState, VARNAME_NODESTATE, MAT_COMPRESSION_NONE);
+		matvar_t *pNodeState = createVar_NodeState(saveTp, VARNAME_NODESTATE);
+		saveVar(pMatFile, pNodeState, VARNAME_NODESTATE, MAT_COMPRESSION_NONE);
 
-	matvar_t *pNodeStateDeriv = createVar_NodeStateDeriv(saveTp, VARNAME_STATE_DERIV);
-	saveVar(pMatFile, pNodeStateDeriv, VARNAME_STATE_DERIV, MAT_COMPRESSION_NONE);
+		matvar_t *pNodeStateDeriv = createVar_NodeStateDeriv(saveTp, VARNAME_STATE_DERIV);
+		saveVar(pMatFile, pNodeStateDeriv, VARNAME_STATE_DERIV, MAT_COMPRESSION_NONE);
 
-	matvar_t *pNodeEpoch = createVar_NodeEpoch(saveTp, VARNAME_NODETIME);
-	saveVar(pMatFile, pNodeEpoch, VARNAME_NODETIME, MAT_COMPRESSION_NONE);
+		matvar_t *pNodeEpoch = createVar_NodeEpoch(saveTp, VARNAME_NODETIME);
+		saveVar(pMatFile, pNodeEpoch, VARNAME_NODETIME, MAT_COMPRESSION_NONE);
 
-	matvar_t *pNodeCtrl = createVar_NodeCtrl(saveTp, VARNAME_NODECTRL);
-	saveVar(pMatFile, pNodeCtrl, VARNAME_NODECTRL, MAT_COMPRESSION_NONE);
+		matvar_t *pNodeCtrl = createVar_NodeCtrl(saveTp, VARNAME_NODECTRL);
+		saveVar(pMatFile, pNodeCtrl, VARNAME_NODECTRL, MAT_COMPRESSION_NONE);
 
-	matvar_t *pSegState = createVar_SegState(saveTp, VARNAME_SEGSTATE);
-	saveVar(pMatFile, pSegState, VARNAME_SEGSTATE, MAT_COMPRESSION_NONE);
+		matvar_t *pSegState = createVar_SegState(saveTp, VARNAME_SEGSTATE);
+		saveVar(pMatFile, pSegState, VARNAME_SEGSTATE, MAT_COMPRESSION_NONE);
 
-	matvar_t *pSegTime = createVar_SegTime(saveTp, VARNAME_SEGTIME);
-	saveVar(pMatFile, pSegTime, VARNAME_SEGTIME, MAT_COMPRESSION_NONE);
+		matvar_t *pSegTime = createVar_SegTime(saveTp, VARNAME_SEGTIME);
+		saveVar(pMatFile, pSegTime, VARNAME_SEGTIME, MAT_COMPRESSION_NONE);
 
-	matvar_t *pSegTOF = createVar_SegTOF(saveTp, VARNAME_TOF);
-	saveVar(pMatFile, pSegTOF, VARNAME_TOF, MAT_COMPRESSION_NONE);
+		matvar_t *pSegTOF = createVar_SegTOF(saveTp, VARNAME_TOF);
+		saveVar(pMatFile, pSegTOF, VARNAME_TOF, MAT_COMPRESSION_NONE);
 
-	matvar_t *pSTM = createVar_SegSTM(saveTp, VARNAME_STM);
-	saveVar(pMatFile, pSTM, VARNAME_STM, MAT_COMPRESSION_NONE);
+		matvar_t *pSTM = createVar_SegSTM(saveTp, VARNAME_STM);
+		saveVar(pMatFile, pSTM, VARNAME_STM, MAT_COMPRESSION_NONE);
 
-	matvar_t *pSegCtrl = createVar_SegCtrlLaw(saveTp, VARNAME_SEGCTRL);
-	saveVar(pMatFile, pSegCtrl, VARNAME_SEGCTRL, MAT_COMPRESSION_NONE);
+		matvar_t *pSegCtrl = createVar_SegCtrlLaw(saveTp, VARNAME_SEGCTRL);
+		saveVar(pMatFile, pSegCtrl, VARNAME_SEGCTRL, MAT_COMPRESSION_NONE);
 
-	matvar_t *pCons = createVar_Constraints(saveTp, VARNAME_CONSTRAINTS);
-	if(pCons)
-		saveVar(pMatFile, pCons, VARNAME_CONSTRAINTS, MAT_COMPRESSION_NONE);
+		matvar_t *pCons = createVar_Constraints(saveTp, VARNAME_CONSTRAINTS);
+		if(pCons)
+			saveVar(pMatFile, pCons, VARNAME_CONSTRAINTS, MAT_COMPRESSION_NONE);
 
-	pSysData->saveToMat(pMatFile);
+		pSysData->saveToMat(pMatFile);
 
-	saveTimestampToFile(pMatFile);
+		saveTimestampToFile(pMatFile);
+	}catch(const std::exception &e){
+		throw &e;
+	}
 }//====================================================
 
 /**

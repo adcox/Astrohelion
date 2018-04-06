@@ -6,6 +6,7 @@
 #include <vector>
 
 using namespace astrohelion;
+using ltlaw = ControlLaw_cr3bp_lt;
 
 int main(){
 
@@ -18,17 +19,26 @@ int main(){
 
 	SimEngine sim;
 	SysData_cr3bp_lt sys("earth", "moon", 1);
+	// unsigned int lawID = ltlaw::CSI_VAR_M | ltlaw::VAR_F_BND | ltlaw::GENERAL;
+	unsigned int lawID = ltlaw::CSI_VAR_M | ltlaw::VAR_F_UBND | ltlaw::GENERAL;
+
 	double Isp = 1500;
-	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::VAR_F_GENERAL, 
-		std::vector<double> {Isp});
-	std::vector<double> ctrl0{0,0,0};	// {sqrt(f), alpha, beta}
+	double fmax = 1e-1;
+	double f0 = 1e-6;
+	// double g0 = asin(2*f0/fmax - 1);
+	double g0 = log10(f0)/4;
+
+	// std::vector<double> params {fmax, Isp};
+	std::vector<double> params {Isp};
+	ControlLaw_cr3bp_lt law(lawID, params);
+	std::vector<double> ctrl0{0,0,0};	// {alpha, beta, g}
 
 	Arcset_cr3bp natArc(&sys);
 
 	Event yzCross(Event_tp::YZ_PLANE, 0, true);
 	sim.addEvent(yzCross);
 	sim.runSim_manyNodes(q0, ctrl0, 0, tof, 2, &natArc, &law);
-
+	natArc.deleteNodeByIx(-1);
 	// natArc.saveToMat("temp.mat");
 
 	// waitForUser();
@@ -49,25 +59,25 @@ int main(){
 	// 	qf);
 	// natArc.addConstraint(finalStateCon);
 
-	Constraint rmFinalCtrl(Constraint_tp::RM_CTRL, 
-		natArc.getNodeByIx(-1).getID(), nullptr, 0);
-	natArc.addConstraint(rmFinalCtrl);
+	// Constraint rmFinalCtrl(Constraint_tp::RM_CTRL, 
+	// 	natArc.getNodeByIx(-1).getID(), nullptr, 0);
+	// natArc.addConstraint(rmFinalCtrl);
 
 	Constraint endSegCon(Constraint_tp::ENDSEG_STATE, 
 		natArc.getSegByIx(-1).getID(), qf);
 	natArc.addConstraint(endSegCon);
 
-	Constraint rmFinalState(Constraint_tp::RM_STATE, 
-		natArc.getNodeByIx(-1).getID(), nullptr, 0);
+	// Constraint rmFinalState(Constraint_tp::RM_STATE, 
+	// 	natArc.getNodeByIx(-1).getID(), nullptr, 0);
+	// natArc.addConstraint(rmFinalState);
 
 	MultShootEngine shooter;
 	// shooter.setVerbosity(Verbosity_tp::NO_MSG);
+	shooter.setVerbosity(Verbosity_tp::ALL_MSG);
 	shooter.setSaveEachIt(true);
 	shooter.setMaxIts(200);
 	shooter.setDoLineSearch(true);
-	// ctrl0[0] = sqrt(1e-4);
-	ctrl0[0] = 0;
-	ctrl0[2] = 0;
+	ctrl0[2] = g0;
 
 	std::map<double, std::vector<double> > allData;
 	const std::vector<double> nanData {NAN, NAN, NAN};
@@ -75,7 +85,7 @@ int main(){
 	unsigned int numSteps = 1;
 	double alphaStep = 2*PI/numSteps;
 	
-	#pragma omp parallel for firstprivate(ctrl0, natArc, shooter) schedule(dynamic)
+	// #pragma omp parallel for firstprivate(ctrl0, natArc, shooter) schedule(dynamic)
 	for(unsigned int i = 0; i < numSteps; i++){
 		double a = alpha0 + i*alphaStep;
 		Arcset_cr3bp_lt transfer(&sys);
@@ -83,7 +93,7 @@ int main(){
 		/*
 		 *	Prep guess for low-thrust
 		 */
-		ctrl0[1] = a;
+		ctrl0[0] = a;
 		for(unsigned int n = 0; n < natArc.getNumNodes(); n++){
 			natArc.getNodeRefByIx(n).setExtraParamVec(PARAMKEY_CTRL, ctrl0);
 		}
@@ -95,10 +105,15 @@ int main(){
 		try{
 			shooter.multShoot(&natArc, &transfer, &it);
 
+			std::vector<double> s = transfer.getSegRefByIx(0).getStateByRow(0);
+			double f = law.getThrustMag(0, &(s[0]), &sys);
 			// Save {f_f, alpha_f, beta_f, it_count}
 			std::vector<double> ctrlf = transfer.getNodeRefByIx(0).\
 				getExtraParamVec(PARAMKEY_CTRL);
-			data.insert(data.end(), ctrlf.begin(), ctrlf.end());
+			
+			data.push_back(f);
+			data.push_back(ctrlf[0]);	// alpha
+			data.push_back(ctrlf[1]);	// beta
 			printColor(GREEN, "alpha = %06.2f deg converged\n", a*180/PI);
 		}catch(Exception &e){
 			// Put NAN values in for the converged control variables

@@ -569,7 +569,7 @@ void MultShootEngine::multShoot(MultShootData *pData){
 			
 			try{
 				solveUpdateEq(*pData, oldX, FX, newX);
-			}catch(LinAlgException &e){
+			}catch(const Exception &e){
 				throw e;	// Rethrow error
 			}
 
@@ -591,10 +591,13 @@ void MultShootEngine::multShoot(MultShootData *pData){
 			pData->pArcIn->getSysData()->getDynamicsModel()->multShoot_createOutput(*pData);
 			char filename[24];
 			sprintf(filename, "multShoot_it%04d.mat", pData->count+1);
-			pData->pArcOut->saveToMat(filename);
-			pData->pArcOut->reset();	// Must be empty for next createOutput() call
+			try{
+				pData->pArcOut->saveToMat(filename);
+				pData->pArcOut->reset();	// Must be empty for next createOutput() call
+			}catch(const std::exception &e){
+				throw &e;
+			}
 		}
-		// waitForUser();
 
 		// Loop through all constraints and compute the constraint values, 
 		// partials, and apply them to the FX and DF matrices
@@ -605,7 +608,8 @@ void MultShootEngine::multShoot(MultShootData *pData){
 				"* Applying %s constraint\n", pData->allCons[c].getTypeStr());
 		}
 
-		// Check to see what the error is; if it's too high, update X and continue another iteration
+		// Check to see what the error is; if it's too high, update X and 
+		// continue another iteration
 		errF_infty = std::abs(pData->FX[0]);
 		for(unsigned int i = 1; i < pData->FX.size(); i++){
 			if(std::abs(pData->FX[i]) > errF_infty)
@@ -634,7 +638,7 @@ void MultShootEngine::multShoot(MultShootData *pData){
 
 		// End the iterations if the constraint error grows too large or if
 		// the constraint error or step size reaches the desired precision
-		if(errF > maxErr || errF < tolF || errX < tolX)
+		if(errF > maxErr || errF < tolF || errF_infty < tolF)
 			break;
 	}// end of corrections loop
 
@@ -662,7 +666,7 @@ void MultShootEngine::multShoot(MultShootData *pData){
 				propSegsFromFreeVars(*pData, simEngine, verbosity);
 			}
 			pData->pArcIn->getSysData()->getDynamicsModel()->multShoot_createOutput(*pData);
-		}catch(Exception &e){
+		}catch(const Exception &e){
 			printErr("MultShootEngine::multShoot: "
 				"Unable to create output arcset\n  Err: %s\n", e.what());
 			throw e;
@@ -878,11 +882,11 @@ void MultShootEngine::solveUpdateEq(MultShootData& it, const Eigen::VectorXd& ol
 				factorizeJacobian(G, FX, w, true);
 				fullStep = JT*w;
 
-				// MatrixXRd mJ(J), mFX(FX), mStep(fullStep);
-				// toCSV(mJ, "DF_cpp.csv");
-				// toCSV(mFX, "FX_cpp.csv");
-				// toCSV(mStep, "dX_cpp.csv");
-				// waitForUser();
+				MatrixXRd mJ(J), mFX(FX), mStep(fullStep);
+				toCSV(mJ, "DF_cpp.csv");
+				toCSV(mFX, "FX_cpp.csv");
+				toCSV(mStep, "dX_cpp.csv");
+				waitForUser();
 				// toCSV(oldX, "X_cpp.csv");
 
 				// Alternative Method: SVD

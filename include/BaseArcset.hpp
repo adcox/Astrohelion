@@ -187,7 +187,9 @@ public:
 	void clearAllConstraints();
 	std::vector<int> concatArcset(const BaseArcset*);
 	void deleteNode(int);
+	void deleteNodeByIx(int);
 	void deleteSeg(int);
+	void deleteSegByIx(int);
 	void putInChronoOrder(bool force = false);
 	void updateEpochs(int, double);
 	//\}

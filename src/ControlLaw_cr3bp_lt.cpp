@@ -740,7 +740,7 @@ void ControlLaw_cr3bp_lt::getPartials_EOMsWRTCtrl_GeneralDir(double t,
 
 				// partial of mdot w.r.t. g
 				partials[numStates*6 + 2] = -dfdg*pSys->getCharL()/
-					(params[1]*G_GRAV_0*pSys->getCharT());
+					(params[0]*G_GRAV_0*pSys->getCharT());
 			}else{
 				printErr("Control Law:\n");
 				print();

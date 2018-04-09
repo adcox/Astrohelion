@@ -19,17 +19,17 @@ int main(){
 
 	SimEngine sim;
 	SysData_cr3bp_lt sys("earth", "moon", 1);
-	unsigned int lawID = ltlaw::CSI_VAR_M | ltlaw::VAR_F_BND | ltlaw::GENERAL;
-	// unsigned int lawID = ltlaw::CSI_VAR_M | ltlaw::VAR_F_UBND | ltlaw::GENERAL;
+	// unsigned int lawID = ltlaw::CSI_VAR_M | ltlaw::VAR_F_BND | ltlaw::GENERAL;
+	unsigned int lawID = ltlaw::CSI_VAR_M | ltlaw::VAR_F_UBND | ltlaw::GENERAL;
 
 	double Isp = 1500;
 	double fmax = 1e-1;
-	double f0 = 1e-6;
-	double g0 = asin(2*f0/fmax - 1);
-	// double g0 = log10(f0)/4;
+	double f0 = 1e-4;
+	// double g0 = asin(2*f0/fmax - 1);
+	double g0 = log10(f0)/4;
 
-	std::vector<double> params {fmax, Isp};
-	// std::vector<double> params {Isp};
+	// std::vector<double> params {fmax, Isp};
+	std::vector<double> params {Isp};
 	ControlLaw_cr3bp_lt law(lawID, params);
 	std::vector<double> ctrl0{0,0,0};	// {alpha, beta, g}
 
@@ -73,7 +73,7 @@ int main(){
 	std::map<double, std::vector<double> > allData;
 	const std::vector<double> nanData {NAN, NAN, NAN};
 	double alpha0 = 0;
-	unsigned int numSteps = 360;
+	unsigned int numSteps = 90;
 	double alphaStep = 2*PI/numSteps;
 	
 	#pragma omp parallel for firstprivate(ctrl0, natArc, shooter) schedule(dynamic)

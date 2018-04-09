@@ -53,40 +53,36 @@
 namespace boostInt = boost::numeric::odeint;
 
 namespace astrohelion{
-//-----------------------------------------------------
+//------------------------------------------------------------------------------
 //      *structors
-//-----------------------------------------------------
+//------------------------------------------------------------------------------
 
 /**
  *  @brief Construct a simulation engine for a specific dynamical system
  */
-SimEngine::SimEngine(){
-    printVerb(verbosity >= Verbosity_tp::ALL_MSG, "Created Simulation Engine\n");
-}//===========================================
+SimEngine::SimEngine(){}
 
 /**
  *  @brief Copy constructor
  *  @param s a simulation engine 
  */
-SimEngine::SimEngine(const SimEngine& s){
-    copyMe(s);
-}//=====================================
+SimEngine::SimEngine(const SimEngine& s){ copyMe(s); }
 
 /**
  *  @brief Default destructor
  */
 SimEngine::~SimEngine(){
-    printVerb(verbosity >= Verbosity_tp::ALL_MSG, "Destroying simulation engine...\n");
     if(eomParams)
         delete(eomParams);
 }//===========================================
 
-//-----------------------------------------------------
+//------------------------------------------------------------------------------
 //      Operator Functions
-//-----------------------------------------------------
+//------------------------------------------------------------------------------
 
 /**
- *  @brief Assignment operator; make this engine equal another by copying its data
+ *  @brief Assignment operator; make this engine equal another by copying its 
+ *  data
  *  @param s another simulation engine
  */
 SimEngine& SimEngine::operator =(const SimEngine& s){
@@ -94,9 +90,9 @@ SimEngine& SimEngine::operator =(const SimEngine& s){
     return *this;
 }//=====================================
 
-//-----------------------------------------------------
+//------------------------------------------------------------------------------
 // 		Set and Get Functions
-//-----------------------------------------------------
+//------------------------------------------------------------------------------
 
 /**
  *  @return whether or not the simulation will leverage simple integration, i.e.,
@@ -133,7 +129,8 @@ double SimEngine::getRelTol() const {return relTol;}
 int SimEngine::getNumSteps() const { return numSteps; }
 
 /**
- *  @brief Retrieve a vector of all events being watched for the current simulation
+ *  @brief Retrieve a vector of all events being watched for the current 
+ *  simulation
  *  @return a vector of events
  */
 std::vector<Event> SimEngine::getEvents() const { return events; }
@@ -148,7 +145,8 @@ int SimEngine::addEvent(Event evt){
     // Make sure this event hasn't been added before
     for(unsigned int e = 0; e < events.size(); e++){
         if(events[e] == evt){
-            printErr("SimEngine::addEvent: Event has already been added to the engine; ignoring this new event\n");
+            printErr("SimEngine::addEvent: Event has already been added to "
+                "the engine; ignoring this new event\n");
             return -1;
         }
     }
@@ -159,7 +157,8 @@ int SimEngine::addEvent(Event evt){
 }//======================================
 
 /**
- *  @brief Determine whether or not default events are created for each simulation
+ *  @brief Determine whether or not default events are created for each 
+ *  simulation
  *  @return whether or not default events are created for each simulation
  */
 bool SimEngine::makesDefaultEvents() const { return bMakeDefaultEvents; }
@@ -184,7 +183,7 @@ void SimEngine::setVarStepSize(bool b){ bVarStepSize = b; }
 void SimEngine::setAbsTol(double t){
     absTol = t;
     if(absTol > 1)
-        printWarn("SimEngine::setAbsTol: tolerance is greater than 1... just FYI\n");
+        printWarn("SimEngine::setAbsTol: tolerance is greater than 1... FYI\n");
 }//====================================================
 
 /**
@@ -195,7 +194,7 @@ void SimEngine::setAbsTol(double t){
 void SimEngine::setRelTol(double t){
     relTol = t;
     if(relTol > 1)
-        printWarn("SimEngine::setRelTol: tolerance is greater than 1... just FYI\n");
+        printWarn("SimEngine::setRelTol: tolerance is greater than 1... FYI\n");
 }//====================================================
 
 /**
@@ -230,7 +229,9 @@ void SimEngine::setMaxCompTime(double t){ maxCompTime = t; }
 void SimEngine::setNumSteps(int n){
     if(n < 2){
         numSteps = 2;
-        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::setNumSteps: Must use at least 2 steps; input number is too few, using numSteps = 2 and continuing.\n");
+        printVerb(verbosity >= Verbosity_tp::SOME_MSG, 
+            "SimEngine::setNumSteps: Must use at least 2 steps; input number "
+            "is too few, using numSteps = 2 and continuing.\n");
     }
     else{
         numSteps = n;
@@ -238,7 +239,8 @@ void SimEngine::setNumSteps(int n){
 }//====================================================
 
 /**
- *  @brief Tell the engine whether or not to use simple integration (i.e., no STM propagation)
+ *  @brief Tell the engine whether or not to use simple integration (i.e., no 
+ *  STM propagation)
  *  @param b whether or not to use simple integration
  */
 void SimEngine::setSimpleInt(bool b){ bSimpleIntegration = b; }
@@ -251,13 +253,11 @@ void SimEngine::setVarStepInteg(Integ_tp integ){
     switch(integ){
         case Integ_tp::RKCK:
         case Integ_tp::RK8PD:
-        case Integ_tp::BOOST_RKCK:
-        case Integ_tp::BOOST_RKF:
-        case Integ_tp::BOOST_BS:
             varStep_integ = integ;
             break;
         default:
-            printErr("SimEngine::SetVarStepInteg: Integrator type is not suited for variable step propagation; ignoring change\n");
+            printErr("SimEngine::SetVarStepInteg: Integrator type is not "
+                "suited for variable step propagation; ignoring change\n");
     }
 }//====================================================
 
@@ -271,50 +271,85 @@ void SimEngine::setFixStepInteg(Integ_tp integ){
             fixStep_integ = integ;
             break;
         default:
-            printErr("SimEngine::SetFixStepInteg: Integrator type is not suited for fixed step propagation; ignoring change\n");
+            printErr("SimEngine::SetFixStepInteg: Integrator type is not "
+                "suited for fixed step propagation; ignoring change\n");
     }
 }//====================================================
 
-//-------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // 		Simulation Functions - Default to 2 Nodes
-//-------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 /**
- *	@brief Run a simulation - initial epoch, STM, and control variables are assumed
+ *	@brief Run a simulation - initial epoch, STM, and control variables are 
+ *  assumed
  *
  *  @details It is assumed that t0 = 0, the STM is identity, and any control 
  *  variables are zero.
  *  
  *	@param ic an array containting the non-dimensional initial state; number
- *    of elements must match the number of <code>coreDim</code> specified 
- *    in the system dynamics model
+ *  of elements must match the number of <code>coreDim</code> specified 
+ *  in the system dynamics model
  *	@param tof the total integration time, or time-of-flight (non-dim units)
- *    Only the absolute value of the TOF is considered; to integrate backwards in
- *    time, use the setRevTime() function.
+ *  Only the absolute value of the TOF is considered; to integrate backwards 
+ *  in time, use the setRevTime() function.
  *  @param arcset pointer to a trajectory object to store the output trajectory
  *  @param pLaw pointer to a control law to apply on all simulated segments
+ *  
+ *  @throws Exception if `ic`, `ctrl0`, or `stm0` are the wrong size for the 
+ *  dynamics specified in `arcset` and `pLaw`
+ *  @throws Exception if the integrator type and stepping strategy are not 
+ *  compatible
+ *  @throws DivergeException if the GSL integrator is unable make steps with 
+ *  acceptable error values. This usually occurs if a trajectory passes very 
+ *  near (or through) a primary. Note that all the data generated up to the 
+ *  integrator failure is saved in the Arcset object passed to the SimEngine 
+ *  regardless of the thrown exception(s).
  */
-void SimEngine::runSim(const double *ic, double tof, Arcset *arcset, ControlLaw *pLaw){
+void SimEngine::runSim(const double *ic, double tof, Arcset *arcset, 
+    ControlLaw *pLaw){
+
 	// Define dummy value: t0 = 0; call the next level of complication
-    runSim(ic, 0, tof, arcset, pLaw);
+    try{
+        runSim(ic, 0, tof, arcset, pLaw);
+    }catch(const Exception &e){
+        throw e;
+    }
 }//=======================================================
 
 /**
- *  @brief Run a simulation - initial epoch, STM, and control variables are assumed
+ *  @brief Run a simulation - initial epoch, STM, and control variables are 
+ *  assumed
  *
  *  @details It is assumed that t0 = 0, the STM is identity, and any control 
  *  variables are zero.
  *  
  *  @param ic a vector containing the IC (nondimensional states)
  *  @param tof the total integration time, or time-of-flight (non-dim units)
- *    Only the absolute value of the TOF is considered; to integrate backwards in
- *    time, use the setRevTime() function.
+ *  Only the absolute value of the TOF is considered; to integrate backwards in
+ *  time, use the setRevTime() function.
  *  @param arcset pointer to a trajectory object to store the output trajectory
  *  @param pLaw pointer to a control law to apply on all simulated segments
+ *  
+ *  @throws Exception if `ic`, `ctrl0`, or `stm0` are the wrong size for the 
+ *  dynamics specified in `arcset` and `pLaw`
+ *  @throws Exception if the integrator type and stepping strategy are not 
+ *  compatible
+ *  @throws DivergeException if the GSL integrator is unable make steps with 
+ *  acceptable error values. This usually occurs if a trajectory passes very 
+ *  near (or through) a primary. Note that all the data generated up to the 
+ *  integrator failure is saved in the Arcset object passed to the SimEngine 
+ *  regardless of the thrown exception(s).
  */
-void SimEngine::runSim(std::vector<double> ic, double tof, Arcset *arcset, ControlLaw *pLaw){
+void SimEngine::runSim(const std::vector<double> &ic, double tof, 
+    Arcset *arcset, ControlLaw *pLaw){
+
     // Define dummy value: t0 = 0; call the next level of complication
-    runSim(ic, 0, tof, arcset, pLaw);
+    try{
+        runSim(ic, 0, tof, arcset, pLaw);
+    }catch(const Exception &e){
+        throw e;
+    }
 }//=======================================================
 
 /**
@@ -330,28 +365,41 @@ void SimEngine::runSim(std::vector<double> ic, double tof, Arcset *arcset, Contr
  *  @param arcset pointer to a trajectory object to store the output trajectory
  *  @param pLaw pointer to a control law (nullptr by default)
  *  
- *  @throws Exception if `ic` has fewer than 6 elements
- *  @throws DivergeException if the GSL integrators are make steps with acceptable error values.
- *    This usually occurs if a trajectory passes very near (or through) a primary. Note that all the
- *    data generated up to the integrator failure is saved in the Arcset object passed to
- *    the SimEngine regardless of the thrown exception(s).
+ *  @throws Exception if `ic`, `ctrl0`, or `stm0` are the wrong size for the 
+ *  dynamics specified in `arcset` and `pLaw`
+ *  @throws Exception if the integrator type and stepping strategy are not 
+ *  compatible
+ *  @throws DivergeException if the GSL integrator is unable make steps with 
+ *  acceptable error values. This usually occurs if a trajectory passes very 
+ *  near (or through) a primary. Note that all the data generated up to the 
+ *  integrator failure is saved in the Arcset object passed to the SimEngine 
+ *  regardless of the thrown exception(s).
  */
-void SimEngine::runSim(std::vector<double> ic, double t0, double tof, Arcset *arcset, ControlLaw *pLaw){
+void SimEngine::runSim(const std::vector<double> &ic, double t0, double tof, 
+    Arcset *arcset, ControlLaw *pLaw){
+
     // Checks
     if(arcset == nullptr){
-        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is nullptr; exiting to avoid memory leaks\n");
+        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: "
+            "Arcset pointer is nullptr; exiting to avoid memory leaks\n");
         return;
     }
 
     unsigned int core_dim = arcset->getSysData()->getDynamicsModel()->getCoreStateSize();
     if(ic.size() < core_dim){
         printErr("IC size = %zu is too small\n", ic.size());
-        throw Exception("SimEngine::runSim: IC must have at least the number of states specified by coreDim in the Dynamics Model");
+        throw Exception("SimEngine::runSim: IC must have at least the number "
+            "of states specified by coreDim in the Dynamics Model");
     }
 
-    // Call the version that takes a pointer as the first argument; all other arguments are the same
-    std::vector<double> icCopy = ic;
-    runSim(&(icCopy.front()), t0, tof, arcset, pLaw);
+    // Call the version that takes a pointer as the first argument; all other 
+    // arguments are the same
+    // std::vector<double> icCopy = ic;
+    try{
+        runSim(&(ic.front()), t0, tof, arcset, pLaw);
+    }catch(const Exception &e){
+        throw e;
+    }
 }//=======================================================
 
 /**
@@ -367,15 +415,22 @@ void SimEngine::runSim(std::vector<double> ic, double t0, double tof, Arcset *ar
  *  @param arcset pointer to a trajectory object to store the output trajectory
  *  @param pLaw pointer to a control law (nullptr by default)
  *  
- *  @throws Exception if `ic` has fewer than 6 elements
- *  @throws DivergeException if the GSL integrators are make steps with acceptable error values.
- *    This usually occurs if a trajectory passes very near (or through) a primary. Note that all the
- *    data generated up to the integrator failure is saved in the Arcset object passed to
- *    the SimEngine regardless of the thrown exception(s).
+ *  @throws Exception if `ic`, `ctrl0`, or `stm0` are the wrong size for the 
+ *  dynamics specified in `arcset` and `pLaw`
+ *  @throws Exception if the integrator type and stepping strategy are not 
+ *  compatible
+ *  @throws DivergeException if the GSL integrator is unable make steps with 
+ *  acceptable error values. This usually occurs if a trajectory passes very 
+ *  near (or through) a primary. Note that all the data generated up to the 
+ *  integrator failure is saved in the Arcset object passed to the SimEngine 
+ *  regardless of the thrown exception(s).
  */
-void SimEngine::runSim(const double* ic, double t0, double tof, Arcset *arcset, ControlLaw *pLaw){
+void SimEngine::runSim(const double* ic, double t0, double tof, Arcset *arcset, 
+    ControlLaw *pLaw){
+
     if(arcset == nullptr){
-        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is nullptr; exiting to avoid memory leaks\n");
+        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: "
+            "Arcset pointer is nullptr; exiting to avoid memory leaks\n");
         return;
     }
 
@@ -393,7 +448,11 @@ void SimEngine::runSim(const double* ic, double t0, double tof, Arcset *arcset, 
     createIdentity(stm0, core_dim + ctrl_dim);
 
     // Call the next level of complication
-    runSim(ic, &(ctrl0.front()), &(stm0.front()), t0, tof, arcset, pLaw);
+    try{
+        runSim(ic, &(ctrl0.front()), &(stm0.front()), t0, tof, arcset, pLaw);
+    }catch(const Exception &e){
+        throw e;
+    }
 }//=======================================================
 
 /**
@@ -404,20 +463,28 @@ void SimEngine::runSim(const double* ic, double t0, double tof, Arcset *arcset, 
  *  @param ctrl0 initial control state values
  *  @param t0 the epoch time associated with the IC (non-dim units)
  *  @param tof the total integration time, or time-of-flight (non-dim units).
- *    Only the absolute value of the TOF is considered; to integrate backwards in
- *    time, use the setRevTime() function.
+ *  Only the absolute value of the TOF is considered; to integrate backwards in
+ *  time, use the setRevTime() function.
  *  @param arcset pointer to a trajectory object to store the output trajectory
  *  @param pLaw pointer to a control law
  *  
- *  @throws Exception if `ic` has fewer than 6 elements
- *  @throws DivergeException if the GSL integrators are make steps with acceptable error values.
- *    This usually occurs if a trajectory passes very near (or through) a primary. Note that all the
- *    data generated up to the integrator failure is saved in the Arcset object passed to
- *    the SimEngine regardless of the thrown exception(s).
+ *  @throws Exception if `ic`, `ctrl0`, or `stm0` are the wrong size for the 
+ *  dynamics specified in `arcset` and `pLaw`
+ *  @throws Exception if the integrator type and stepping strategy are not 
+ *  compatible
+ *  @throws DivergeException if the GSL integrator is unable make steps with 
+ *  acceptable error values. This usually occurs if a trajectory passes very 
+ *  near (or through) a primary. Note that all the data generated up to the 
+ *  integrator failure is saved in the Arcset object passed to the SimEngine 
+ *  regardless of the thrown exception(s).
  */
-void SimEngine::runSim(std::vector<double> ic, std::vector<double> ctrl0, double t0, double tof, Arcset *arcset, ControlLaw *pLaw){
+void SimEngine::runSim(const std::vector<double> &ic,
+    const std::vector<double> &ctrl0, double t0, double tof, Arcset *arcset, 
+    ControlLaw *pLaw){
+
     if(arcset == nullptr){
-        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is nullptr; exiting to avoid memory leaks\n");
+        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: "
+            "Arcset pointer is nullptr; exiting to avoid memory leaks\n");
         return;
     }
 
@@ -426,23 +493,30 @@ void SimEngine::runSim(std::vector<double> ic, std::vector<double> ctrl0, double
 
     if(ic.size() < core_dim){
         printErr("IC size = %zu is too small\n", ic.size());
-        throw Exception("SimEngine::runSim: IC must have at least the number of states specified by the Dynamics Model");
+        throw Exception("SimEngine::runSim: IC must have at least the number "
+            "of states specified by the Dynamics Model");
     }
 
     if(ctrl0.size() < ctrl_dim){
         printErr("Ctrl state size = %zu is too small\n", ctrl0.size());
-        throw Exception("SimEngine::runSim: Ctrl state must have at least the number of states specifed by the Control Law");
+        throw Exception("SimEngine::runSim: Ctrl state must have at least the "
+            "number of states specifed by the Control Law");
     }
 
     // Define dummy values for STM0
     std::vector<double> stm0;
     createIdentity(stm0, core_dim + ctrl_dim);
 
-    std::vector<double> icCopy = ic;
-    std::vector<double> ctrlCopy = ctrl0;
+    // std::vector<double> icCopy = ic;
+    // std::vector<double> ctrlCopy = ctrl0;
 
     // Call the next level of complication
-    runSim(&(icCopy.front()), &(ctrlCopy.front()), &(stm0.front()), t0, tof, arcset, pLaw);
+    try{
+        runSim(&(ic.front()), &(ctrl0.front()), &(stm0.front()), t0, tof, 
+            arcset, pLaw);
+    }catch(const Exception &e){
+        throw e;
+    }
 }//=======================================================
 
 /**
@@ -460,16 +534,24 @@ void SimEngine::runSim(std::vector<double> ic, std::vector<double> ctrl0, double
  *  @param arcset pointer to a trajectory object to store the output trajectory
  *  @param pLaw pointer to a control law
  *  
- *  @throws Exception if `ic` has fewer than 6 elements
- *  @throws DivergeException if the GSL integrators are make steps with acceptable error values.
- *    This usually occurs if a trajectory passes very near (or through) a primary. Note that all the
- *    data generated up to the integrator failure is saved in the Arcset object passed to
- *    the SimEngine regardless of the thrown exception(s).
+ *  @throws Exception if `ic`, `ctrl0`, or `stm0` are the wrong size for the 
+ *  dynamics specified in `arcset` and `pLaw`
+ *  @throws Exception if the integrator type and stepping strategy are not 
+ *  compatible
+ *  @throws DivergeException if the GSL integrator is unable make steps with 
+ *  acceptable error values. This usually occurs if a trajectory passes very 
+ *  near (or through) a primary. Note that all the data generated up to the 
+ *  integrator failure is saved in the Arcset object passed to the SimEngine 
+ *  regardless of the thrown exception(s).
  */
-void SimEngine::runSim(std::vector<double> ic, std::vector<double> ctrl0, const MatrixXRd &stm0, double t0, double tof, Arcset *arcset, ControlLaw *pLaw){
+void SimEngine::runSim(const std::vector<double> &ic, 
+    const std::vector<double> &ctrl0, const MatrixXRd &stm0, double t0, 
+    double tof, Arcset *arcset, ControlLaw *pLaw){
+
     // Checks
     if(arcset == nullptr){
-        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is nullptr; exiting to avoid memory leaks\n");
+        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: "
+            "Arcset pointer is nullptr; exiting to avoid memory leaks\n");
         return;
     }
 
@@ -478,49 +560,67 @@ void SimEngine::runSim(std::vector<double> ic, std::vector<double> ctrl0, const 
 
     if(ic.size() < core_dim){
         printErr("IC size = %zu is too small\n", ic.size());
-        throw Exception("SimEngine::runSim: IC must have at least the number of states specified by the Dynamics Model");
+        throw Exception("SimEngine::runSim: IC must have at least the number "
+            "of states specified by the Dynamics Model");
     }
 
     if(ctrl0.size() < ctrl_dim){
         printErr("Ctrl state size = %zu is too small\n", ctrl0.size());
-        throw Exception("SimEngine::runSim: Ctrl state must have at least the number of states specifed by the Control Law");
+        throw Exception("SimEngine::runSim: Ctrl state must have at least "
+            "the number of states specifed by the Control Law");
     }
 
     if(stm0.rows() != core_dim + ctrl_dim || stm0.cols() != core_dim + ctrl_dim){
-        printErr("STM rows = %d, cols = %d, should = %u\n", stm0.rows(), stm0.cols(), core_dim + ctrl_dim);
-        throw Exception("SimEngine::runSim: Initial STM size does not match the core state size + control state size");
+        printErr("STM rows = %d, cols = %d, should = %u\n", stm0.rows(), 
+            stm0.cols(), core_dim + ctrl_dim);
+        throw Exception("SimEngine::runSim: Initial STM size does not match "
+            "the core state size + control state size");
     }
     
 
     // Copy arrays to pass by reference
-    std::vector<double> icCopy = ic;
-    std::vector<double> ctrlCopy = ctrl0;
+    // std::vector<double> icCopy = ic;
+    // std::vector<double> ctrlCopy = ctrl0;
 
     // Call the version that takes a pointers; all other arguments are the same
-    runSim(&(icCopy.front()), &(ctrlCopy.front()), stm0.data(), t0, tof, arcset, pLaw);
+    try{
+        runSim(&(ic.front()), &(ctrl0.front()), stm0.data(), t0, tof, 
+            arcset, pLaw);
+    }catch(const Exception &e){
+        throw e;
+    }
 }//=======================================================
 
 /**
  *  @brief Run a simulation - No assumptions
- *  @details No assumptions are made about the integration; all parameters are passed in
- *  or specified by SimEngine member variables
+ *  @details No assumptions are made about the integration; all parameters are 
+ *  passed in or specified by SimEngine member variables
  * 
  *  @param ic a vector containing the IC (nondimensional states)
  *  @param ctrl0 initial control states
  *  @param stm0 initial STM
  *  @param t0 the epoch time associated with the IC (non-dim units)
  *  @param tof the total integration time, or time-of-flight (non-dim units).
- *    Only the absolute value of the TOF is considered; to integrate backwards in
- *    time, use the setRevTime() function.
+ *  Only the absolute value of the TOF is considered; to integrate backwards in
+ *  time, use the setRevTime() function.
  *  @param arcset pointer to a trajectory object to store the output trajectory
  *  @param pLaw pointer to a control law
+ *  
+ *  @throws Exception if the integrator type and stepping strategy are not 
+ *  compatible
+ *  @throws DivergeException if the integrator fails and cannot proceed
  */
-void SimEngine::runSim(const double* ic, const double* ctrl0, const double* stm0, double t0, double tof, Arcset *arcset, ControlLaw *pLaw){
+void SimEngine::runSim(const double* ic, const double* ctrl0, 
+    const double* stm0, double t0, double tof, Arcset *arcset, 
+    ControlLaw *pLaw){
+
     std::vector<double> t_span;
-    // Compute the final time based on whether or not we're using reverse time integration
+    // Compute the final time based on whether or not we're using reverse time
     double tf = bRevTime ? t0 - std::abs(tof) : t0 + std::abs(tof);
-    printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  time will span from %.3e to %.3e\n", t0, tf);
-    printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  (Reverse Time is %s)\n", bRevTime ? "ON" : "OFF");
+    printVerb(verbosity >= Verbosity_tp::ALL_MSG, 
+        "  time will span from %.3e to %.3e\n", t0, tf);
+    printVerb(verbosity >= Verbosity_tp::ALL_MSG, 
+        "  (Reverse Time is %s)\n", bRevTime ? "ON" : "OFF");
 
     if(bVarStepSize){
         t_span.reserve(2);
@@ -536,15 +636,20 @@ void SimEngine::runSim(const double* ic, const double* ctrl0, const double* stm0
     }
 
     // Construct the tspan vector; call the next level of complication
-    runSim(ic, ctrl0, stm0, t_span, arcset, pLaw);
+    try{
+        runSim(ic, ctrl0, stm0, t_span, arcset, pLaw);
+    }catch(const Exception &e){
+        throw e;
+    }
 }//=======================================================
 
 /**
- *  @brief Run a simulation in the specified system starting with a set of initial conditions,
- *  at a specified initial time, and integrating for a specified time-of-flight
+ *  @brief Run a simulation in the specified system starting with a set of 
+ *  initial conditions, at a specified initial time, and integrating for a 
+ *  specified time-of-flight
  *  
- *  @details This version of runSim is the only function that directly calls the integrate() function;
- *  all other runSim() functions reroute to this
+ *  @details This version of runSim is the only function that directly calls 
+ *  the integrate() function; all other runSim() functions reroute to this
  *  
  *  @param ic an array of non-dimensional initial states; number
  *    of elements must match the number of <code>coreDim</code> specified 
@@ -554,19 +659,30 @@ void SimEngine::runSim(const double* ic, const double* ctrl0, const double* stm0
  *  @param t_span a vector of times to include in the solution.
  *  @param arcset pointer to a trajectory object to store the output trajectory
  *  @param pLaw pointer to the control law to apply during propagation
+ *  
+ *  @throws Exception if the integrator type and stepping strategy are not 
+ *  compatible
+ *  @throws DivergeException if the integrator fails and cannot proceed
  */
-void SimEngine::runSim(const double *ic, const double *ctrl0, const double *stm0, std::vector<double> t_span, Arcset *arcset, ControlLaw *pLaw){
+void SimEngine::runSim(const double *ic, const double *ctrl0, 
+    const double *stm0, std::vector<double> t_span, Arcset *arcset, 
+    ControlLaw *pLaw){
+
     if(arcset == nullptr){
-        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is nullptr; exiting to avoid memory leaks\n");
+        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: "
+            "Arcset pointer is nullptr; exiting to avoid memory leaks\n");
         return;
     }
 
     if(!arcset->getSysData()->getDynamicsModel()->supportsControl(pLaw)){
-        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Control law is not supported. Exiting without simulation\n");
+        printVerb(verbosity >= Verbosity_tp::SOME_MSG, 
+            "SimEngine::runSim: Control law is not supported. Exiting "
+            "without simulation\n");
         return;
     }
 
-    printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, GREEN, "Running simulation...\n");
+    printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, GREEN, 
+        "Running simulation...\n");
     if(!bIsClean){
         cleanEngine();
     }
@@ -577,96 +693,152 @@ void SimEngine::runSim(const double *ic, const double *ctrl0, const double *stm0
     eomParams = new EOM_ParamStruct(arcset->getSysData(), pLaw);
 
     // Run the simulation
-    bIsClean = false;   // Technically, nothing has changed yet, but this flag should be false even if any part of integrate throws an exception
-    integrate(ic, ctrl0, stm0, &(t_span.front()), t_span.size(), arcset);
+    bIsClean = false;   // Technically, nothing has changed yet, but this flag 
+    // should be false even if any part of integrate throws an exception
+    try{
+        integrate(ic, ctrl0, stm0, &(t_span.front()), t_span.size(), arcset);
+    }catch(const Exception &e){
+        throw e;
+    }
 }//====================================================
 
-//-------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 //      Simulation Functions - User Specifies Number of Nodes
-//-------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 /**
- *  @brief Run a simulation with more than two nodes - initial epoch, STM, and control variables are assumed
+ *  @brief Run a simulation with more than two nodes - initial epoch, STM, and 
+ *  control variables are assumed
  *  @details It is assumed that the initial epoch is 0, the STM is identity,
  *  and the control variables are zero.
  * 
  *  @param ic initial state vector
- *  @param tof nondimensional time-of-flight along the trajectory. The sign of <code>tof</code>
- *  is ignored; for reverse time, set the reverse time flag via setRevTime()
- *  @param numNodes Number of nodes (including the initial and final nodes) to place
- *  on the trajectory
+ *  @param tof nondimensional time-of-flight along the trajectory. The sign of 
+ *  <code>tof</code> is ignored; for reverse time, set the reverse time flag 
+ *  via setRevTime()
+ *  @param numNodes Number of nodes (including the initial and final nodes) to 
+ *  place on the trajectory
  *  @param arcset Data structure in which to store the propagated trajectory
  *  @param pLaw control law to apply while propagating
+ *  
+ *  @throws Exception if the integrator type and stepping strategy are not 
+ *  compatible
+ *  @throws DivergeException if the integrator fails and cannot proceed
  */
-void SimEngine::runSim_manyNodes(std::vector<double> ic, double tof, int numNodes, Arcset *arcset, ControlLaw *pLaw){
+void SimEngine::runSim_manyNodes(const std::vector<double> &ic, double tof, 
+    int numNodes, Arcset *arcset, ControlLaw *pLaw){
     // Set t0 = 0, use more specific function
-    runSim_manyNodes(ic, 0, tof, numNodes, arcset, pLaw);
+    try{
+        runSim_manyNodes(ic, 0, tof, numNodes, arcset, pLaw);
+    }catch(const Exception &e){
+        throw e;
+    }
 }//====================================================
 
 /**
- *  @brief Run a simulation with more than two nodes - initial epoch, STM, and control variables are assumed
+ *  @brief Run a simulation with more than two nodes - initial epoch, STM, and 
+ *  control variables are assumed
  *  @details It is assumed that the initial epoch is 0, the STM is identity,
  *  and the control variables are zero.
  * 
  *  @param ic initial state vector
- *  @param tof nondimensional time-of-flight along the trajectory. The sign of <code>tof</code>
- *  is ignored; for reverse time, set the reverse time flag via setRevTime()
- *  @param numNodes Number of nodes (including the initial and final nodes) to place
- *  on the trajectory
+ *  @param tof nondimensional time-of-flight along the trajectory. The sign of 
+ *  <code>tof</code> is ignored; for reverse time, set the reverse time flag 
+ *  via setRevTime()
+ *  @param numNodes Number of nodes (including the initial and final nodes) to 
+ *  place on the trajectory
  *  @param arcset Data structure in which to store the propagated trajectory
  *  @param pLaw control law to apply while propagating
+ *  
+ *  @throws Exception if the integrator type and stepping strategy are not 
+ *  compatible
+ *  @throws DivergeException if the integrator fails and cannot proceed
  */
-void SimEngine::runSim_manyNodes(const double *ic, double tof, int numNodes, Arcset *arcset, ControlLaw *pLaw){
+void SimEngine::runSim_manyNodes(const double *ic, double tof, int numNodes, 
+    Arcset *arcset, ControlLaw *pLaw){
+    
     // Set t0 = 0, use more specific function
-    runSim_manyNodes(ic, 0, tof, numNodes, arcset, pLaw);
+    try{
+        runSim_manyNodes(ic, 0, tof, numNodes, arcset, pLaw);
+    }catch(const Exception &e){
+        throw e;
+    }
 }//====================================================
 
 /**
- *  @brief Run a simulation with more than two nodes - STM and control variables are assumed
- *  @details It is assumed that the STM is identity, and the control variables are zero.
+ *  @brief Run a simulation with more than two nodes - STM and control variables 
+ *  are assumed
+ *  @details It is assumed that the STM is identity, and the control variables 
+ *  are zero.
  * 
  *  @param ic initial state vector
  *  @param t0 nondimensional epoch associated with the initial state
- *  @param tof nondimensional time-of-flight along the trajectory. The sign of <code>tof</code>
- *  is ignored; for reverse time, set the reverse time flag via setRevTime()
- *  @param numNodes Number of nodes (including the initial and final nodes) to place
- *  on the trajectory
+ *  @param tof nondimensional time-of-flight along the trajectory. The sign of 
+ *  <code>tof</code> is ignored; for reverse time, set the reverse time flag 
+ *  via setRevTime()
+ *  @param numNodes Number of nodes (including the initial and final nodes) to 
+ *  place on the trajectory
  *  @param arcset Data structure in which to store the propagated trajectory
  *  @param pLaw control law to apply while propagating
+ *  
+ *  @throws Exception if `ic` is too small for the dynamics associated with
+ *  the `arcset` input object
+ *  @throws Exception if the integrator type and stepping strategy are not 
+ *  compatible
+ *  @throws DivergeException if the integrator fails and cannot proceed
  */
-void SimEngine::runSim_manyNodes(std::vector<double> ic, double t0, double tof, int numNodes, Arcset *arcset, ControlLaw *pLaw){
+void SimEngine::runSim_manyNodes(const std::vector<double> &ic, double t0, 
+    double tof, int numNodes, Arcset *arcset, ControlLaw *pLaw){
+
     // Checks
     if(arcset == nullptr){
-        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is nullptr; exiting to avoid memory leaks\n");
+        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: "
+            "Arcset pointer is nullptr; exiting to avoid memory leaks\n");
         return;
     }
 
     unsigned int core_dim = arcset->getSysData()->getDynamicsModel()->getCoreStateSize();
     if(ic.size() < core_dim){
         printErr("IC size = %zu is too small\n", ic.size());
-        throw Exception("SimEngine::runSim: IC must have at least the number of states specified by the Dynamics Model");
+        throw Exception("SimEngine::runSim: IC must have at least the number "
+            "of states specified by the Dynamics Model");
     }
 
     std::vector<double> tempIC = ic;
-    runSim_manyNodes(&(tempIC.front()), t0, tof, numNodes, arcset, pLaw);
+    try{
+        runSim_manyNodes(&(tempIC.front()), t0, tof, numNodes, arcset, pLaw);
+    }catch(const Exception &e){
+        throw e;
+    }
 }//====================================================
 
 /**
- *  @brief Run a simulation with more than two nodes - STM and control variables are assumed
- *  @details It is assumed that the STM is identity, and the control variables are zero.
+ *  @brief Run a simulation with more than two nodes - STM and control variables 
+ *  are assumed
+ *  @details It is assumed that the STM is identity, and the control variables 
+ *  are zero.
  * 
  *  @param ic initial state vector
  *  @param t0 nondimensional epoch associated with the initial state
- *  @param tof nondimensional time-of-flight along the trajectory. The sign of <code>tof</code>
- *  is ignored; for reverse time, set the reverse time flag via setRevTime()
- *  @param numNodes Number of nodes (including the initial and final nodes) to place
- *  on the trajectory
+ *  @param tof nondimensional time-of-flight along the trajectory. The sign of 
+ *  <code>tof</code> is ignored; for reverse time, set the reverse time flag 
+ *  via setRevTime()
+ *  @param numNodes Number of nodes (including the initial and final nodes) to 
+ *  place on the trajectory
  *  @param arcset Data structure in which to store the propagated trajectory
  *  @param pLaw control law to apply while propagating
+ *  
+ *  @throws Exception if the integrator type and stepping strategy are not 
+ *  compatible
+ *  @throws DivergeException if the integrator fails and cannot proceed
  */
-void SimEngine::runSim_manyNodes(const double *ic, double t0, double tof, int numNodes, Arcset *arcset, ControlLaw *pLaw){
+void SimEngine::runSim_manyNodes(const double *ic, double t0, double tof, 
+    int numNodes, Arcset *arcset, ControlLaw *pLaw){
+
     if(numNodes < 2){
-        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim_manyNodes: Cannot create an arcset with fewer than two nodes\n");
+        printVerb(verbosity >= Verbosity_tp::SOME_MSG, 
+            "SimEngine::runSim_manyNodes: Cannot create an arcset with fewer "
+            "than two nodes\n");
         return;
     }
     int t_sign = bRevTime ? -1 : 1;
@@ -691,27 +863,43 @@ void SimEngine::runSim_manyNodes(const double *ic, double t0, double tof, int nu
     std::vector<double> stm0;
     createIdentity(stm0, coreSize + ctrlSize);
 
-    runSim(ic, &(ctrl0.front()), &(stm0.front()), t_span, arcset, pLaw);
+    try{
+        runSim(ic, &(ctrl0.front()), &(stm0.front()), t_span, arcset, pLaw);
+    }catch(const Exception &e){
+        throw e;
+    }
 }//====================================================
 
 /**
- *  @brief Run a simulation with more than two nodes - initial STM is assumed to be identity
- *  @details [long description]
+ *  @brief Run a simulation with more than two nodes - initial STM is assumed to 
+ *  be identity
  * 
  *  @param ic initial state vector
  *  @param ctrl0 initial control state vector
  *  @param t0 nondimensional epoch associated with the initial state
- *  @param tof nondimensional time-of-flight along the trajectory. The sign of <code>tof</code>
- *  is ignored; for reverse time, set the reverse time flag via setRevTime()
- *  @param numNodes Number of nodes (including the initial and final nodes) to place
- *  on the trajectory
+ *  @param tof nondimensional time-of-flight along the trajectory. The sign of 
+ *  <code>tof</code> is ignored; for reverse time, set the reverse time flag 
+ *  via setRevTime()
+ *  @param numNodes Number of nodes (including the initial and final nodes) to 
+ *  place on the trajectory
  *  @param arcset Data structure in which to store the propagated trajectory
  *  @param pLaw control law to apply while propagating
+ *  
+ *  @throws Exception if `ic` or `ctrl0` are too small for the specified 
+ *  dynamics or control laws.
+ *  @throws Exception if the integrator type and stepping strategy are not 
+ *  compatible
+ *  @throws DivergeException if the integrator fails and cannot proceed
  */
-void SimEngine::runSim_manyNodes(std::vector<double> ic, std::vector<double> ctrl0, double t0, double tof, int numNodes, Arcset *arcset, ControlLaw *pLaw){
+void SimEngine::runSim_manyNodes(const std::vector<double> &ic, 
+    const std::vector<double> &ctrl0, double t0, double tof, int numNodes, 
+    Arcset *arcset, ControlLaw *pLaw){
+
     // Checks
     if(numNodes < 2){
-        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim_manyNodes: Cannot create an arcset with fewer than two nodes\n");
+        printVerb(verbosity >= Verbosity_tp::SOME_MSG, 
+            "SimEngine::runSim_manyNodes: Cannot create an arcset with fewer "
+            "than two nodes\n");
         return;
     }
 
@@ -721,12 +909,14 @@ void SimEngine::runSim_manyNodes(std::vector<double> ic, std::vector<double> ctr
     
     if(ic.size() < coreSize){
         printErr("IC size = %zu is too small\n", ic.size());
-        throw Exception("SimEngine::runSim: IC must have at least the number of states specified by the Dynamics Model");
+        throw Exception("SimEngine::runSim: IC must have at least the number "
+            "of states specified by the Dynamics Model");
     }
 
     if(ctrl0.size() < ctrlSize){
         printErr("Control state size = %zu is too small\n", ctrl0.size());
-        throw Exception("SimEngine::runSim: Control state must have at least the number of states specified by the Control Law");
+        throw Exception("SimEngine::runSim: Control state must have at least "
+            "the number of states specified by the Control Law");
     }
 
     // Space out nodes in time
@@ -738,16 +928,22 @@ void SimEngine::runSim_manyNodes(std::vector<double> ic, std::vector<double> ctr
     for(int s = 0; s < numNodes-1; s++){
         t_span[s] = t0 + t_sign*s*t_step;
     }
-    t_span[numNodes-1] = t0 + t_sign*std::abs(tof);  // Final node at the desired TOF
+    // Final node at the desired TOF
+    t_span[numNodes-1] = t0 + t_sign*std::abs(tof);
 
     // Create some dummy variables
     std::vector<double> stm0;
     createIdentity(stm0, coreSize + ctrlSize);
 
-    std::vector<double> icCopy = ic;
-    std::vector<double> ctrlCopy = ctrl0;
+    // std::vector<double> icCopy = ic;
+    // std::vector<double> ctrlCopy = ctrl0;
 
-    runSim(&(icCopy.front()), &(ctrlCopy.front()), &(stm0.front()), t_span, arcset, pLaw);
+    try{
+        runSim(&(ic.front()), &(ctrl0.front()), &(stm0.front()), t_span, 
+            arcset, pLaw);
+    }catch(const Exception &e){
+        throw e;
+    }
 }//====================================================
 
 //-----------------------------------------------------
@@ -755,29 +951,36 @@ void SimEngine::runSim_manyNodes(std::vector<double> ic, std::vector<double> ctr
 //-----------------------------------------------------
 
 /**
- *  @brief Integrate the state EOMs and STM EOMs with additional integration as required by 
- *  specific systems.
+ *  @brief Integrate the state EOMs and STM EOMs with additional integration as 
+ *  required by specific systems.
  *
- *  @details This function uses values stored in member variables to determine the direction time flows,
- *  whether or not to use simple integration, and whether or not to use variable step sizes.
+ *  @details This function uses values stored in member variables to determine 
+ *  the direction time flows, whether or not to use simple integration, and 
+ *  whether or not to use variable step sizes.
  *
  *  @param ic an array containing the initial state for the trajectory; number
- *    of elements must match the number of <code>coreDim</code> specified 
- *    in the system dynamics model
+ *  of elements must match the number of <code>coreDim</code> specified 
+ *  in the system dynamics model
  *  @param ctrl0 initial control state; number of elements must match the number
- *    of states specified in the control law.
+ *  of states specified in the control law.
  *  @param stm0 initial STM in row-major order; number of elements is expected to
- *    be consistent with a square matrix with side length equal to the number of
- *    <code>coreDim</code>.
- *  @param t an array of times to integrate over; may contain 2 elements (t0, tf), or a range of times
+ *  be consistent with a square matrix with side length equal to the number of
+ *  <code>coreDim</code>.
+ *  @param t an array of times to integrate over; may contain 2 elements (t0, tf), 
+ *  or a range of times
  *  @param t_dim the dimension of t
  *  @param arcset pointer to a trajectory object to store the output trajectory
  *  
+ *  @throws Exception if the integrator type and stepping strategy are not 
+ *  compatible
  *  @throws DivergeException if the integrator fails and cannot proceed
  */
-void SimEngine::integrate(const double *ic, const double *ctrl0, const double *stm0, const double *t, unsigned int t_dim, Arcset *arcset){
+void SimEngine::integrate(const double *ic, const double *ctrl0, 
+    const double *stm0, const double *t, unsigned int t_dim, Arcset *arcset){
     if(arcset == nullptr){
-        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::integrate: Arcset pointer is nullptr; exiting to avoid memory leaks\n");
+        printVerb(verbosity >= Verbosity_tp::SOME_MSG, 
+            "SimEngine::integrate: Arcset pointer is nullptr; exiting to avoid "
+            "memory leaks\n");
         return;
     }
 
@@ -805,101 +1008,85 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
      *  
      *  q = [core_state; control_state; stm_elements; extra_state]
      *  
-     *      core_state      -   a (core_dim x 1) vector that contains the "core state," e.g.,
-     *                          the position, velocity, mass of the spacecraft
-     *      control_state   -   a (ctrl_dim x 1) vector that contains control state information
-     *      stm_elements    -   represents a (core_dim + ctrl_dim x core_dim + ctrl_dim) state 
-     *                          transition matrix in row-major order
-     *      extra_state     -   a (extra_dim x 1) vector that contains "extra states," e.g.,
+     *      core_state      -   a (core_dim x 1) vector that contains the "core 
+     *                          state," e.g., the position, velocity, mass of 
+     *                          the spacecraft
+     *      control_state   -   a (ctrl_dim x 1) vector that contains control 
+     *                          state information
+     *      stm_elements    -   represents a (core_dim + ctrl_dim x core_dim + 
+     *                          ctrl_dim) state transition matrix in row-major 
+     *                          order
+     *      extra_state     -   a (extra_dim x 1) vector that contains "extra 
+     *                          states," e.g.,
      *  
-     *  If simpleIntegration is enabled, the STM and extra states are not included in the
-     *  integration and their values in the Segment state array are filled by zeros 
+     *  If simpleIntegration is enabled, the STM and extra states are not 
+     *  included in the integration and their values in the Segment state array 
+     *  are filled by zeros 
      */
-    const unsigned int core_dim = model->getCoreStateSize();            // The number of states in the most basic EOM propagation
-    const unsigned int ctrl_dim = eomParams->pCtrlLaw ? eomParams->pCtrlLaw->getNumStates() : 0;  // The number of independent control variables
-    const unsigned int extra_dim = model->getExtraStateSize();          // The number of extra states
-    
 
-    const unsigned int stm_dim = pow(core_dim + ctrl_dim, 2);           // Size of the state-transition matrix
-    const unsigned int ic_dim = core_dim + ctrl_dim + (!bSimpleIntegration)*(stm_dim + extra_dim);     // Number of states used for this propagation
-    const unsigned int full_dim = core_dim + ctrl_dim + stm_dim + extra_dim;       // Max number of states for the most complex EOM propagation for this model
+    // The number of states in the most basic EOM propagation
+    const unsigned int core_dim = model->getCoreStateSize();
+    
+    // The number of independent control variables
+    const unsigned int ctrl_dim = eomParams->pCtrlLaw ? 
+    eomParams->pCtrlLaw->getNumStates() : 0;  
+    
+    // The number of extra states
+    const unsigned int extra_dim = model->getExtraStateSize();
+    
+    // Size of the state-transition matrix
+    const unsigned int stm_dim = pow(core_dim + ctrl_dim, 2);           
+    
+    // Number of states used for this propagation
+    const unsigned int ic_dim = core_dim + ctrl_dim + 
+        (!bSimpleIntegration)*(stm_dim + extra_dim);
+
+    // Max number of states for the most complex EOM propagation for this model
+    const unsigned int full_dim = core_dim + ctrl_dim + stm_dim + extra_dim;
     
     // dummy extra state variables to save if not all the states are propagated
     const std::vector<double> extraStates(full_dim - ic_dim, 0);
 
     printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  IC has %u initial states\n", ic_dim);
 
-    // Construct the full IC from the state ICs plus the STM ICs and any other ICs for more complex systems
+    // Construct the full IC from the state ICs plus the STM ICs and any other 
+    // ICs for more complex systems
     std::vector<double> fullIC(ic_dim, 0);
     std::copy(ic, ic + core_dim, &(fullIC.front()));
 
     // Add the control states to the vector
     std::copy(ctrl0, ctrl0+ctrl_dim, &(fullIC[core_dim]));
 
-    // NOTE: STM follows immediately after core and control states; any extras come after the STM
+    // NOTE: STM follows immediately after core and control states; any extras 
+    // come after the STM
     if(!bSimpleIntegration){
         std::copy(stm0, stm0 + stm_dim, &(fullIC[core_dim + ctrl_dim]));
     }        
 
-    double *y = &(fullIC.front());      // array of states that is passed to the integrator
+    // array of states that is passed to the integrator
+    double *y = &(fullIC.front());
 
     // Choose EOM function based on system type and simplicity
-    printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  using %s integration\n", bSimpleIntegration ? "simple (no STM)" : "full (+ STM)");
+    printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  using %s integration\n", 
+        bSimpleIntegration ? "simple (no STM)" : "full (+ STM)");
+    
+    // Pointer for the EOM function
     int (*eomFcn)(double, const double[], double[], void*) = 
-        bSimpleIntegration ? model->getSimpleEOM_fcn() : model->getFullEOM_fcn();     // Pointer for the EOM function
+        bSimpleIntegration ? model->getSimpleEOM_fcn() : model->getFullEOM_fcn();
 
     printVerb(verbosity >= Verbosity_tp::ALL_MSG, 
-        "  using control law: %s\n", eomParams->pCtrlLaw ? eomParams->pCtrlLaw->getTypeString().c_str() : "NONE");
-
-    /*
-     * BOOST INTEGRATOR ADDITION
-     */
-    // if(bVarStepSize && (
-    //     varStep_integ == Integ_tp::BOOST_RKCK ||
-    //     varStep_integ == Integ_tp::BOOST_RKF ||
-    //     varStep_integ == Integ_tp::BOOST_BS) ){
-
-    //     if(t_dim != 2)
-    //         throw Exception("SimEngine::integrate: t_dim must be 2 for BOOST integration right now!");
-
-    //     boost_eom_wrapper boostEOM(eomFcn, eomParams);
-    //     boost_observer boostObserver(model, arcset, eomParams);
-
-    //     double t0 = t[0], tf = t[1];                // start and finish times for integration; t0 will be updated by integrator
-    //     double dt = tf > t0 ? dtGuess : -dtGuess;   // step size (initial guess)
-
-    //     // Save the initial state, time, and STM
-    //     // model->sim_saveIntegratedData(y, t[0], arcset, eomParams);
-
-    //     switch(varStep_integ){
-    //         case Integ_tp::BOOST_RKCK:
-    //             boostInt::integrate_adaptive(
-    //                 boostInt::make_controlled< boostInt::runge_kutta_cash_karp54< std::vector<double> > >(absTol, relTol),
-    //                 boostEOM, fullIC, t0, tf, dt, boostObserver);
-    //             break;
-    //         case Integ_tp::BOOST_RKF:
-    //             boostInt::integrate_adaptive(
-    //                 boostInt::make_controlled< boostInt::runge_kutta_fehlberg78< std::vector<double> > >(absTol, relTol),
-    //                 boostEOM, fullIC, t0, tf, dt, boostObserver);
-    //             break;
-    //         case Integ_tp::BOOST_BS:
-    //         {
-    //             boostInt::bulirsch_stoer<std::vector<double> > stepper(absTol, relTol);
-    //             integrate_adaptive(stepper, boostEOM, fullIC, t0, tf, dt, boostObserver);
-    //             break;
-    //         }    
-    //     }
-
-    //     return; // Skip the rest of the function and exit
-    // }// END OF BOOST INTEGRATORS
+        "  using control law: %s\n", eomParams->pCtrlLaw ? 
+        eomParams->pCtrlLaw->getTypeString().c_str() : "NONE");
 
     /* Create a system to integrate; we don't include a Jacobin (nullptr)
      *  The parameter set eomParams can be modified 
-     *  between integration steps (i.e., change model parameters), but the ode functions must be reset
-     *  via <code>gsl_odeiv2_driver_reset</code>, <code>gsl_odeiv2_evolve_reset</code>, or
-     *  <code>gsl_odeiv2_step_reset</code> before continuing with an updated parameter set
+     *  between integration steps (i.e., change model parameters), but the ode 
+     *  functions must be reset via `gsl_odeiv2_driver_reset`, 
+     *  `gsl_odeiv2_evolve_reset`, or `gsl_odeiv2_step_reset` 
+     *  before continuing with an updated parameter set
      */
-    gsl_odeiv2_system odeSys = {eomFcn, nullptr, static_cast<size_t>(ic_dim), eomParams};
+    gsl_odeiv2_system odeSys = {eomFcn, nullptr, static_cast<size_t>(ic_dim), 
+        eomParams};
     
     // Define ODE objects, define them conditionaly based on bVarStepSize
     gsl_odeiv2_step *s = nullptr;
@@ -912,30 +1099,40 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
         switch(varStep_integ){
             case Integ_tp::RK8PD:
                 s = gsl_odeiv2_step_alloc(gsl_odeiv2_step_rk8pd, ic_dim);
-                printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  variable step size, using Runge-Kutta Dormand-Prince 8-9 method\n");
+                printVerb(verbosity >= Verbosity_tp::ALL_MSG, 
+                    "  variable step size, using Runge-Kutta Dormand-Prince "
+                    "8-9 method\n");
                 break;
             case Integ_tp::RKCK:
                 s = gsl_odeiv2_step_alloc(gsl_odeiv2_step_rkck, ic_dim);
-                printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  variable step size, using Runge-Kutta Cash-Karp 4-5 method\n");
+                printVerb(verbosity >= Verbosity_tp::ALL_MSG, 
+                    "  variable step size, using Runge-Kutta Cash-Karp 4-5 "
+                    "method\n");
                 break;
             default:
                 free_odeiv2(s, c, e, d);
-                throw Exception("SimEngine::integrate: Integrator type is not suited for variable step propagation; aborting integration process");
+                throw Exception("SimEngine::integrate: Integrator type is "
+                    "not suited for variable step propagation; aborting "
+                    "integration process");
         }
         
-        // Define a control that will keep the error in the state y within the specified tolerances
+        // Define a control that will keep the error in the state y within the 
+        // specified tolerances
         c = gsl_odeiv2_control_y_new (absTol, relTol);
         // Allocate space for the integrated solution to evolve in
         e = gsl_odeiv2_evolve_alloc(ic_dim);
     }else{
-        printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  fixed step size, using Adams-Bashforth, Adams-Moulton method\n");
+        printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  fixed step size, "
+            "using Adams-Bashforth, Adams-Moulton method\n");
         
         double signed_dt = bRevTime ? -1*dtGuess : dtGuess;
 
         switch(fixStep_integ){
             case Integ_tp::MSADAMS:
-                // Allocate space for a driver; the msadams algorithm requires access to the driver
-                d = gsl_odeiv2_driver_alloc_y_new(&odeSys, gsl_odeiv2_step_msadams, signed_dt, absTol, relTol);
+                // Allocate space for a driver; the msadams algorithm requires 
+                // access to the driver
+                d = gsl_odeiv2_driver_alloc_y_new(&odeSys, 
+                    gsl_odeiv2_step_msadams, signed_dt, absTol, relTol);
                 gsl_odeiv2_driver_set_nmax(d, maxDriverSteps);
                 // Allocate space for the stepping object
                 s = gsl_odeiv2_step_alloc(gsl_odeiv2_step_msadams, ic_dim);
@@ -943,46 +1140,59 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
                 break;
             default:
                 free_odeiv2(s, c, e, d);
-                throw Exception("SimEngine::integrate: Integrator type is not suited for fixed step propagation; aborting integration process");
+                throw Exception("SimEngine::integrate: Integrator type is not "
+                    "suited for fixed step propagation; aborting integration "
+                    "process");
         }
     }
 
     // Update all event functions with IC
-    printVerb(verbosity >= Verbosity_tp::SOME_MSG, "  sim will use %d event functions:\n", static_cast<int>(events.size()));
+    printVerb(verbosity >= Verbosity_tp::SOME_MSG, 
+        "  sim will use %d event functions:\n", static_cast<int>(events.size()));
     for(unsigned int ev = 0; ev < events.size(); ev++){
-        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "  [%02u] - %s\n", ev, events.at(ev).getTypeStr());
+        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "  [%02u] - %s\n", ev, 
+            events.at(ev).getTypeStr());
         events.at(ev).updateDist(y, core_dim, t[0]);
     }
 
     // Save the initial state, time, and STM
     Node node0(y, core_dim, t[0]); // Construct a basic node
-    int id0 = model->sim_addNode(node0, y, t[0], arcset, eomParams, Event_tp::NONE); // Pass the node to the Dynamic Model so specific modifications may be made
+
+    // Pass the node to the Dynamic Model so specific modifications may be made
+    int id0 = model->sim_addNode(node0, y, t[0], arcset, eomParams, 
+        Event_tp::NONE);
     
-    // Construct a segment with origin at the initial node, undefined terminus, dummy TOF in the correct direction
+    // Construct a segment with origin at the initial node, undefined terminus, 
+    // dummy TOF in the correct direction
     Segment seg(id0, Linkable::INVALID_ID, t[1] - t[0]);
     seg.appendState(y, ic_dim);     // Save the initial state in the segment
     seg.setStateWidth(ic_dim);
-    seg.appendState(extraStates);   // Save dummy values for extra states that are not propagated
+    seg.appendState(extraStates);   // Save dummy values for extra states 
     seg.appendTime(t[0]);           // Save the initial time in the segment
     model->sim_addSeg(seg, y, t[0], arcset, eomParams);
 
     int status;             // integrator status
-    int propStepCount = 0;  // Count of propagated steps (different than number of time steps)
+    int propStepCount = 0;  // Count of propagated steps (different than 
+                            // number of time steps)
     bool killSim = false;   // flag to stop simulation
     double t_int = t[0];    // current propagation time
 
     if(t_dim == 2){
-        double tf = t[1];                // start and finish times for integration; t_int will be updated by integrator
-        double dt = tf > t_int ? dtGuess : -dtGuess;   // step size (initial guess)
+        
+        // start and finish times for integration; t_int will be updated by 
+        // integrator
+        double tf = t[1];
+        double dt = tf > t_int ? dtGuess : -dtGuess;   // step size (init guess)
         int sgn = tf > t_int ? 1 : -1;
 
         while (sgn*t_int < sgn*tf && !killSim){
-            // apply integrator for one step; new state and time are stored in y and t_int
+            // apply integrator for one step; new state and time are stored in 
+            // y and t_int
             if(bVarStepSize){
-                status = gsl_odeiv2_evolve_apply(e, c, s, &odeSys, &t_int, tf, &dt, y);
+                status = gsl_odeiv2_evolve_apply(e, c, s, &odeSys, &t_int, tf,
+                    &dt, y);
             }else{
                 status = gsl_odeiv2_driver_apply(d, &t_int, tf, y);
-                // printColor(GREEN, "Driver took %d steps for %.2f nd time\n", d->n, t_int);
             }
 
             if(status != GSL_SUCCESS){
@@ -990,35 +1200,58 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
                 free_odeiv2(s, c, e, d);
 
                 // Save the last successful step the integrator was able to take
-                Node nodeF(y, core_dim, t_int);                 // Construct a basic node
-                Segment &lastSeg = arcset->getSegRefByIx(-1);   // Get reference to most recent segment (faster than copying the object!)
+                Node nodeF(y, core_dim, t_int);     // Construct a basic node
+                
+                // Get reference to most recent segment (faster than copying 
+                // the object!)
+                Segment &lastSeg = arcset->getSegRefByIx(-1);   
 
-                int idf = model->sim_addNode(nodeF, y, t_int, arcset, eomParams, Event_tp::SIM_ERR); // Pass the node to the DynamicModel for more specific actions
+                // Pass the node to the DynamicModel for more specific actions
+                int idf = model->sim_addNode(nodeF, y, t_int, arcset, 
+                    eomParams, Event_tp::SIM_ERR); 
+
                 arcset->getNodeRef(idf).addLink(lastSeg.getID());
 
-                lastSeg.setTerminus(idf);                       // Update the terminus to the final node
-                lastSeg.appendState(y, ic_dim);                 // Save the final state and time to the segment
-                lastSeg.appendState(extraStates);               // Save dummy values for extra states that are not propagated
-                lastSeg.appendTime(t_int);
-                lastSeg.updateTOF();                             // Compute the actual TOF from the data and store in dedicated TOF variable
-                lastSeg.setSTM(y+core_dim+ctrl_dim, stm_dim);   // Set the STM to be the most recent one
+                // Update the terminus to the final node
+                lastSeg.setTerminus(idf); 
 
-                throw DivergeException("SimEngine::integrate: Integration did not succeed");
+                // Save the final state and time to the segment                      
+                lastSeg.appendState(y, ic_dim);                 
+
+                // Save dummy values for extra states that are not propagated
+                lastSeg.appendState(extraStates);               
+                lastSeg.appendTime(t_int);
+                
+                // Compute the actual TOF from the data and store in 
+                // dedicated TOF variable
+                lastSeg.updateTOF();                            
+
+                // Set the STM to be the most recent one 
+                lastSeg.setSTM(y+core_dim+ctrl_dim, stm_dim);   
+
+                throw DivergeException("SimEngine::integrate: Integration did "
+                    "not succeed");
             }
 
             // Stop the simulation if a simulation-ending event occurs
             killSim = locateEvents(y, t_int, arcset, propStepCount);
 
             // Stop the simulation if the maximum computation time has passed
-            killSim = killSim || (maxCompTime > 0 && (time(nullptr) - startTimestamp) > maxCompTime);
+            killSim = killSim || 
+                (maxCompTime > 0 && (time(nullptr) - startTimestamp) > maxCompTime);
 
             if(killSim)
                 break;
 
             // Save propagation state to segment
-            Segment &lastSeg = arcset->getSegRefByIx(-1);       // Get another reference (not reassignable)
-            lastSeg.appendState(y, ic_dim);                     // Save newest state and time
-            lastSeg.appendState(extraStates);                   // Save dummy values for extra states that are not propagated
+            // Get another reference (not reassignable)
+            Segment &lastSeg = arcset->getSegRefByIx(-1);       
+            
+            // Save newest state and time
+            lastSeg.appendState(y, ic_dim);                     
+            
+            // Save dummy values for extra states that are not propagated
+            lastSeg.appendState(extraStates);                   
             lastSeg.appendTime(t_int);
             propStepCount++;
         }
@@ -1471,21 +1704,26 @@ void SimEngine::createDefaultEvents(const SysData *sysData){
 
 void SimEngine::reportPropErrs(int gsl_status, double t_int){
     printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, RED,
-        "SimEngine::integrate: t = %.4e, GSL ERR: %s\n", t_int, gsl_strerror(gsl_status));
+        "SimEngine::integrate: t = %.4e, GSL ERR: %s\n", t_int, 
+        gsl_strerror(gsl_status));
 
     switch(gsl_status){
         case GSL_EMAXITER:
             printVerbColor(verbosity >= Verbosity_tp::NO_MSG, RED,
-                "  Details: SimEngine::integrate: maximum number of driver steps have occurred\n");
+                "  Details: SimEngine::integrate: maximum number of driver "
+                "steps have occurred\n");
             break;
         case GSL_ENOPROG:
             printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, RED,
-                "  Details: SimEngine::integrate: driver step size has dropped below the minimum value; no progress to be made\n");
+                "  Details: SimEngine::integrate: driver step size has "
+                "dropped below the minimum value; no progress to be made\n");
             break;
         case GSL_EBADFUNC:
             printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, RED,
                 "  Details: SimEngine::integrate: 'bad function' error thrown\n");
-            break;  // Driver must be reset before using again, but current behavior ends the integration and frees driver, so not necessary
+            // Driver must be reset before using again, but current behavior 
+            // ends the integration and frees driver, so not necessary
+            break; 
         default: 
             break; // Nothing to do!
     }

@@ -137,7 +137,7 @@ void DynamicsModel_bc4bp::getPrimPos(double t, const SysData *pSysData, int pIx,
 
             // Compute the angles for the system at the specified time
             double theta = theta0 + k*t;
-            double phi = phi0 + sqrt(mu/pow(ratio, 3)) * t;
+            double phi = phi0 + sqrt(mu/(ratio*ratio*ratio)) * t;
 
             switch(pIx){
                 case -1:
@@ -220,7 +220,7 @@ void DynamicsModel_bc4bp::getPrimVel(double t, const SysData *pSysData, int pIx,
 
             // Compute angular velocities for stystem
             double thetaDot = k;
-            double phiDot = sqrt(mu/pow(ratio, 3));
+            double phiDot = sqrt(mu/(ratio*ratio*ratio));
 
             // Compute the angles for the system at the specified time
             double theta = theta0 + thetaDot*t;
@@ -298,7 +298,7 @@ void DynamicsModel_bc4bp::getPrimAccel(double t, const SysData *pSysData, int pI
 
             // Compute angular velocities for stystem
             double thetaDot = k;
-            double phiDot = sqrt(mu/pow(ratio, 3));
+            double phiDot = sqrt(mu/(ratio*ratio*ratio));
 
             // Compute the angles for the system at the specified time
             double theta = theta0 + thetaDot*t;
@@ -1400,6 +1400,12 @@ void DynamicsModel_bc4bp::multShoot_targetSP(MultShootData& it, const Constraint
     double d1 = r_p1.norm();
     double d2 = r_p2.norm();
     double d3 = r_p3.norm();
+    double d1_3 = d1*d1*d1;
+    double d2_3 = d2*d2*d2;
+    double d3_3 = d3*d3*d3;
+    double d1_5 = d1_3*d1*d1;
+    double d2_5 = d2_3*d2*d2;
+    double d3_5 = d3_3*d3*d3;
 
     double k = bcSysData->getK();
     double mu = bcSysData->getMu();
@@ -1407,7 +1413,7 @@ void DynamicsModel_bc4bp::multShoot_targetSP(MultShootData& it, const Constraint
 
     // Evaluate three constraint function values 
     Eigen::Vector3d conEval;
-    conEval.noalias() = -(1/k - mu)*r_p1/pow(d1, 3) - (mu - nu)*r_p2/pow(d2,3) - nu*r_p3/pow(d3, 3);
+    conEval.noalias() = -(1/k - mu)*r_p1/d1_3 - (mu - nu)*r_p2/d2_3 - nu*r_p3/d3_3;
     
     // printf("Node %d: Saddle Point Constraint Data:", n);
     // printf("Epoch = %.16f\n", epoch);
@@ -1420,27 +1426,27 @@ void DynamicsModel_bc4bp::multShoot_targetSP(MultShootData& it, const Constraint
 
     // Parials w.r.t. node position r
     double dFdq_data[9] = {0};
-    dFdq_data[0] = -(1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1(0),2)/pow(d1,5)) -
-        (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2(0),2)/pow(d2,5)) - nu*(1/pow(d3,3) - 
-        3*pow(r_p3(0),2)/pow(d3,5));     //dxdx
-    dFdq_data[1] = (1/k - mu)*3*r_p1(0)*r_p1(1)/pow(d1,5) + 
-        (mu - nu)*3*r_p2(0)*r_p2(1)/pow(d2,5) +
-        nu*3*r_p3(0)*r_p3(1)/pow(d3,5);   //dxdy
-    dFdq_data[2] = (1/k - mu)*3*r_p1(0)*r_p1(2)/pow(d1,5) +
-        (mu - nu)*3*r_p2(0)*r_p2(2)/pow(d2,5) +
-        nu*3*r_p3(0)*r_p3(2)/pow(d3,5);   //dxdz
+    dFdq_data[0] = -(1/k - mu)*(1/d1_3 - 3*pow(r_p1(0),2)/d1_5) -
+        (mu-nu)*(1/d2_3 - 3*pow(r_p2(0),2)/d2_5) - nu*(1/d3_3 - 
+        3*pow(r_p3(0),2)/d3_5);     //dxdx
+    dFdq_data[1] = (1/k - mu)*3*r_p1(0)*r_p1(1)/d1_5 + 
+        (mu - nu)*3*r_p2(0)*r_p2(1)/d2_5 +
+        nu*3*r_p3(0)*r_p3(1)/d3_5;   //dxdy
+    dFdq_data[2] = (1/k - mu)*3*r_p1(0)*r_p1(2)/d1_5 +
+        (mu - nu)*3*r_p2(0)*r_p2(2)/d2_5 +
+        nu*3*r_p3(0)*r_p3(2)/d3_5;   //dxdz
     dFdq_data[3] = dFdq_data[1];    // dydx = dxdy
-    dFdq_data[4] = -(1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1(1),2)/pow(d1,5)) -
-        (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2(1),2)/pow(d2,5)) - 
-        nu*(1/pow(d3,3) - 3*pow(r_p3(1),2)/pow(d3,5));   //dydy
-    dFdq_data[5] = (1/k - mu)*3*r_p1(1)*r_p1(2)/pow(d1,5) +
-        (mu - nu)*3*r_p2(1)*r_p2(2)/pow(d2,5) +
-        nu*3*r_p3(1)*r_p3(2)/pow(d3,5);   //dydz
+    dFdq_data[4] = -(1/k - mu)*(1/d1_3 - 3*pow(r_p1(1),2)/d1_5) -
+        (mu-nu)*(1/d2_3 - 3*pow(r_p2(1),2)/d2_5) - 
+        nu*(1/d3_3 - 3*pow(r_p3(1),2)/d3_5);   //dydy
+    dFdq_data[5] = (1/k - mu)*3*r_p1(1)*r_p1(2)/d1_5 +
+        (mu - nu)*3*r_p2(1)*r_p2(2)/d2_5 +
+        nu*3*r_p3(1)*r_p3(2)/d3_5;   //dydz
     dFdq_data[6] = dFdq_data[2];    //dzdx = dxdz
     dFdq_data[7] = dFdq_data[5];    //dzdy = dydz
-    dFdq_data[8] = -(1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1(2),2)/pow(d1,5)) -
-            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2(2),2)/pow(d2,5)) - nu*(1/pow(d3,3) - 
-            3*pow(r_p3(2),2)/pow(d3,5)); //dzdz
+    dFdq_data[8] = -(1/k - mu)*(1/d1_3 - 3*pow(r_p1(2),2)/d1_5) -
+            (mu-nu)*(1/d2_3 - 3*pow(r_p2(2),2)/d2_5) - nu*(1/d3_3 - 
+            3*pow(r_p3(2),2)/d3_5); //dzdz
 
     Matrix3Rd dFdq = Eigen::Map<Matrix3Rd>(dFdq_data, 3, 3);
 

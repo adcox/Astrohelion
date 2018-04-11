@@ -24,10 +24,11 @@ void freeLaws(std::vector<ControlLaw*>& laws){
 }//====================================================
 
 int main(int argc, char** argv){
-	(void) argc;
-	(void) argv;
+	if(argc != 2)
+		printErr("Expected 1 input but got %d\n", argc-1);
 
-	char famfile[] = "L4_Lyap_f1.0e-02_Isp3000_law6144.mat";
+	char *famfile = argv[1];
+	// char famfile[] = "L4_Lyap_f1.0e-01_Isp3000_law6144.mat";
 	char filename[128];
 	sprintf(filename, "%s/%s", "../../data/families/cr3bp-lt_earth-moon", famfile);
 
@@ -150,7 +151,7 @@ int main(int argc, char** argv){
 	newFam.sortEigs();
 
 	newFam.setName(oldFam.getName());
-	newFam.saveToMat("newFam.mat");
+	newFam.saveToMat(famfile);
 
 	freeLaws(laws);
 	return 0;

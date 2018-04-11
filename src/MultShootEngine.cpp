@@ -595,15 +595,19 @@ void MultShootEngine::multShoot(MultShootData *pData){
 				pData->pArcOut->saveToMat(filename);
 				pData->pArcOut->reset();	// Must be empty for next createOutput() call
 			}catch(const std::exception &e){
-				throw &e;
+				throw e;
 			}
 		}
 
 		// Loop through all constraints and compute the constraint values, 
 		// partials, and apply them to the FX and DF matrices
 		for(unsigned int c = 0; c < pData->allCons.size(); c++){
-			pData->pArcIn->getSysData()->getDynamicsModel()->\
-				multShoot_applyConstraint(*pData, pData->allCons[c], c);
+			try{
+				pData->pArcIn->getSysData()->getDynamicsModel()->\
+					multShoot_applyConstraint(*pData, pData->allCons[c], c);
+			}catch(const std::exception &e){
+				throw e;
+			}
 			printVerb(verbosity >= Verbosity_tp::DEBUG, 
 				"* Applying %s constraint\n", pData->allCons[c].getTypeStr());
 		}
@@ -667,7 +671,8 @@ void MultShootEngine::multShoot(MultShootData *pData){
 				simEngine.setVarStepSize(true);
 				propSegsFromFreeVars(*pData, simEngine, verbosity);
 			}
-			pData->pArcIn->getSysData()->getDynamicsModel()->multShoot_createOutput(*pData);
+			pData->pArcIn->getSysData()->getDynamicsModel()->\
+				multShoot_createOutput(*pData);
 		}catch(const Exception &e){
 			printErr("MultShootEngine::multShoot: "
 				"Unable to create output arcset\n  Err: %s\n", e.what());

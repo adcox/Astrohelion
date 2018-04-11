@@ -208,7 +208,8 @@ int DynamicsModel_2bp::fullEOMs(double t, const double s[], double sdot[], void 
     const SysData_2bp *pSys = static_cast<const SysData_2bp *>(paramStruct->pSysData);
 
     double r = sqrt( s[0]*s[0] + s[1]*s[1] + s[2]*s[2] );
-    double mult = -pSys->getMu()/pow(r,3);	// G*(mass_primary)/(r^3)
+    r *= r*r;   // cube it
+    double mult = -pSys->getMu()/r;	// G*(mass_primary)/(r^3)
 
     // Position derivatives = velocity
     std::copy(s+3, s+6, sdot);
@@ -253,7 +254,8 @@ int DynamicsModel_2bp::simpleEOMs(double t, const double s[], double sdot[], voi
     const SysData_2bp *pSys = static_cast<const SysData_2bp *>(paramStruct->pSysData);
 
     double r = sqrt( s[0]*s[0] + s[1]*s[1] + s[2]*s[2] );
-    double mult = -pSys->getMu()/pow(r,3);	// G*(mass_primary)/(r^3)
+    r *= r*r;   // cube it
+    double mult = -pSys->getMu()/r;	// G*(mass_primary)/(r^3)
 
     // Position derivatives = velocity
     std::copy(s+3, s+6, sdot);
@@ -279,13 +281,15 @@ int DynamicsModel_2bp::simpleEOMs(double t, const double s[], double sdot[], voi
 void DynamicsModel_2bp::getUDDots(double mu, double x, double y, double z, double* ddots){
     // compute distance to primaries
     double r = sqrt(x*x + y*y + z*z);
+    double r3 = r*r*r;
+    double r5 = r*r*r*r*r;
 
-    ddots[0] = 3*mu*x*x/pow(r,5) - mu/pow(r,3);	// Uxx
-    ddots[1] = 3*mu*y*y/pow(r,5) - mu/pow(r,3);	// Uyy
-    ddots[2] = 3*mu*z*z/pow(r,5) - mu/pow(r,3);	// Uzz
-    ddots[3] = 3*mu*x*y/pow(r,5);	// Uxy
-    ddots[4] = 3*mu*x*z/pow(r,5);	// Uxz
-    ddots[5] = 3*mu*y*z/pow(r,5);	// Uyz
+    ddots[0] = 3*mu*x*x/r5 - mu/r3;	// Uxx
+    ddots[1] = 3*mu*y*y/r5 - mu/r3;	// Uyy
+    ddots[2] = 3*mu*z*z/r5 - mu/r3;	// Uzz
+    ddots[3] = 3*mu*x*y/r5;	// Uxy
+    ddots[4] = 3*mu*x*z/r5;	// Uxz
+    ddots[5] = 3*mu*y*z/r5;	// Uyz
 }//========================================================
 
 

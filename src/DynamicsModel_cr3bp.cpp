@@ -379,18 +379,21 @@ void DynamicsModel_cr3bp::multShoot_targetJC(MultShootData& it, const Constraint
     double vy = nodeState[4];
     double vz = nodeState[5];
 
-    double r13 = sqrt((x + mu)*(x + mu) + y*y + z*z);
-    double r23 = sqrt((x - 1 + mu)*(x - 1 + mu) + y*y + z*z);
+    // Compute distances, then cube them
+    double r13_3 = sqrt((x + mu)*(x + mu) + y*y + z*z);
+    r13_3 *= r13_3*r13_3;
+    double r23_3 = sqrt((x - 1 + mu)*(x - 1 + mu) + y*y + z*z);
+    r23_3 *= r23_3*r23_3;
 
     it.FX[row0] = nodeJC - conData[0];
     // printf("Targeting JC = %.4f, value is %.4f\n", conData[0], nodeJC);
 
     it.DF_elements.push_back(Tripletd(row0, state_var.row0+0,
-        (-2*(x + mu)*(1 - mu)/pow(r13,3) - 2*(x + mu - 1)*mu/pow(r23,3) + 2*x) ));
+        (-2*(x + mu)*(1 - mu)/r13_3 - 2*(x + mu - 1)*mu/r23_3 + 2*x) ));
     it.DF_elements.push_back(Tripletd(row0, state_var.row0+1,
-        (-2*y*(1 - mu)/pow(r13,3) - 2*y*mu/pow(r23,3) + 2*y) ));
+        (-2*y*(1 - mu)/r13_3 - 2*y*mu/r23_3 + 2*y) ));
     it.DF_elements.push_back(Tripletd(row0, state_var.row0+2,
-        (-2*z*(1 - mu)/pow(r13,3) - 2*z*mu/pow(r23,3)) ));
+        (-2*z*(1 - mu)/r13_3 - 2*z*mu/r23_3) ));
     it.DF_elements.push_back(Tripletd(row0, state_var.row0+3, -2*vx));
     it.DF_elements.push_back(Tripletd(row0, state_var.row0+4, -2*vy));
     it.DF_elements.push_back(Tripletd(row0, state_var.row0+5, -2*vz));
@@ -449,14 +452,16 @@ void DynamicsModel_cr3bp::multShoot_targetJC_endSeg(MultShootData& it, const Con
     double vy = lastState[4];
     double vz = lastState[5];
 
-    double r13 = sqrt((x + mu)*(x + mu) + y*y + z*z);
-    double r23 = sqrt((x + mu - 1)*(x + mu - 1) + y*y + z*z);
+    double r13_3 = sqrt((x + mu)*(x + mu) + y*y + z*z);
+    r13_3 *= r13_3*r13_3;
+    double r23_3 = sqrt((x + mu - 1)*(x + mu - 1) + y*y + z*z);
+    r23_3 *= r23_3*r23_3;
 
     // Partial derivative of constraint w.r.t. propagated node states
     double dFdq_f[6] = {
-        (-2*(x + mu)*(1 - mu)/pow(r13,3) - 2*(x + mu - 1)*mu/pow(r23,3) + 2*x),
-        (-2*y*(1 - mu)/pow(r13,3) - 2*y*mu/pow(r23,3) + 2*y),
-        (-2*z*(1 - mu)/pow(r13,3) - 2*z*mu/pow(r23,3)),
+        (-2*(x + mu)*(1 - mu)/r13_3 - 2*(x + mu - 1)*mu/r23_3 + 2*x),
+        (-2*y*(1 - mu)/r13_3 - 2*y*mu/r23_3 + 2*y),
+        (-2*z*(1 - mu)/r13_3 - 2*z*mu/r23_3),
         -2*vx,
         -2*vy,
         -2*vz
@@ -489,31 +494,43 @@ void DynamicsModel_cr3bp::multShoot_targetJC_endSeg(MultShootData& it, const Con
 }//====================================================
 
 /**
- *  @brief Compute constraint function and partial derivative values for Pseudo Arc-Length
+ *  @brief Compute constraint function and partial derivative values for Pseudo 
+ *  Arc-Length
  *  
  *  @param it a pointer to the corrector's iteration data structure
  *  @param con the constraint being applied
  *  @param row0 the row this constraint begins on
- *  @throw Exception if the pseudo arclength constraint is not listed as the final constraint
- *  @throw Exception if the Jacobian matrix (w/o the PAL constraint) is nonsquare.
+ *  @throw Exception if the pseudo arclength constraint is not listed as the 
+ *  final constraint
+ *  @throw Exception if the Jacobian matrix (w/o the PAL constraint) is 
+ *  nonsquare.
  */
-void DynamicsModel_cr3bp::multShoot_targetPseudoArc(MultShootData& it, const Constraint& con, int row0) const{
+void DynamicsModel_cr3bp::multShoot_targetPseudoArc(MultShootData& it, 
+    const Constraint& con, int row0) const{
+
     std::vector<double> conData = con.getData();
 
     if(row0 != it.totalCons-1)
-        throw Exception("DynamicsModel_cr3bp::multShoot_targetPseudoArc: Pseudo Arc-Length constraint must be the final constraint; please re-create the nodeset accordingly");
+        throw Exception("DynamicsModel_cr3bp::multShoot_targetPseudoArc: "
+            "Pseudo Arc-Length constraint must be the final constraint; "
+            "please re-create the nodeset accordingly");
 
     if(it.totalCons != it.totalFree)
-        throw Exception("DynamicsModel_cr3bp::multShoot_targetPseudoArc: Jacobian matrix is not square; cannot apply pseudo arc-length");
+        throw Exception("DynamicsModel_cr3bp::multShoot_targetPseudoArc: "
+            "Jacobian matrix is not square; cannot apply pseudo arc-length");
 
-    // All elements except the last are the free-variable vector for a converged family member
+    // All elements except the last are the free-variable vector for a converged 
+    // family member
     std::vector<double> famFreeVec(conData.begin(), conData.begin()+it.totalFree);
     std::vector<double> nullspace(conData.begin()+it.totalFree, conData.end()-1);
     double stepSize = conData.back();   // The last element is the step size
 
-    Eigen::RowVectorXd X = Eigen::Map<Eigen::RowVectorXd>(&(it.X[0]), 1, it.totalFree);
-    Eigen::RowVectorXd X_fam = Eigen::Map<Eigen::RowVectorXd>(&(famFreeVec[0]), 1, famFreeVec.size());
-    Eigen::VectorXd N = Eigen::Map<Eigen::VectorXd>(&(nullspace[0]), nullspace.size(), 1);
+    Eigen::RowVectorXd X = Eigen::Map<Eigen::RowVectorXd>(&(it.X[0]), 1, 
+        it.totalFree);
+    Eigen::RowVectorXd X_fam = Eigen::Map<Eigen::RowVectorXd>(&(famFreeVec[0]), 
+        1, famFreeVec.size());
+    Eigen::VectorXd N = Eigen::Map<Eigen::VectorXd>(&(nullspace[0]), 
+        nullspace.size(), 1);
     
     MatrixXRd dotProd;
     dotProd.noalias() = (X - X_fam)*N;
@@ -546,20 +563,19 @@ int DynamicsModel_cr3bp::fullEOMs(double t, const double s[], double sdot[], voi
     
     double mu = sysData->getMu();
 
-    // double x = s[0];    double y = s[1];    double z = s[2];
-    // double xdot = s[3]; double ydot = s[4];
-
-    // compute distance to primaries
-    double r13 = sqrt( (s[0] + mu)*(s[0] + mu) + s[1]*s[1] + s[2]*s[2] );
-    double r23 = sqrt( (s[0] - 1+mu)*(s[0] - 1+mu) + s[1]*s[1] + s[2]*s[2] );
+    // compute distance to primaries, then cube them for use in eq
+    double r13_3 = sqrt( (s[0] + mu)*(s[0] + mu) + s[1]*s[1] + s[2]*s[2] );
+    r13_3 *= r13_3*r13_3;
+    double r23_3 = sqrt( (s[0] - 1+mu)*(s[0] - 1+mu) + s[1]*s[1] + s[2]*s[2] );
+    r23_3 *= r23_3*r23_3;
 
     // Position derivatives = velocity
     std::copy(s+3, s+6, sdot);
 
     // Velocity derivatives = acceleraiton
-    sdot[3] =   2*s[4] + s[0] - (1-mu)*(s[0]+mu)/pow(r13,3) - mu*(s[0]-1+mu)/pow(r23,3);
-    sdot[4] =  -2*s[3] + s[1] - (1-mu) * s[1]/pow(r13,3) - mu*s[1]/pow(r23,3);
-    sdot[5] =  -(1-mu)*s[2]/pow(r13,3) - mu*s[2]/pow(r23,3); 
+    sdot[3] =   2*s[4] + s[0] - (1-mu)*(s[0]+mu)/r13_3 - mu*(s[0]-1+mu)/r23_3;
+    sdot[4] =  -2*s[3] + s[1] - (1-mu) * s[1]/r13_3 - mu*s[1]/r23_3;
+    sdot[5] =  -(1-mu)*s[2]/r13_3 - mu*s[2]/r23_3;
 
     /*
      * Next step, compute STM
@@ -598,17 +614,19 @@ int DynamicsModel_cr3bp::simpleEOMs(double t, const double s[], double sdot[], v
     const SysData_cr3bp *sysData = static_cast<const SysData_cr3bp *>(paramStruct->pSysData);
     double mu = sysData->getMu();
 
-    // compute distance to primaries
-    double r13 = sqrt( (s[0] + mu)*(s[0] + mu) + s[1]*s[1] + s[2]*s[2] );
-    double r23 = sqrt( (s[0] - 1+mu)*(s[0] - 1+mu) + s[1]*s[1] + s[2]*s[2] );
+    // compute distance to primaries, then cube them for use in eq
+    double r13_3 = sqrt( (s[0] + mu)*(s[0] + mu) + s[1]*s[1] + s[2]*s[2] );
+    r13_3 *= r13_3*r13_3;
+    double r23_3 = sqrt( (s[0] - 1+mu)*(s[0] - 1+mu) + s[1]*s[1] + s[2]*s[2] );
+    r23_3 *= r23_3*r23_3;
 
     // Position derivatives = velocity
     std::copy(s+3, s+6, sdot);
 
     // Velocity derivatives = acceleraiton
-    sdot[3] =   2*s[4] + s[0] - (1-mu)*(s[0]+mu)/pow(r13,3) - mu*(s[0]-1+mu)/pow(r23,3);
-    sdot[4] =  -2*s[3] + s[1] - (1-mu) * s[1]/pow(r13,3) - mu*s[1]/pow(r23,3);
-    sdot[5] =  -(1-mu)*s[2]/pow(r13,3) - mu*s[2]/pow(r23,3); 
+    sdot[3] =   2*s[4] + s[0] - (1-mu)*(s[0]+mu)/r13_3 - mu*(s[0]-1+mu)/r23_3;
+    sdot[4] =  -2*s[3] + s[1] - (1-mu) * s[1]/r13_3 - mu*s[1]/r23_3;
+    sdot[5] =  -(1-mu)*s[2]/r13_3 - mu*s[2]/r23_3; 
 
     return GSL_SUCCESS;
 }//=====================================================
@@ -716,21 +734,25 @@ void DynamicsModel_cr3bp::getUDDots(double mu, double x, double y, double z, dou
     // compute distance to primaries
     double r13 = sqrt( (x+mu)*(x+mu) + y*y + z*z );
     double r23 = sqrt( (x-1+mu)*(x-1+mu) + y*y + z*z );
+    double r13_3 = r13*r13*r13;
+    double r23_3 = r23*r23*r23;
+    double r13_5 = r13_3*r13*r13;
+    double r23_5 = r23_3*r23*r23;
 
     // Uxx
-    ddots[0] = 1 - (1-mu)/pow(r13,3) - mu/pow(r23,3) + 3*(1-mu)*pow((x + mu),2)/pow(r13,5) + 
-        3*mu*pow((x + mu - 1), 2)/pow(r23,5);
+    ddots[0] = 1 - (1-mu)/r13_3 - mu/r23_3 + 3*(1-mu)*(x + mu)*(x + mu)/r13_5 + 
+        3*mu*(x + mu - 1)*(x + mu - 1)/r23_5;
     // Uyy
-    ddots[1] = 1 - (1-mu)/pow(r13,3) - mu/pow(r23,3) + 3*(1-mu)*y*y/pow(r13,5) + 3*mu*y*y/pow(r23,5);
+    ddots[1] = 1 - (1-mu)/r13_3 - mu/r23_3 + 3*(1-mu)*y*y/r13_5 + 3*mu*y*y/r23_5;
     // Uzz
-    ddots[2] = -(1-mu)/pow(r13,3) - mu/pow(r23,3) + 3*(1-mu)*z*z/pow(r13,5) + 3*mu*z*z/pow(r23,5);
+    ddots[2] = -(1-mu)/r13_3 - mu/r23_3 + 3*(1-mu)*z*z/r13_5 + 3*mu*z*z/r23_5;
 
     // Uxy
-    ddots[3] = 3*(1-mu)*(x + mu)*y/pow(r13,5) + 3*mu*(x + mu - 1)*y/pow(r23,5);
+    ddots[3] = 3*(1-mu)*(x + mu)*y/r13_5 + 3*mu*(x + mu - 1)*y/r23_5;
     // Uxz
-    ddots[4] = 3*(1-mu)*(x + mu)*z/pow(r13,5) + 3*mu*(x + mu - 1)*z/pow(r23,5);
+    ddots[4] = 3*(1-mu)*(x + mu)*z/r13_5 + 3*mu*(x + mu - 1)*z/r23_5;
     // Uyz
-    ddots[5] = 3*(1-mu)*y*z/pow(r13,5) + 3*mu*y*z/pow(r23,5);
+    ddots[5] = 3*(1-mu)*y*z/r13_5 + 3*mu*y*z/r23_5;
 }//========================================================
 
 }// END of Astrohelion namespace

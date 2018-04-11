@@ -262,18 +262,20 @@ void DynamicsModel_cr3bp_lt::multShoot_targetHLT(MultShootData &it,
     unsigned int i;
     if(state_var.row0 != -1){
         // dF/dx
+        double r23_3 = r23*r23*r23;
+        double r13_3 = r13*r13*r13;
         it.DF_elements.push_back(Tripletd(row0, state_var.row0+0,
-            -q[0] + (1-mu)*(q[0]+mu)/pow(r13,3) + mu*(q[0]-1+mu)/pow(r23,3) - 
+            -q[0] + (1-mu)*(q[0]+mu)/r13_3 + mu*(q[0]-1+mu)/r23_3 - 
             a[0] - q[0]*dadq[core_dim*0 + 0] - q[1]*dadq[core_dim*1 + 0] -
             q[2]*dadq[core_dim*2 + 0]));
         // dF/dy
         it.DF_elements.push_back(Tripletd(row0, state_var.row0+1,
-            -q[1] + (1-mu)*q[1]/pow(r13,3) + mu*q[1]/pow(r23,3) - a[1] -
+            -q[1] + (1-mu)*q[1]/r13_3 + mu*q[1]/r23_3 - a[1] -
             q[0]*dadq[core_dim*0 + 1] - q[1]*dadq[core_dim*1 + 1] -
             q[2]*dadq[core_dim*2 + 1]));
         // dF/dz
         it.DF_elements.push_back(Tripletd(row0, state_var.row0+2,
-            (1-mu)*q[2]/pow(r13,3) + mu*q[2]/pow(r23,3) - a[2] -
+            (1-mu)*q[2]/r13_3 + mu*q[2]/r23_3 - a[2] -
             q[0]*dadq[core_dim*0 + 2] - q[1]*dadq[core_dim*1 + 2] -
             q[2]*dadq[core_dim*2 + 2]));
         
@@ -333,6 +335,10 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
     // compute distance to primaries and velocity magnitude
     double r13 = sqrt( (s[0]+mu)*(s[0]+mu) + s[1]*s[1] + s[2]*s[2] );
     double r23 = sqrt( (s[0]-1+mu)*(s[0]-1+mu) + s[1]*s[1] + s[2]*s[2] );
+    double r13_3 = r13*r13*r13;
+    double r23_3 = r23*r23*r23;
+    double r13_5 = r13_3*r13*r13;
+    double r23_5 = r23_3*r23*r23;
 
     // Retrieve the control law acceleration values
     double control_accel[3] = {0};
@@ -344,9 +350,9 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
     sdot[1] = s[4];
     sdot[2] = s[5];
 
-    sdot[3] = 2*s[4] + s[0] - (1-mu)*(s[0]+mu)/pow(r13,3) - mu*(s[0]-1+mu)/pow(r23,3) + control_accel[0];
-    sdot[4] = -2*s[3] + s[1] - (1-mu) * s[1]/pow(r13,3) - mu*s[1]/pow(r23,3) + control_accel[1];
-    sdot[5] = -(1-mu)*s[2]/pow(r13,3) - mu*s[2]/pow(r23,3) + control_accel[2];
+    sdot[3] = 2*s[4] + s[0] - (1-mu)*(s[0]+mu)/r13_3 - mu*(s[0]-1+mu)/r23_3 + control_accel[0];
+    sdot[4] = -2*s[3] + s[1] - (1-mu) * s[1]/r13_3 - mu*s[1]/r23_3 + control_accel[1];
+    sdot[5] = -(1-mu)*s[2]/r13_3 - mu*s[2]/r23_3 + control_accel[2];
 
     sdot[6] = law ? law->get_dmdt(t, s, pSys) : 0;
 
@@ -370,21 +376,22 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
     A[2*stmSide + 5] = 1;   // d/dvz (dz/dt)
 
     // Uxx = d/dx (dvx/dt)
-    A[3*stmSide + 0] = 1 - (1-mu)/pow(r13,3) - mu/pow(r23,3) + 3*(1-mu)*pow((s[0] + mu),2)/pow(r13,5) + 
-        3*mu*pow((s[0] + mu - 1), 2)/pow(r23,5);
+    A[3*stmSide + 0] = 1 - (1-mu)/r13_3 - mu/r23_3 + 
+        3*(1-mu)*(s[0] + mu)*(s[0] + mu)/r13_5 + 
+        3*mu*(s[0] + mu - 1)*(s[0] + mu - 1)/r23_5;
     // Uxy = d/dy (dvx/dt)
-    A[3*stmSide + 1] = 3*(1-mu)*(s[0] + mu)*s[1]/pow(r13,5) + 3*mu*(s[0] + mu - 1)*s[1]/pow(r23,5);
+    A[3*stmSide + 1] = 3*(1-mu)*(s[0] + mu)*s[1]/r13_5 + 3*mu*(s[0] + mu - 1)*s[1]/r23_5;
     // Uxz = d/dz (dvx/dt)
-    A[3*stmSide + 2] = 3*(1-mu)*(s[0] + mu)*s[2]/pow(r13,5) + 3*mu*(s[0] + mu - 1)*s[2]/pow(r23,5);
+    A[3*stmSide + 2] = 3*(1-mu)*(s[0] + mu)*s[2]/r13_5 + 3*mu*(s[0] + mu - 1)*s[2]/r23_5;
 
     // Uyy = d/dy (dvy/dt)
-    A[4*stmSide + 1] = 1 - (1-mu)/pow(r13,3) - mu/pow(r23,3) + 3*(1-mu)*s[1]*s[1]/pow(r13,5) + 3*mu*s[1]*s[1]/pow(r23,5);
+    A[4*stmSide + 1] = 1 - (1-mu)/r13_3 - mu/r23_3 + 3*(1-mu)*s[1]*s[1]/r13_5 + 3*mu*s[1]*s[1]/r23_5;
 
     // Uyz = d/dz (dvy/dt)
-    A[4*stmSide + 2] = 3*(1-mu)*s[1]*s[2]/pow(r13,5) + 3*mu*s[1]*s[2]/pow(r23,5);
+    A[4*stmSide + 2] = 3*(1-mu)*s[1]*s[2]/r13_5 + 3*mu*s[1]*s[2]/r23_5;
 
     // Uzz = d/dz (dvz/dt)
-    A[5*stmSide + 2] = -(1-mu)/pow(r13,3) - mu/pow(r23,3) + 3*(1-mu)*s[2]*s[2]/pow(r13,5) + 3*mu*s[2]*s[2]/pow(r23,5);
+    A[5*stmSide + 2] = -(1-mu)/r13_3 - mu/r23_3 + 3*(1-mu)*s[2]*s[2]/r13_5 + 3*mu*s[2]*s[2]/r23_5;
 
     // Symmetry
     A[4*stmSide + 0] = A[3*stmSide + 1];
@@ -468,9 +475,11 @@ int DynamicsModel_cr3bp_lt::simpleEOMs(double t, const double s[], double sdot[]
 
     double mu = pSys->getMu();           // nondimensional mass ratio
 
-    // compute distance to primaries and velocity magnitude
-    double d = sqrt( (s[0]+mu)*(s[0]+mu) + s[1]*s[1] + s[2]*s[2] );
-    double r = sqrt( (s[0]-1+mu)*(s[0]-1+mu) + s[1]*s[1] + s[2]*s[2] );
+    // compute distance to primaries and velocity magnitude, then cube them
+    double r13 = sqrt( (s[0]+mu)*(s[0]+mu) + s[1]*s[1] + s[2]*s[2] );
+    r13 *= r13*r13;
+    double r23 = sqrt( (s[0]-1+mu)*(s[0]-1+mu) + s[1]*s[1] + s[2]*s[2] );
+    r23 *= r23*r23;
 
     // Retrieve the control law acceleration values
     double control_accel[3] = {0};
@@ -481,9 +490,9 @@ int DynamicsModel_cr3bp_lt::simpleEOMs(double t, const double s[], double sdot[]
     sdot[1] = s[4];
     sdot[2] = s[5];
 
-    sdot[3] = 2*s[4] + s[0] - (1-mu)*(s[0]+mu)/pow(d,3) - mu*(s[0]-1+mu)/pow(r,3) + control_accel[0];
-    sdot[4] = -2*s[3] + s[1] - (1-mu) * s[1]/pow(d,3) - mu*s[1]/pow(r,3) + control_accel[1];
-    sdot[5] = -(1-mu)*s[2]/pow(d,3) - mu*s[2]/pow(r,3) + control_accel[2];
+    sdot[3] = 2*s[4] + s[0] - (1-mu)*(s[0]+mu)/r13 - mu*(s[0]-1+mu)/r23 + control_accel[0];
+    sdot[4] = -2*s[3] + s[1] - (1-mu) * s[1]/r13 - mu*s[1]/r23 + control_accel[1];
+    sdot[5] = -(1-mu)*s[2]/r13 - mu*s[2]/r23 + control_accel[2];
     
     sdot[6] = law ? law->get_dmdt(t, s, pSys) : 0;
 

@@ -65,13 +65,16 @@ const char* Exception::what() const throw(){
 //-----------------------------------------------------------------------------
 
 /** @brief Default constructor */
-SizeMismatchException::SizeMismatchException() : Exception("Matrix dimensions do not match!"), std::runtime_error("Matrix dimensions do not match!"){}
+SizeMismatchException::SizeMismatchException() : \
+	Exception("Matrix dimensions do not match!"), \
+	std::runtime_error("Matrix dimensions do not match!"){}
 
 /**
  *	@brief Create an exception with a custom message
  *	@param m a message
  */
-SizeMismatchException::SizeMismatchException(const char* m) : Exception(m), std::runtime_error(m) {}
+SizeMismatchException::SizeMismatchException(const char* m) : Exception(m), \
+	std::runtime_error(m) {}
 
 
 //-----------------------------------------------------------------------------
@@ -79,13 +82,15 @@ SizeMismatchException::SizeMismatchException(const char* m) : Exception(m), std:
 //-----------------------------------------------------------------------------
 
 /** Default constructor */
-DivergeException::DivergeException() : Exception("Did not converge!"), std::runtime_error("Did not converge!"){}
+DivergeException::DivergeException() : Exception("Did not converge!"), \
+	std::runtime_error("Did not converge!"){}
 
 /**
  *	@brief Create an exception with a custom message
  *	@param m a message
  */
-DivergeException::DivergeException(const char* m) : Exception(m), std::runtime_error(m) {}
+DivergeException::DivergeException(const char* m) : Exception(m), \
+	std::runtime_error(m) {}
 
 
 //-----------------------------------------------------------------------------
@@ -93,13 +98,15 @@ DivergeException::DivergeException(const char* m) : Exception(m), std::runtime_e
 //-----------------------------------------------------------------------------
 
 /** Default constructor */
-LinAlgException::LinAlgException() : Exception("Linear algebra error!"), std::runtime_error("Linear algebra error!"){}
+LinAlgException::LinAlgException() : Exception("Linear algebra error!"), \
+	std::runtime_error("Linear algebra error!"){}
 
 /**
  *	@brief Create an exception with a custom message
  *	@param m a message
  */
-LinAlgException::LinAlgException(const char* m) : Exception(m), std::runtime_error(m) {}
+LinAlgException::LinAlgException(const char* m) : Exception(m), \
+	std::runtime_error(m) {}
 
 
 

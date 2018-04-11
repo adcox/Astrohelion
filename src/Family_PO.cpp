@@ -42,16 +42,33 @@ namespace astrohelion{
 //      Constructors and Desctructor
 //-----------------------------------------------------------------------------
 
+/**
+ * @brief Default constructor
+ * @param pSys System data associated with every member of the family
+ */
 Family_PO::Family_PO(const SysData *pSys) : Family(pSys) {}
 
+/**
+ * @brief Construct the family from another object
+ * @param f reference to another family object
+ */
 Family_PO::Family_PO(const Family_PO &f): Family(f) { copyMe(f); }
 
+/**
+ * @brief Default destructor; does nothing
+ */
 Family_PO::~Family_PO() {}
 
 //-----------------------------------------------------------------------------
 //      Operators
 //-----------------------------------------------------------------------------
 
+/**
+ * @brief Copy constructor
+ * 
+ * @param f Another object to copy
+ * @return reference to this object after it is copied from the input, `f`
+ */
 Family_PO& Family_PO::operator= (const Family_PO &f){
 	copyMe(f);
 	return *this;
@@ -71,14 +88,18 @@ Family_PO& Family_PO::operator= (const Family_PO &f){
  */
 Family_PO operator+ (const Family_PO &lhs, const Family_PO &rhs){
 	if(*(lhs.pSysData) != *(rhs.pSysData))
-		throw Exception("Family_PO, operator+ : lhs and rhs use different system data structures");
+		throw Exception("Family_PO, operator+ : lhs and rhs use different "
+			"system data structures");
 
 	Family_PO combo(lhs);	// Copy contents of lhs
 
 	// Append contents of rhs to lhs
-	combo.members.insert(combo.members.end(), rhs.members.begin(), rhs.members.end());
-	combo.memberEigVals.insert(combo.memberEigVals.end(), rhs.memberEigVals.begin(), rhs.memberEigVals.end());
-	combo.memberEigVecs.insert(combo.memberEigVecs.end(), rhs.memberEigVecs.begin(), rhs.memberEigVecs.end());
+	combo.members.insert(combo.members.end(), rhs.members.begin(), 
+		rhs.members.end());
+	combo.memberEigVals.insert(combo.memberEigVals.end(), 
+		rhs.memberEigVals.begin(), rhs.memberEigVals.end());
+	combo.memberEigVecs.insert(combo.memberEigVecs.end(), 
+		rhs.memberEigVecs.begin(), rhs.memberEigVecs.end());
 
 	return combo;
 }//====================================================
@@ -107,6 +128,74 @@ void Family_PO::addMember(const Arcset_periodic &arc){
 }//====================================================
 
 /**
+ * @brief Retrieve the eigenvalues associated with a specific family member
+ * 
+ * @param ix Index of the family member. If ix < 0, it counts backward from the
+ * end of the family.
+ * @return a vector of complex eigenvalues associated with the specified
+ * family member's monodromy matrix
+ * 
+ * @throws Exception if the eigenvalue and eigenvector arrays have not been
+ * populated
+ * @throws Exception if `ix` is out of bounds
+ */
+std::vector<cdouble> Family_PO::getEigVals(int ix) const{
+	if(memberEigVecs.size() != members.size() || memberEigVals.size() == 0)
+		throw Exception("Family_PO::getEigVals: eigenvalue/vector vectors"
+			" have not been populated");
+
+	while(ix < 0)
+		ix += members.size();
+
+	if(ix > static_cast<int>(members.size())){
+		char msg[128];
+		sprintf(msg, "Family_PO::getEigVals: index %d out of bounds, "
+			"max = %zu\n", ix, members.size());
+		throw Exception(msg);
+	}
+
+	const unsigned int nE = memberEigVecs[0].rows();
+	if(memberEigVals.size() != nE*memberEigVecs.size()){
+		throw Exception("Family_PO::getEigVals: eigenvalue vector does not "
+			"have enough elements to supply eigenvalues for each family "
+			"member");
+	}
+
+	std::vector<cdouble> vals(memberEigVals.begin() + ix*nE, 
+		memberEigVals.begin() + (ix+1)*nE);
+	return vals;
+}//====================================================
+
+/**
+ * @brief Retrieve the eigenvectors associated with a specific family member
+ * 
+ * @param ix Index of the family member. If ix < 0, it counts backward from the
+ * end of the family.
+ * @return a matrix of complex eigenvectors associated with the specified
+ * family member's monodromy matrix; each column is an eigenvector
+ * 
+ * @throws Exception if the eigenvector array has not been populated
+ * @throws Exception if `ix` is out of bounds
+ */
+MatrixXRcd Family_PO::getEigVecs(int ix) const{
+	if(memberEigVecs.size() != members.size())
+		throw Exception("Family_PO::getEigVecs: eigenvector array is not "
+			"same size as number of members");
+
+	while(ix < 0)
+		ix += members.size();
+
+	if(ix > static_cast<int>(members.size())){
+		char msg[128];
+		sprintf(msg, "Family_PO::getEigVecs: index %d out of bounds, "
+			"max = %zu\n", ix, members.size());
+		throw Exception(msg);
+	}
+
+	return memberEigVecs[ix];
+}//====================================================
+
+/**
  *  @brief Retrieve a copy of a family member
  * 
  *  @param ix index of the family member within the storage vector
@@ -115,6 +204,13 @@ void Family_PO::addMember(const Arcset_periodic &arc){
 Arcset_periodic Family_PO::getMember(int ix) const{
 	while(ix < 0)
 		ix += members.size();
+
+	if(ix > static_cast<int>(members.size())){
+		char msg[128];
+		sprintf(msg, "Family_PO::getMember: index %d out of bounds, "
+			"max = %zu\n", ix, members.size());
+		throw Exception(msg);
+	}
 
 	return members[ix];
 }//====================================================
@@ -135,12 +231,15 @@ Arcset_periodic& Family_PO::getMemberRef(int ix){
 /**
  *  @brief Find a family member with a specific value of one of the initial states
  * 
- *  @param val the value of the initial state at the specified index, nondimensional units
+ *  @param val the value of the initial state at the specified index, 
+ *  nondimensional units
  *  @param stateIx index of the state variable (e.g., x = 0, y = 1, etc.)
  * 
  *  @return A vector of family members that match the criterion
  */
-std::vector<Arcset_periodic> Family_PO::getMemberByState(double val, unsigned int stateIx) const{
+std::vector<Arcset_periodic> Family_PO::getMemberByState(double val, 
+	unsigned int stateIx) const{
+
 	const unsigned int core_dim = pSysData->getDynamicsModel()->getCoreStateSize();
 	if(stateIx >= core_dim)
 		throw Exception("Family_PO::getMemberByState: State index out of range");
@@ -196,7 +295,8 @@ std::vector<unsigned int> Family_PO::findBifurcations(){
 	unsigned int nE = memberEigVecs[0].rows();
 
 	for(unsigned int m = 0; m < members.size(); m++){
-		std::vector<cdouble> eigs(memberEigVals.begin() + m*nE, memberEigVals.begin() + (m+1)*nE);
+		std::vector<cdouble> eigs(memberEigVals.begin() + m*nE, 
+			memberEigVals.begin() + (m+1)*nE);
 		// printf("Eigs[ %s, %s, %s, %s, %s, %s]\n", complexToStr(eigs[0]).c_str(),
 		// 	complexToStr(eigs[1]).c_str(), complexToStr(eigs[2]).c_str(), complexToStr(eigs[3]).c_str(),
 		// 	complexToStr(eigs[4]).c_str(), complexToStr(eigs[5]).c_str());
@@ -219,7 +319,8 @@ std::vector<unsigned int> Family_PO::findBifurcations(){
 	for(unsigned int m = 0; m < members.size(); m++){
 		
 		// Compute the stability indices for this family member
-		std::vector<cdouble> eigs(memberEigVals.begin() + m*nE, memberEigVals.begin() + (m+1)*nE);
+		std::vector<cdouble> eigs(memberEigVals.begin() + m*nE, 
+			memberEigVals.begin() + (m+1)*nE);
 		for(unsigned int i = 0; i < 3; i++){
 			stab[i] = 1.0 - std::abs(0.5*(eigs[2*i] + eigs[2*i+1]));
 
@@ -234,7 +335,9 @@ std::vector<unsigned int> Family_PO::findBifurcations(){
 		else{
 			// Look for changes in sign (stability index crosses 1)
 			for(unsigned int i = 0; i < 3; i++){
-				if(i != onesIx && stab[i]*prevStab[i] < 0 && std::abs(stab[i] - prevStab[i]) > okErr){
+				if(i != onesIx && stab[i]*prevStab[i] < 0 && 
+					std::abs(stab[i] - prevStab[i]) > okErr){
+
 					// Bifurcation!
 					bifs.push_back(m-1);
 					// printf("vvvv -Bifurcation- vvvv\n");
@@ -295,9 +398,9 @@ void Family_PO::sortEigs(){
  *	that best describes the natural progression of the family. For example,
  *	Lyapunov orbits can be evolved naturally by varying the x-coordinate of the IC.
  *
- *	The family must be sorted (or be loaded from an already sorted family file) before
- *	you can retrieve family members. The process will run without sorting, but the results
- *	will likely be wonky.
+ *	The family must be sorted (or be loaded from an already sorted family file) 
+ *	before you can retrieve family members. The process will run without sorting, 
+ *	but the results will likely be wonky.
  *	
  *	@throws Exception if the sorting type is not recognized
  */
@@ -325,7 +428,8 @@ void Family_PO::sortMembers(){
 			// for(unsigned int i = 0; i < members.size(); i++){
 			// 	dataToSort.push_back(members[i].getJacobi());
 			// }
-			throw Exception("Family_PO::sortMembers: JC Sorting not implemented here!");
+			throw Exception("Family_PO::sortMembers: JC Sorting not "
+				"implemented here!");
 			break;
 		case FamSort_tp::SORT_TOF:
 			for(unsigned int i = 0; i < members.size(); i++){
@@ -350,7 +454,8 @@ void Family_PO::sortMembers(){
 		ix = indices[n];
 		sortedMembers.push_back(members[ix]);
 		sortedEigVecs.push_back(memberEigVecs[ix]);
-		sortedEigVals.insert(sortedEigVals.end(), memberEigVals.begin() + nE*ix, memberEigVals.begin() + nE*(ix+1));
+		sortedEigVals.insert(sortedEigVals.end(), memberEigVals.begin() + nE*ix, 
+			memberEigVals.begin() + nE*(ix+1));
 	}
 
 	// Reassign the members vector
@@ -362,20 +467,22 @@ void Family_PO::sortMembers(){
 /**
  *	@brief Locate a family member with a specific attribute
  *	
- *	This function locates a family member or set of members that have a specific value
- *	for one of the variables of interest (e.g. coordinates, Jacobi, TOF). Exact matches
- *	and interpolated matches are returned; interpolated matches are computed using a
- *	differential corrections algorithm.
+ *	This function locates a family member or set of members that have a specific 
+ *	value for one of the variables of interest (e.g. coordinates, Jacobi, TOF). 
+ *	Exact matches and interpolated matches are returned; interpolated matches 
+ *	are computed using a differential corrections algorithm.
  *
  *	@param val the value the family member should have
- *	@param data a pointer to a vector containing the set of values to search for matches
- *	in. For example, if the `val` I pass in contains a specific TOF, then 
+ *	@param data a pointer to a vector containing the set of values to search for 
+ *	matches in. For example, if the `val` I pass in contains a specific TOF, then 
  *	`data` points to a vector containing the TOFs for the entire family, sorted
  *	according to this family's `sortType`.
- *	@param matchCon a constraint that can be applied in a corrections scheme that will
- *	ensure the corrected trajectory has the desired value for the variable of interest.
+ *	@param matchCon a constraint that can be applied in a corrections scheme 
+ *	that will ensure the corrected trajectory has the desired value for the 
+ *	variable of interest.
  *
- *	@return a vector of matches. If no matches are returned, the vector will be empty.
+ *	@return a vector of matches. If no matches are returned, the vector will be 
+ *	empty.
  */
 std::vector<Arcset_periodic> Family_PO::getMatchingMember(double val,
 	std::vector<double> *data, Constraint matchCon) const{
@@ -385,10 +492,13 @@ std::vector<Arcset_periodic> Family_PO::getMatchingMember(double val,
 	std::vector<Arcset_periodic> matchMembers;
 
 	if(matches.size() == 0){
-		astrohelion::printErr("Could not locate any matches. The family either has too few members to facilitate an accurate search or the desired trajectory does not exist.\n");
+		astrohelion::printErr("Could not locate any matches. The family "
+			"either has too few members to facilitate an accurate search or "
+			"the desired trajectory does not exist.\n");
 		return matchMembers;	// empty set
 	}else{
-		astrohelion::printColor(GREEN, "Located %zu matches; applying corrections\n", matches.size());
+		astrohelion::printColor(GREEN, "Located %zu matches; applying "
+			"corrections\n", matches.size());
 	}
 	
 	for(unsigned int n = 0; n < matches.size(); n++){
@@ -406,7 +516,8 @@ std::vector<Arcset_periodic> Family_PO::getMatchingMember(double val,
 			Arcset_periodic copyOrbit = members[idx];
 
 			// Delete any constraints that might directly conflict with matchCon
-			// There may still be indirect conflicts... ammend as necessary if those cases emerge
+			// There may still be indirect conflicts... ammend as necessary if 
+			// those cases emerge
 			switch(matchCon.getAppType()){
 				case ConstraintApp_tp::APP_TO_NODE:
 					copyOrbit.getNodeRef(matchCon.getID()).clearConstraints();
@@ -426,7 +537,8 @@ std::vector<Arcset_periodic> Family_PO::getMatchingMember(double val,
 				corrector.multShoot(&copyOrbit, &newOrbit);
 				matchMembers.push_back(newOrbit);
 			}catch(DivergeException &e){
-				printErr("  Unable to converge on a periodic solution for candidate %d...\n", n);
+				printErr("  Unable to converge on a periodic solution "
+					"for candidate %d...\n", n);
 			}
 		}
 	}
@@ -452,7 +564,8 @@ void Family_PO::getCoord(unsigned int coordIx, std::vector<double> *data) const{
 			if(coordIx < ic.size())
 				dataRef[i] = ic[coordIx];
 			else
-				throw Exception("Family_PO::getCoord: coordIx is larger than the state size");
+				throw Exception("Family_PO::getCoord: coordIx is larger than "
+					"the state size");
 		}
 	}
 }//====================================================
@@ -470,18 +583,21 @@ void Family_PO::reverseOrder(){
 	std::reverse(std::begin(memberEigVecs), std::end(memberEigVecs));
 
 	if(memberEigVecs.size() != members.size())
-		throw Exception("Family_PO::reverseOrder: sizes of members and memberEigVecs are not consistent");
+		throw Exception("Family_PO::reverseOrder: sizes of members and "
+			"memberEigVecs are not consistent");
 
 	unsigned int nE = memberEigVecs[0].rows();
 	unsigned int nM = memberEigVals.size()/nE;
 
 	if(nM != members.size())
-		throw Exception("Family_PO::reverseOrder: sizes of members and memberEigVals are not consistent");
+		throw Exception("Family_PO::reverseOrder: sizes of members and "
+			"memberEigVals are not consistent");
 
 	// Swap groups of eigenvalues without changing order within each group
 	for(unsigned int m = 0; m < nM/2; m++){
 		for(unsigned int i = 0; i < nE; i++){
-			std::iter_swap(memberEigVals.begin() + nE*m + i, memberEigVals.end() - nE*(m+1) + i);
+			std::iter_swap(memberEigVals.begin() + nE*m + i, 
+				memberEigVals.end() - nE*(m+1) + i);
 		}
 	}
 }//====================================================
@@ -571,28 +687,34 @@ void Family_PO::loadEigVals(mat_t *matFile){
 		unsigned int numMembers = matvar->dims[0], numVals = matvar->dims[1];
 
 		if(members.size() != numMembers){
-			throw Exception("Family_PO::loadEigVals: # eigenvalues is not same as number of members");
+			throw Exception("Family_PO::loadEigVals: # eigenvalues is not "
+				"same as number of members");
 		}
 
 		if(matvar->class_type == MAT_C_DOUBLE && matvar->data_type == MAT_T_DOUBLE){
 			// First cast the data to a special variable matio uses to store complex values
-			mat_complex_split_t *splitVals = static_cast<mat_complex_split_t *>(matvar->data);
+			mat_complex_split_t *splitVals = 
+				static_cast<mat_complex_split_t *>(matvar->data);
 
 			if(splitVals != nullptr){
-				// splitVals holds two void pointers to the real and imaginary parts; cast them to doubles
+				// splitVals holds two void pointers to the real and imaginary 
+				// parts; cast them to doubles
 				double *realParts = static_cast<double *>(splitVals->Re);
 				double *imagParts = static_cast<double *>(splitVals->Im);
 
-				// Read data from column-major order matrix, store in row-major order vector
+				// Read data from column-major order matrix, store in row-major 
+				// order vector
 				for(unsigned int i = 0; i < numMembers; i++){
 					for(unsigned int j = 0; j < numVals; j++){
-						cdouble temp(realParts[j*numMembers + i], imagParts[j*numMembers + i]);
+						cdouble temp(realParts[j*numMembers + i], 
+							imagParts[j*numMembers + i]);
 						memberEigVals.push_back(temp);
 					}
 				}
 			}
 		}else{
-			throw Exception("Family_PO::loadEigVals: Incompatible data file: unsupported data type/class");
+			throw Exception("Family_PO::loadEigVals: Incompatible data file: "
+				"unsupported data type/class");
 		}
 	}
 	Mat_VarFree(matvar);
@@ -601,7 +723,8 @@ void Family_PO::loadEigVals(mat_t *matFile){
 /**
  *	@brief Load eigenvectors from the data file
  *
- *	NOTE: the vector of family members MUST be populated before loading the eigenvectors
+ *	NOTE: the vector of family members MUST be populated before loading the 
+ *	eigenvectors
  *	@param pMatFile a pointer to the data file in question
  *	@throws Exception if the variable cannot be loaded
  */
@@ -613,38 +736,46 @@ void Family_PO::loadEigVecs(mat_t* pMatFile){
 		unsigned int numSteps = pMatvar->dims[2];
 
 		if(members.size() == 0){
-			throw Exception("Family_PO::loadEigVecs: Member vector has not been initialized!");
+			throw Exception("Family_PO::loadEigVecs: Member vector has not "
+				"been initialized!");
 		}
 
 		if(numSteps != members.size() ){
-			throw Exception("Family_PO::loadEigVecs: Eigenvector vector does not have the same number of elements as the member vector");
+			throw Exception("Family_PO::loadEigVecs: Eigenvector vector does "
+				"not have the same number of elements as the member vector");
 		}
 
 		if(pMatvar->dims[0] != pMatvar->dims[1]){
-			throw Exception("Family_PO::loadEigVecs: Incompatible data file: Eigenvector matrix is not square.");
+			throw Exception("Family_PO::loadEigVecs: Incompatible data file: "
+				"Eigenvector matrix is not square.");
 		}
 
 		const unsigned int nE = pMatvar->dims[0];	// number of eigenvalues per family member
 
 		if(pMatvar->class_type == MAT_C_DOUBLE && pMatvar->data_type == MAT_T_DOUBLE){
 			// First cast the data to a special variable matio uses to store complex values
-			mat_complex_split_t *splitVals = static_cast<mat_complex_split_t *>(pMatvar->data);
+			mat_complex_split_t *splitVals = 
+				static_cast<mat_complex_split_t *>(pMatvar->data);
 
 			if(splitVals != nullptr){
-				// splitVals holds two void pointers to the real and imaginary parts; cast them to doubles
+				// splitVals holds two void pointers to the real and imaginary 
+				// parts; cast them to doubles
 				double *realParts = static_cast<double *>(splitVals->Re);
 				double *imagParts = static_cast<double *>(splitVals->Im);
 
 				for(unsigned int i = 0; i < numSteps; i++){
 					std::vector<cdouble> vecData(nE*nE, 0);
 					for(unsigned int j = 0; j < nE*nE; j++){
-						vecData[j] = cdouble(realParts[j*numSteps + i], imagParts[j*numSteps + i]);
+						vecData[j] = cdouble(realParts[j*numSteps + i], 
+							imagParts[j*numSteps + i]);
 					}
-					memberEigVecs.push_back(Eigen::Map<MatrixXRcd>(&(vecData.front()), nE, nE));
+					memberEigVecs.push_back(Eigen::Map<MatrixXRcd>(\
+						&(vecData.front()), nE, nE));
 				}
 			}
 		}else{
-			throw Exception("Family_PO::loadEigVecs: Incompatible data file: unsupported data type/class");
+			throw Exception("Family_PO::loadEigVecs: Incompatible data file: "
+				"unsupported data type/class");
 		}
 	}
 	Mat_VarFree(pMatvar);
@@ -727,9 +858,11 @@ void Family_PO::saveMembers(mat_t *pMatFile) const{
 	const unsigned int numMembers = members.size();
 	size_t dims[2] = {numMembers, 1};
 
-	matvar_t *pStruct = Mat_VarCreateStruct(VARNAME_FAM_MEMBER, 2, dims, fieldNames, 11);
+	matvar_t *pStruct = Mat_VarCreateStruct(VARNAME_FAM_MEMBER, 2, dims, 
+		fieldNames, 11);
 	if(pStruct == nullptr){
-		throw Exception("Family_PO::saveMembers: Could not create family member structure array");
+		throw Exception("Family_PO::saveMembers: Could not create family "
+			"member structure array");
 	}
 
 	for(unsigned int m = 0; m < numMembers; m++){
@@ -771,8 +904,10 @@ void Family_PO::saveEigVals(mat_t *pMatFile) const{
 		mat_complex_split_t splitVals = {&(realParts[0]), &(imagParts[0])};
 
 		size_t dims[2] = {members.size(), nE};
-		matvar_t *matvar = Mat_VarCreate(VARNAME_FAM_EIGVAL, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &splitVals, MAT_F_COMPLEX);
-		astrohelion::saveVar(pMatFile, matvar, VARNAME_FAM_EIGVAL, MAT_COMPRESSION_NONE);
+		matvar_t *matvar = Mat_VarCreate(VARNAME_FAM_EIGVAL, MAT_C_DOUBLE, 
+			MAT_T_DOUBLE, 2, dims, &splitVals, MAT_F_COMPLEX);
+		astrohelion::saveVar(pMatFile, matvar, VARNAME_FAM_EIGVAL, 
+			MAT_COMPRESSION_NONE);
 	}
 }//====================================================
 
@@ -784,7 +919,8 @@ void Family_PO::saveEigVecs(mat_t *pMatFile) const{
 	if(members.size() > 0){
 		
 		if(members.size() != memberEigVecs.size())
-			throw Exception("Family_PO::saveEigVecs: eigenvector storage vector does not contain the appropriate number of elements!");
+			throw Exception("Family_PO::saveEigVecs: eigenvector storage "
+				"vector does not contain the appropriate number of elements!");
 
 		const unsigned int nE = memberEigVecs[0].rows();
 		std::vector<double> allVec_real(members.size()*nE*nE);
@@ -807,8 +943,10 @@ void Family_PO::saveEigVecs(mat_t *pMatFile) const{
 		mat_complex_split_t splitVals = {&(allVec_real[0]), &(allVec_imag[0])};
 
 		size_t dims[3] = {nE, nE, members.size()};
-		matvar_t *pMatVar = Mat_VarCreate(VARNAME_FAM_EIGVEC, MAT_C_DOUBLE, MAT_T_DOUBLE, 3, dims, &splitVals, MAT_F_COMPLEX);
-		astrohelion::saveVar(pMatFile, pMatVar, VARNAME_FAM_EIGVEC, MAT_COMPRESSION_NONE);
+		matvar_t *pMatVar = Mat_VarCreate(VARNAME_FAM_EIGVEC, MAT_C_DOUBLE, 
+			MAT_T_DOUBLE, 3, dims, &splitVals, MAT_F_COMPLEX);
+		astrohelion::saveVar(pMatFile, pMatVar, VARNAME_FAM_EIGVEC, 
+			MAT_COMPRESSION_NONE);
 	}
 }//====================================================
 
@@ -820,14 +958,17 @@ void Family_PO::saveMiscData(mat_t *pMatFile) const{
 	// sortType
 	int type = static_cast<int>(sortType);
 	size_t dims[2] = {1,1};
-	matvar_t *typeVar = Mat_VarCreate(VARNAME_SORTTYPE, MAT_C_INT32, MAT_T_INT32, 2, dims, &type, MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(pMatFile, typeVar, VARNAME_SORTTYPE, MAT_COMPRESSION_NONE);
+	matvar_t *typeVar = Mat_VarCreate(VARNAME_SORTTYPE, MAT_C_INT32, 
+		MAT_T_INT32, 2, dims, &type, MAT_F_DONT_COPY_DATA);
+	astrohelion::saveVar(pMatFile, typeVar, VARNAME_SORTTYPE, 
+		MAT_COMPRESSION_NONE);
 
 	// name
 	char name_str[128];
 	std::strcpy(name_str, name.c_str());
 	dims[1] = name.length();
-	matvar_t *nameVar = Mat_VarCreate(VARNAME_NAME, MAT_C_CHAR, MAT_T_UINT8, 2, dims, &(name_str[0]), MAT_F_DONT_COPY_DATA);
+	matvar_t *nameVar = Mat_VarCreate(VARNAME_NAME, MAT_C_CHAR, MAT_T_UINT8, 2, 
+		dims, &(name_str[0]), MAT_F_DONT_COPY_DATA);
 	astrohelion::saveVar(pMatFile, nameVar, VARNAME_NAME, MAT_COMPRESSION_NONE);
 }//====================================================
 

@@ -35,18 +35,38 @@ namespace astrohelion{
 //-----------------------------------------------------------------------------
 //      Constructors and Desctructor
 //-----------------------------------------------------------------------------
+
+/**
+ * @brief Default constructor, requires system data pointer
+ * 
+ * @param pSys pointer to system data object common to all family members
+ */
 Family::Family(const SysData *pSys) : pSysData(pSys){}
 
+/**
+ * @brief Construct a Family object from another object
+ * 
+ * @param f reference to a Family object
+ */
 Family::Family(const Family &f) : pSysData(f.pSysData){
 	copyMe(f);
 }//====================================================
 
+/**
+ * @brief Default destructor; no functionality at this time
+ */
 Family::~Family() {}
 
 //-----------------------------------------------------------------------------
 //      Operators
 //-----------------------------------------------------------------------------
 
+/**
+ * @brief Copy constructor
+ * 
+ * @param f Reference to a Family object
+ * @return a reference to this Family object, now equal to the input `f`
+ */
 Family& Family::operator= (const Family &f){
 	copyMe(f);
 	return *this;
@@ -55,14 +75,69 @@ Family& Family::operator= (const Family &f){
 //-----------------------------------------------------------------------------
 //      Set and Get Functions
 //-----------------------------------------------------------------------------
+
+/**
+ * @brief Retrieve the tolerance used when finding matches between user-
+ * specified values and stored data
+ * 
+ * @return the numerical tolerance for detecting matches. A difference less
+ * than this magnitude is considered zero.
+ * @see setMatchTol()
+ */
 double Family::getMatchTol() const { return matchTol; }
+
+/**
+ * @brief Retrieve the name of the family
+ * @return the name of the family
+ * @see setName()
+ */
 std::string Family::getName() const{ return name; }
+
+/**
+ * @brief Retrieve the sortType associated with this family
+ * @return a value of FamSort_tp that dictates how the family members are sorted
+ * @see setSortType()
+ */
 FamSort_tp Family::getSortType() const { return sortType; }
+
+/**
+ * @brief Retrieve a string that describes the sort type associated with this 
+ * family
+ * @return a string that describes the sort type
+ * @see getSortType()
+ */
 const char* Family::getSortTypeStr() const { return sortTypeToStr(sortType); }
+
+/**
+ * @brief Retrieve the system data pointer associated with this family
+ * @return the system data pointer associated with this family
+ */
 const SysData* Family::getSysData() const { return pSysData; }
 
+/**
+ * @brief Set the match tolerance for the family
+ * 
+ * @param tol a tolerance used to determine which numerical values are 
+ * practically zero
+ * @see getMatchTol()
+ */
 void Family::setMatchTol(double tol){ matchTol = tol; }
+
+/**
+ * @brief Set the name of the family
+ * 
+ * @param name string describing the family
+ * @see getName()
+ */
 void Family::setName(std::string name){ this->name = name; }
+
+/**
+ * @brief Set the family sort type
+ * 
+ * @param tp describes how family members are sorted when sortMembers() is
+ * called
+ * @see getSortType()
+ */
 void Family::setSortType(FamSort_tp tp){ sortType = tp; }
 
 //-----------------------------------------------------------------------------
@@ -80,7 +155,9 @@ void Family::setSortType(FamSort_tp tp){ sortType = tp; }
  *	@param data a pointer to a data set to search in
  *	@return a vector of integers representing the indices of matches
  */
-std::vector<unsigned int> Family::findMatches(double value, std::vector<double> *data) const{
+std::vector<unsigned int> Family::findMatches(double value, 
+	std::vector<double> *data) const{
+
 	double numBins = data->size() > 500 ? 100 : (data->size()/5.0);
 	int binSize = std::floor((data->size())/numBins);
 
@@ -119,6 +196,12 @@ std::vector<unsigned int> Family::findMatches(double value, std::vector<double> 
 //      Utility
 //-----------------------------------------------------------------------------
 
+/**
+ * @brief Convert the numerical type into a human-readable string
+ * 
+ * @param tp family sort type
+ * @return human-readable string version of the numerical type
+ */
 const char* Family::sortTypeToStr(FamSort_tp tp){
 	switch(tp){
 		case FamSort_tp::SORT_X: return "SORT_X"; break;
@@ -134,6 +217,11 @@ const char* Family::sortTypeToStr(FamSort_tp tp){
 	}
 }//====================================================
 
+/**
+ * @brief Copy all member data between the input Family object and this family
+ * 
+ * @param f reference to another Family object
+ */
 void Family::copyMe(const Family &f){
 	name = f.name;
 	sortType = f.sortType;

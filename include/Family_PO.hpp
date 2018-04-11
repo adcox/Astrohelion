@@ -74,6 +74,8 @@ class Family_PO : public Family{
 		 *  \name Set and Get Functions
 		 *  \{
 		 */
+		std::vector<cdouble> getEigVals(int) const;
+		MatrixXRcd getEigVecs(int) const;
 		Arcset_periodic getMember(int) const;
 		Arcset_periodic& getMemberRef(int);
 		std::vector<Arcset_periodic> getMemberByState(double, unsigned int) const;

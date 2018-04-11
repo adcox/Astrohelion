@@ -291,7 +291,9 @@ void MultShootEngine::setFindEvent(bool b){ bFindEvent = b; }
  *	* if the input arcset contains more than one delta-v constraint
  *	* if the input arcset contains more than one TOF constraint
  */
-MultShootData MultShootEngine::multShoot(const Arcset *pArcIn, Arcset *pArcOut){
+void MultShootEngine::multShoot(const Arcset *pArcIn, Arcset *pArcOut,
+	MultShootData *pData){
+
 	if(pArcOut != nullptr && *(pArcIn->getSysData()) != *(pArcOut->getSysData()))
 		throw Exception("MultShootEngine::multShoot: "
 			"Input and Output arcsets must use the same system data object");
@@ -300,15 +302,21 @@ MultShootData MultShootEngine::multShoot(const Arcset *pArcIn, Arcset *pArcOut){
 		cleanEngine();
 
 	bIsClean = false;
+	bool bDataOnStack = pData == nullptr;
+
+	if(bDataOnStack)
+		pData = new MultShootData(pArcIn);
+	else
+		*pData = MultShootData(pArcIn);
 
 	// Create structure to store iteration data for easy sharing
-	MultShootData it(pArcIn);
-	it.pArcOut = pArcOut;
-	it.tofTp = tofTp;
+	// MultShootData it(pArcIn);
+	pData->pArcOut = pArcOut;
+	pData->tofTp = tofTp;
 	
 	if(verbosity >= Verbosity_tp::ALL_MSG){
 		printf("Multiple Shooting Algorithm:\n");
-		printf("  it.numNodes = %u\n", it.numNodes);
+		printf("  it.numNodes = %u\n", pData->numNodes);
 		printf("  sysType = %s\n", pArcIn->getSysData()->getTypeStr().c_str());
 		printf("  TOF Type = %s\n", MSTOF_tp_cStr(tofTp));
 		printf("  Do full final prop? %s\n", bFullFinalProp ? "YES" : "NO");
@@ -321,43 +329,43 @@ MultShootData MultShootEngine::multShoot(const Arcset *pArcIn, Arcset *pArcOut){
 
 	// Get the model associated with the arcset
 	const DynamicsModel *pModel = pArcIn->getSysData()->getDynamicsModel();
-	pModel->multShoot_initDesignVec(it);
+	pModel->multShoot_initDesignVec(*pData);
 
 	// Create constraints that enforce continuity between nodes; this process
 	// does account for velocity discontinuities specified in the arcset
-	it.allCons.clear();
-	pModel->multShoot_createContCons(it);
+	pData->allCons.clear();
+	pModel->multShoot_createContCons(*pData);
 
 	// Add all node constraints
 	for(unsigned int n = 0; n < pArcIn->getNumNodes(); n++){
 		std::vector<Constraint> nodeCons = 
 			pArcIn->getNodeRefByIx_const(n).getConstraints();
-		it.allCons.insert(it.allCons.end(), nodeCons.begin(), nodeCons.end());
+		pData->allCons.insert(pData->allCons.end(), nodeCons.begin(), nodeCons.end());
 	}
 
 	// Add all segment constraints
 	for(unsigned int s = 0; s < pArcIn->getNumSegs(); s++){
 		std::vector<Constraint> segCons = 
 			pArcIn->getSegRefByIx_const(s).getConstraints();
-		it.allCons.insert(it.allCons.end(), segCons.begin(), segCons.end());
+		pData->allCons.insert(pData->allCons.end(), segCons.begin(), segCons.end());
 	}
 
 	// Add all arcset constraints
 	std::vector<Constraint> arcCons = pArcIn->getArcConstraints();
-	it.allCons.insert(it.allCons.end(), arcCons.begin(), arcCons.end());
+	pData->allCons.insert(pData->allCons.end(), arcCons.begin(), arcCons.end());
 
 	// Compute number of extra consraint functions to add
-	it.numSlack = 0;
+	pData->numSlack = 0;
 
 	// Initialize vector to keep track of which row each constraint begins on
 	// Also add slack variables to the design variable vector
-	it.conRows.assign(it.allCons.size(), -1);	// Fill with -1
+	pData->conRows.assign(pData->allCons.size(), -1);	// Fill with -1
 	int conRow = 0;
 	bool foundDVCon = false;
 	bool foundTOFCon = false;
-	for(unsigned int c = 0; c < it.allCons.size(); c++){
+	for(unsigned int c = 0; c < pData->allCons.size(); c++){
 		int addToRows = 0;
-		Constraint con = it.allCons[c];
+		Constraint con = pData->allCons[c];
 
 		if(!pModel->supportsCon(con.getType()))
 			throw Exception("MultShootEngine::multShoot: "
@@ -382,14 +390,14 @@ MultShootData MultShootEngine::multShoot(const Arcset *pArcIn, Arcset *pArcOut){
 				break;
 			case Constraint_tp::SP_RANGE:
 				addToRows = 1;
-				it.X.push_back(pModel->multShoot_getSlackVarVal(it, con));
-				it.slackAssignCon.push_back(c);
-				it.numSlack++;
+				pData->X.push_back(pModel->multShoot_getSlackVarVal(*pData, con));
+				pData->slackAssignCon.push_back(c);
+				pData->numSlack++;
 				break;
 			case Constraint_tp::SP_MAX_DIST:
-				it.X.push_back(pModel->multShoot_getSlackVarVal(it, con));
-				it.slackAssignCon.push_back(c);
-				it.numSlack++;
+				pData->X.push_back(pModel->multShoot_getSlackVarVal(*pData, con));
+				pData->slackAssignCon.push_back(c);
+				pData->numSlack++;
 			case Constraint_tp::SP_DIST:
 				addToRows = 1;
 				break;
@@ -397,10 +405,10 @@ MultShootData MultShootEngine::multShoot(const Arcset *pArcIn, Arcset *pArcOut){
 			case Constraint_tp::MIN_DIST:
 			case Constraint_tp::ENDSEG_MAX_DIST:
 			case Constraint_tp::ENDSEG_MIN_DIST:
-				it.X.push_back(pModel->multShoot_getSlackVarVal(it, con));
+				pData->X.push_back(pModel->multShoot_getSlackVarVal(*pData, con));
 				// remember where this slack variable is hiding
-				it.slackAssignCon.push_back(c);	
-				it.numSlack++;
+				pData->slackAssignCon.push_back(c);	
+				pData->numSlack++;
 				// do NOT break here, continue on to do stuff for DIST as well
 			case Constraint_tp::DIST:
 			case Constraint_tp::ENDSEG_DIST:
@@ -414,12 +422,12 @@ MultShootData MultShootEngine::multShoot(const Arcset *pArcIn, Arcset *pArcOut){
 
 					if(con.getType() == Constraint_tp::MAX_DELTA_V){
 						/* Add a slack variable to the end of design vector and 
-						 * keep track of which constraint it is assigned to; 
+						 * keep track of which constraint pData is assigned to; 
 						 * value of slack variable will be recomputed later
 						 */
-						it.X.push_back(pModel->multShoot_getSlackVarVal(it, con));
-						it.numSlack++;
-						it.slackAssignCon.push_back(c);
+						pData->X.push_back(pModel->multShoot_getSlackVarVal(*pData, con));
+						pData->numSlack++;
+						pData->slackAssignCon.push_back(c);
 					}
 				}else{
 					throw Exception("MultShootEngine::multShoot: "
@@ -470,32 +478,41 @@ MultShootData MultShootEngine::multShoot(const Arcset *pArcIn, Arcset *pArcOut){
 		}
 
 		// Save the index of the first row for this constraint
-		it.conRows[c] = conRow;
+		pData->conRows[c] = conRow;
 		conRow += addToRows;	// remember we've added rows
-		it.totalCons += addToRows;
+		pData->totalCons += addToRows;
 	}// END of loop through constraints
 
 	// Determine the number of free/design variables based on the system type
-	it.totalFree = it.X.size();
+	pData->totalFree = pData->X.size();
 
 	// Save the initial free variable vector
-	it.X0 = it.X;
+	pData->X0 = pData->X;
 
 	// Print debugging information
 	printVerb(verbosity >= Verbosity_tp::ALL_MSG,
-		"  # Free: %d\n  # Constraints: %d\n", it.totalFree, it.totalCons);
+		"  # Free: %d\n  # Constraints: %d\n", pData->totalFree, pData->totalCons);
 	printVerb(verbosity >= Verbosity_tp::ALL_MSG,
-		"  -> # Slack Variables: %d\n", it.numSlack);
+		"  -> # Slack Variables: %d\n", pData->numSlack);
 
 	printVerb(verbosity >= Verbosity_tp::ALL_MSG, "ALL CONSTRAINTS:\n\n");
 	if(verbosity >= Verbosity_tp::ALL_MSG){
-		for(unsigned int n = 0; n < it.allCons.size(); n++){
-			it.allCons[n].print();
+		for(unsigned int n = 0; n < pData->allCons.size(); n++){
+			pData->allCons[n].print();
 		}
 	}
 	
 	// Run the multiple shooting process
-	return multShoot(it);
+	try{
+		multShoot(pData);
+	}catch(const std::exception &e){
+		// Free allocated data
+		if(bDataOnStack){ delete pData; }
+		throw e;	// Throw the error up a level
+	}
+
+	// Free allocated data
+	if(bDataOnStack){ delete pData; }
 }//==========================================================
 
 /**
@@ -508,8 +525,8 @@ MultShootData MultShootEngine::multShoot(const Arcset *pArcIn, Arcset *pArcOut){
  *  @see multShoot(Arcset*)
  *  @throws DivergeException if the multiple shooting process does not converge
  */
-MultShootData MultShootEngine::multShoot(MultShootData it){
-	it.count = 0;
+void MultShootEngine::multShoot(MultShootData *pData){
+	pData->count = 0;
 
 	// create a simulation engine
 	SimEngine simEngine;
@@ -539,84 +556,89 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 	// Define values for use in corrections loop
 	double errF = 10*tolF, errX = 10*tolX, errF_infty = 10*tolF;
 	unsigned int coreStateSize = 
-		it.pArcIn->getSysData()->getDynamicsModel()->getCoreStateSize();
+		pData->pArcIn->getSysData()->getDynamicsModel()->getCoreStateSize();
 
-	Eigen::VectorXd oldX(it.totalFree, 1), newX(it.totalFree, 1), 
-		FX(it.totalCons, 1);
+	Eigen::VectorXd oldX(pData->totalFree, 1), newX(pData->totalFree, 1), 
+		FX(pData->totalCons, 1);
 
 	// Loop through iterations; error checking is done inside the loop
-	while(it.count < maxIts){
-		if(it.count > 0){
+	while(pData->count < maxIts){
+		if(pData->count > 0){
 			// Solve for newX and copy into working vector X
-			oldX = Eigen::Map<Eigen::VectorXd>(&(it.X[0]), it.totalFree, 1);
+			oldX = Eigen::Map<Eigen::VectorXd>(&(pData->X[0]), pData->totalFree, 1);
 			
 			try{
-				solveUpdateEq(it, oldX, FX, newX);
-			}catch(LinAlgException &e){
+				solveUpdateEq(*pData, oldX, FX, newX);
+			}catch(const Exception &e){
 				throw e;	// Rethrow error
 			}
 
-			it.X.clear();
-			it.X.insert(it.X.begin(), newX.data(), newX.data()+it.totalFree);
+			pData->X.clear();
+			pData->X.insert(pData->X.begin(), newX.data(), newX.data()+pData->totalFree);
 		}
 
-		it.FX.clear();					// Clear vectors each iteration
-		it.FX.assign(it.totalCons, 0);	// Size the vectors and fill with zeros
+		pData->FX.clear();					// Clear vectors each iteration
+		pData->FX.assign(pData->totalCons, 0);	// Size the vectors and fill with zeros
 
-		it.DF_elements.clear();
-		it.DF_elements.reserve(it.totalCons * coreStateSize);
+		pData->DF_elements.clear();
+		pData->DF_elements.reserve(pData->totalCons * coreStateSize);
 
 		// Fill each trajectory object with a propagated arc
-		propSegsFromFreeVars(it, simEngine);
+		propSegsFromFreeVars(*pData, simEngine);
 
 		// Save the updated solution to file (for debugging)
 		if(bSaveEachIt){
-			it.pArcIn->getSysData()->getDynamicsModel()->multShoot_createOutput(it);
+			pData->pArcIn->getSysData()->getDynamicsModel()->multShoot_createOutput(*pData);
 			char filename[24];
-			sprintf(filename, "multShoot_it%04d.mat", it.count+1);
-			it.pArcOut->saveToMat(filename);
-			it.pArcOut->reset();	// Must be empty for next createOutput() call
+			sprintf(filename, "multShoot_it%04d.mat", pData->count+1);
+			try{
+				pData->pArcOut->saveToMat(filename);
+				pData->pArcOut->reset();	// Must be empty for next createOutput() call
+			}catch(const std::exception &e){
+				throw &e;
+			}
 		}
-		// waitForUser();
 
 		// Loop through all constraints and compute the constraint values, 
 		// partials, and apply them to the FX and DF matrices
-		for(unsigned int c = 0; c < it.allCons.size(); c++){
-			it.pArcIn->getSysData()->getDynamicsModel()->multShoot_applyConstraint(it, it.allCons[c], c);
+		for(unsigned int c = 0; c < pData->allCons.size(); c++){
+			pData->pArcIn->getSysData()->getDynamicsModel()->\
+				multShoot_applyConstraint(*pData, pData->allCons[c], c);
 			printVerb(verbosity >= Verbosity_tp::DEBUG, 
-				"* Applying %s constraint\n", it.allCons[c].getTypeStr());
+				"* Applying %s constraint\n", pData->allCons[c].getTypeStr());
 		}
 
-		// Check to see what the error is; if it's too high, update X and continue another iteration
-		errF_infty = std::abs(it.FX[0]);
-		for(unsigned int i = 1; i < it.FX.size(); i++){
-			if(std::abs(it.FX[i]) > errF_infty)
-				errF_infty = std::abs(it.FX[i]);
+		// Check to see what the error is; if it's too high, update X and 
+		// continue another iteration
+		errF_infty = std::abs(pData->FX[0]);
+		for(unsigned int i = 1; i < pData->FX.size(); i++){
+			if(std::abs(pData->FX[i]) > errF_infty)
+				errF_infty = std::abs(pData->FX[i]);
 		}
 
-		FX = Eigen::Map<Eigen::VectorXd>(&(it.FX[0]), it.totalCons, 1);
+		FX = Eigen::Map<Eigen::VectorXd>(&(pData->FX[0]), pData->totalCons, 1);
 		errF = FX.norm();
 
 		if(verbosity >= Verbosity_tp::DEBUG)
-			reportConMags(it);
+			reportConMags(*pData);
 
 		// Compute error: difference between subsequent free variable vectors
-		if(it.count > 0){
+		if(pData->count > 0){
 			Eigen::VectorXd diff = newX - oldX;
 			errX = diff.norm();
 		}
 
-		it.count++;
+		pData->count++;
 		printVerbColor((bFindEvent && verbosity >= Verbosity_tp::ALL_MSG) || 
 			(!bFindEvent && verbosity > Verbosity_tp::NO_MSG),
 			YELLOW, "It %02d : ||F(X)||_2 = %6.4e / %4.2e : "
 			"||F(X)||_inf = %6.4e / %4.2e : "
-			"||dX||_2 = %6.4e / %4.2e\n", it.count, errF, tolF, 
+			"||dX||_2 = %6.4e / %4.2e\n", pData->count, errF, tolF, 
 			errF_infty, tolF, errX, tolX);
 
 		// End the iterations if the constraint error grows too large or if
 		// the constraint error or step size reaches the desired precision
-		if(errF > maxErr || errF < tolF || errX < tolX)
+		if(errF > maxErr || errF < tolF || errF_infty < tolF)
 			break;
 	}// end of corrections loop
 
@@ -635,23 +657,21 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 		}
 	}
 
-	if(it.pArcOut){
+	if(pData->pArcOut){
 		try{
 			// Save propagated data and free variable vector values to the 
 			// output arcset
 			if(bFullFinalProp){
 				simEngine.setVarStepSize(true);
-				propSegsFromFreeVars(it, simEngine, verbosity);
+				propSegsFromFreeVars(*pData, simEngine, verbosity);
 			}
-			it.pArcIn->getSysData()->getDynamicsModel()->multShoot_createOutput(it);
-		}catch(Exception &e){
+			pData->pArcIn->getSysData()->getDynamicsModel()->multShoot_createOutput(*pData);
+		}catch(const Exception &e){
 			printErr("MultShootEngine::multShoot: "
 				"Unable to create output arcset\n  Err: %s\n", e.what());
 			throw e;
 		}
 	}
-	
-	return it;
 }//=====================================================
 
 /**
@@ -666,8 +686,11 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
  *  input SimEngine object is set separately (i.e., via sim.setVerbosity()) and 
  *  is not affected by this input
  */
-void MultShootEngine::propSegsFromFreeVars(MultShootData& it, SimEngine &sim, Verbosity_tp verbosity){
-	unsigned int coreStateSize = it.pArcIn->getSysData()->getDynamicsModel()->getCoreStateSize();
+void MultShootEngine::propSegsFromFreeVars(MultShootData& it, SimEngine &sim, 
+	Verbosity_tp verbosity){
+	
+	unsigned int coreStateSize = it.pArcIn->getSysData()->getDynamicsModel()->\
+		getCoreStateSize();
 
 	it.deltaVs.clear();
 	it.deltaVs.assign(3*it.numNodes, 0);
@@ -690,7 +713,8 @@ void MultShootEngine::propSegsFromFreeVars(MultShootData& it, SimEngine &sim, Ve
 			ctrl0.assign(pLaw->getNumStates(), 0);
 		}
 
-		it.pArcIn->getSysData()->getDynamicsModel()->multShoot_getSimICs(it, it.pArcIn->getSegRefByIx_const(s).getID(),
+		it.pArcIn->getSysData()->getDynamicsModel()->multShoot_getSimICs(it, 
+			it.pArcIn->getSegRefByIx_const(s).getID(),
 			&(ic.front()), &(ctrl0.front()), &t0, &tof);
 
 		sim.setRevTime(tof < 0);
@@ -700,7 +724,7 @@ void MultShootEngine::propSegsFromFreeVars(MultShootData& it, SimEngine &sim, Ve
 
 		try{
 			sim.runSim(ic, ctrl0, t0, tof, &(it.propSegs[s]), pLaw);
-		}catch(DivergeException &e){
+		}catch(const DivergeException &e){
 			if(verbosity >= Verbosity_tp::SOME_MSG){
 				printf("%s", RED);
 				printf("SimEngine integration diverged on segment %u...\n", s);
@@ -710,7 +734,7 @@ void MultShootEngine::propSegsFromFreeVars(MultShootData& it, SimEngine &sim, Ve
 				}
 				printf("]\n  > t0 = %.4f\n  > tof = %.4f\n", t0, tof);
 			}
-		}catch(Exception &e){
+		}catch(const Exception &e){
 			printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, RED, 
 				"SimEngine Error on segment %u:\n%s\nEnding corrections.\n",
 				s, e.what());
@@ -852,15 +876,18 @@ void MultShootEngine::solveUpdateEq(MultShootData& it, const Eigen::VectorXd& ol
 				SparseMatXCd JT = J.transpose();
 				SparseMatXCd G = J*JT;		// G will always be symmetric
 
-				// toCSV(J, "DF_cpp.csv");
-				// toCSV(FX, "FX_cpp.csv");
-				// toCSV(oldX, "X_cpp.csv");
-
 				// Solve the system Gw = b
 				G.makeCompressed();
 				Eigen::VectorXd w(G.cols(), 1);
 				factorizeJacobian(G, FX, w, true);
 				fullStep = JT*w;
+
+				// MatrixXRd mJ(J), mFX(FX), mStep(fullStep);
+				// toCSV(mJ, "DF_cpp.csv");
+				// toCSV(mFX, "FX_cpp.csv");
+				// toCSV(mStep, "dX_cpp.csv");
+				// waitForUser();
+				// toCSV(oldX, "X_cpp.csv");
 
 				// Alternative Method: SVD
 				// NOTE: This takes approximately five times as much 
@@ -1157,7 +1184,8 @@ void MultShootEngine::chooseStep_LineSearch(MultShootData& it, const Eigen::Vect
 		if(lambda < minLambda){
 			// Apparently, the "optimal" attenuation factor is approaching zero
 			// Thus, the update delta X is zero, i.e., we've converged on X_old
-			printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, RED, "  Line search decreased past minimum bound.\n");
+			printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, RED, 
+				"  Line search decreased past minimum bound.\n");
 			newX = oldX;
 			checkLocalMin = true;
 			return;
@@ -1165,7 +1193,9 @@ void MultShootEngine::chooseStep_LineSearch(MultShootData& it, const Eigen::Vect
 
 
 		if(f <= f_old + ls_alpha*lambda*initROD){
-			printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, BLUE, "  Line Search: attenuation factor = %.4e (%u its)\n", lambda, count);
+			printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, BLUE, 
+				"  Line Search: attenuation factor = %.4e (%u its)\n", lambda,
+				count);
 			return;	// We're all set, so return!
 		}else{	// Need to backtrack
 			if(count == 0){
@@ -1353,18 +1383,23 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, Verbosit
  *  value of FALSE are: The Jacobian is singular (row or column of all zeros), or the differences
  *  between the numerically computed Jacobian and analytical Jacobian are large.
  */
-bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, MultShootEngine engine, Verbosity_tp verbosity, bool writeToFile){
-    printVerb(verbosity >= Verbosity_tp::SOME_MSG, "Finite Diff: Checking DF matrix...\n");
+bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, 
+	MultShootEngine engine, Verbosity_tp verbosity, bool writeToFile){
+
+    printVerb(verbosity >= Verbosity_tp::SOME_MSG, 
+    	"Finite Diff: Checking DF matrix...\n");
     // Create multiple shooter that will only do 1 iteration
     MultShootEngine corrector(engine);
     corrector.setMaxIts(1);
-    corrector.setVerbosity(verbosity < Verbosity_tp::DEBUG ? Verbosity_tp::NO_MSG : Verbosity_tp::ALL_MSG);
+    corrector.setVerbosity(verbosity < Verbosity_tp::DEBUG ? 
+    	Verbosity_tp::NO_MSG : Verbosity_tp::ALL_MSG);
     corrector.setIgnoreDiverge(true);
     corrector.setIgnoreCrash(true);
     corrector.setFullFinalProp(false);
 
     // Run multiple shooter to get X, FX, and DF
-    MultShootData it = corrector.multShoot(pNodeset, nullptr);
+    MultShootData it(pNodeset);
+    corrector.multShoot(pNodeset, nullptr, &it);
     Eigen::VectorXd FX = Eigen::Map<Eigen::VectorXd>(&(it.FX[0]), it.totalCons, 1);
     SparseMatXCd sparseDF(it.totalCons, it.totalFree);
     sparseDF.setFromTriplets(it.DF_elements.begin(), it.DF_elements.end());
@@ -1382,33 +1417,42 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, MultShoo
         std::vector<double> pertX = it.X0;      // Copy unperturbed state vetor
         pertX[i] += pertSize;                   // add perturbation
         it.X = pertX;                           // Copy into iteration data
-        MultShootData pertIt = corrector.multShoot(it);     // Correct perturbred state
-        Eigen::VectorXd FX_up = Eigen::Map<Eigen::VectorXd>(&(pertIt.FX[0]), it.totalCons, 1);
+        MultShootData pertIt = it;
+        corrector.multShoot(&pertIt);     // Correct perturbred state
+        Eigen::VectorXd FX_up = Eigen::Map<Eigen::VectorXd>(&(pertIt.FX[0]), 
+        	it.totalCons, 1);
 
         // Do another process for opposite direction
         pertX = it.X0;
         pertX[i] -= pertSize;
         it.X = pertX;
-        pertIt = corrector.multShoot(it);
-        Eigen::VectorXd FX_down = Eigen::Map<Eigen::VectorXd>(&(pertIt.FX[0]), it.totalCons, 1);
+        pertIt = it;
+        corrector.multShoot(&pertIt);
+        Eigen::VectorXd FX_down = Eigen::Map<Eigen::VectorXd>(&(pertIt.FX[0]), 
+        	it.totalCons, 1);
 
         // An iteration for twice the perturbation up
         pertX = it.X0;
         pertX[i] += 2*pertSize;
         it.X = pertX;
-        pertIt = corrector.multShoot(it);
-        Eigen::VectorXd FX_2up = Eigen::Map<Eigen::VectorXd>(&(pertIt.FX[0]), it.totalCons, 1);
+        pertIt = it;
+        corrector.multShoot(&pertIt);
+        Eigen::VectorXd FX_2up = Eigen::Map<Eigen::VectorXd>(&(pertIt.FX[0]), 
+        	it.totalCons, 1);
 
         // An iteration for twice the perturbation down
         pertX = it.X0;
         pertX[i] -= 2*pertSize;
         it.X = pertX;
-        pertIt = corrector.multShoot(it);
-        Eigen::VectorXd FX_2down = Eigen::Map<Eigen::VectorXd>(&(pertIt.FX[0]), it.totalCons, 1);
+        pertIt = it;
+        corrector.multShoot(&pertIt);
+        Eigen::VectorXd FX_2down = Eigen::Map<Eigen::VectorXd>(&(pertIt.FX[0]), 
+        	it.totalCons, 1);
 
 
         // Compute central difference
-        Eigen::VectorXd col = (-1*FX_2up + 8*FX_up - 8*FX_down + FX_2down)/std::abs(12*pertSize);   // Five-point stencil
+        Eigen::VectorXd col = (-1*FX_2up + 8*FX_up - 8*FX_down + FX_2down)/
+        	std::abs(12*pertSize);   // Five-point stencil
         // Eigen::VectorXd col = (FX_up - FX_down)/std::abs(2*pertSize);   // Central Difference
         // Eigen::VectorXd col = (FX_up - FX)/std::abs(pertSize);       // Forward difference
         DFest.block(0, i, it.totalCons, 1) = col;
@@ -1419,7 +1463,7 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, MultShoo
     MatrixXRd DF_abs = DF.cwiseAbs();       // Get coefficient-wise absolute value
     MatrixXRd DFest_abs = DFest.cwiseAbs();
 
-    diff = diff.cwiseAbs();                     	// Get coefficient-wise aboslute value
+    diff = diff.cwiseAbs();	// Get coefficient-wise aboslute value
     MatrixXRd relDiff = MatrixXRd::Zero(diff.rows(), diff.cols());	// Relative differences (divide by magnitude of each value)
 
     // Divide each element by the magnitude of the DF element to get a relative difference magnitude
@@ -1432,9 +1476,9 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, MultShoo
     }
     
     if(writeToFile){
-        astrohelion::toCSV(DFest, "FiniteDiff_DFest.csv");
-        astrohelion::toCSV(diff, "FiniteDiff_Diff.csv"); 
-        astrohelion::toCSV(relDiff, "FiniteDiff_RelDiff.csv");
+        toCSV(DFest, "FiniteDiff_DFest.csv");
+        toCSV(diff, "FiniteDiff_Diff.csv"); 
+        toCSV(relDiff, "FiniteDiff_RelDiff.csv");
     }
 
     // Compute the largest coefficient in each row and column

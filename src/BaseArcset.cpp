@@ -709,18 +709,20 @@ void BaseArcset::deleteNode(int id){
 				deleteSeg(id2);	// CANNOT USE pForwardSeg pointer AFTER THIS LINE
 
 				if((law1 && law2) && (*law1 != *law2))
-					printWarn("BaseArcset::deleteNode: Node deleted between segments with different control laws. A new segment is created using only one of those control laws!\n");
+					printWarn("BaseArcset::deleteNode: Node deleted between "
+						"segments with different control laws. A new segment "
+						"is created using only one of those control laws!\n");
 
 				combo.setCtrlLaw(law1);
 				addSeg(combo);
 			}
 		}else if(linkedSegIxs.size() == 1){
-			// Must be either the first or last point, so update the one linked segment
+			// Must be either the 1st or last point, so update the 1 linked seg
 			segs[linkedSegIxs[0]].removeLink(id);
 		}else{ /* Not linked to anything, just delete it! */ }
 
 
-		nodes.erase(nodes.begin() + nodeIx);					// Remove node from vector
+		nodes.erase(nodes.begin() + nodeIx);		// Remove node from vector
 		nodeIDMap.erase(id);
 
 		// Update vector that maps ID values to storage indices
@@ -734,7 +736,26 @@ void BaseArcset::deleteNode(int id){
 	}else{
 		printf("Cannot Delete: Node with ID %02d was not located\n", id);
 	}
-}//===========================================
+}//====================================================
+
+/**
+ * @brief Delete a node at the specified index
+ * @param ix index of the node in the nodes vector. If ix < 0, it will count
+ * backward from the end of the vector
+ * @throws Exception if `ix` is out of bounds
+ */
+void BaseArcset::deleteNodeByIx(int ix){
+	while(ix < 0)
+		ix += nodes.size();
+
+	if(ix < 0 || ix >= static_cast<int>(nodes.size())){
+		char msg[128];
+		sprintf(msg, "BaseArcset::deleteNodeByIx: ix = %d out of bounds", ix);
+		throw Exception(msg);
+	}else{
+		deleteNode(nodes[ix].getID());
+	}
+}//====================================================
 
 /**
  *  @brief Delete a segment with the specified ID.
@@ -784,6 +805,25 @@ void BaseArcset::deleteSeg(int id){
 
 	bInChronoOrder = false;
 }//===========================================
+
+/**
+ * @brief Delete a segment at the specified index
+ * @param ix index of the segment in the nodes vector. If ix < 0, it will count
+ * backward from the end of the vector
+ * @throws Exception if `ix` is out of bounds
+ */
+void BaseArcset::deleteSegByIx(int ix){
+	while(ix < 0)
+		ix += segs.size();
+
+	if(ix < 0 || ix >= static_cast<int>(segs.size())){
+		char msg[128];
+		sprintf(msg, "BaseArcset::deleteSegByIx: ix = %d out of bounds", ix);
+		throw Exception(msg);
+	}else{
+		deleteSeg(segs[ix].getID());
+	}
+}//====================================================
 
 /**
  *  @brief Retrieve the state derivative vector associated with a node
@@ -1243,7 +1283,7 @@ Node BaseArcset::getNode(int id) const{
  *  @throws Exception if `ix` is out of bounds
  */
 Node BaseArcset::getNodeByIx(int ix) const{
-	if(ix < 0)
+	while(ix < 0)
 		ix += nodes.size();
 
 	if(ix < 0 || ix >= static_cast<int>(nodes.size())){
@@ -1284,7 +1324,7 @@ Node& BaseArcset::getNodeRef(int id){
  *  @throws Exception if `ix` is out of bounds
  */
 const Node& BaseArcset::getNodeRefByIx_const(int ix) const{
-	if(ix < 0)
+	while(ix < 0)
 		ix += nodes.size();
 
 	if(ix < 0 || ix >= static_cast<int>(nodes.size()))
@@ -1322,7 +1362,7 @@ const Node& BaseArcset::getNodeRef_const(int id) const{
  *  @throws Exception if `ix` is out of bounds
  */
 Node& BaseArcset::getNodeRefByIx(int ix){
-	if(ix < 0)
+	while(ix < 0)
 		ix += nodes.size();
 
 	if(ix < 0 || ix >= static_cast<int>(nodes.size()))
@@ -1375,7 +1415,7 @@ Segment BaseArcset::getSeg(int id) const{
  *  @throws Exception if `ix` is out of bounds
  */
 Segment BaseArcset::getSegByIx(int ix) const{
-	if(ix < 0)
+	while(ix < 0)
 		ix += segs.size();
 
 	if(ix < 0 || ix >= static_cast<int>(segs.size()))
@@ -1414,7 +1454,7 @@ Segment& BaseArcset::getSegRef(int id){
  *  @throws Exception if `ix` is out of bounds
  */
 Segment& BaseArcset::getSegRefByIx(int ix){
-	if(ix < 0)
+	while(ix < 0)
 		ix += segs.size();
 
 	if(ix < 0 || ix >= static_cast<int>(segs.size()))
@@ -1453,7 +1493,7 @@ const Segment& BaseArcset::getSegRef_const(int id) const{
  *  @throws Exception if `ix` is out of bounds
  */
 const Segment& BaseArcset::getSegRefByIx_const(int ix) const{
-	if(ix < 0)
+	while(ix < 0)
 		ix += segs.size();
 
 	if(ix < 0 || ix >= static_cast<int>(segs.size()))
@@ -1508,7 +1548,7 @@ std::vector<double> BaseArcset::getState(int id) const{
  *	@throws Exception if `ix` is out of bounds
  */
 std::vector<double> BaseArcset::getStateByIx(int ix) const{
-	if(ix < 0)
+	while(ix < 0)
 		ix += nodes.size();
 
 	if(ix < 0 || ix >= static_cast<int>(nodes.size()))
@@ -1547,7 +1587,7 @@ MatrixXRd BaseArcset::getSTM(int id) const{
  *	@throws Exception if `ix` is out of bounds
  */
 MatrixXRd BaseArcset::getSTMByIx(int ix) const{
-	if(ix < 0)
+	while(ix < 0)
 		ix += segs.size();
 
 	if(ix < 0 || ix >= static_cast<int>(segs.size())){
@@ -1593,7 +1633,7 @@ double BaseArcset::getTOF(int id) const{
  *	@throws Exception if `ix` is out of bounds
  */
 double BaseArcset::getTOFByIx(int ix) const {
-	if(ix < 0)
+	while(ix < 0)
 		ix += segs.size();
 
 	if(ix < 0 || ix >= static_cast<int>(segs.size()))
@@ -2022,13 +2062,20 @@ matvar_t* BaseArcset::createVar_LinkTable(const char *pVarName) const{
 	// Store data in column-major order
 	for(unsigned int s = 0; s < numSegs; s++){
 		segTable[0*numSegs + s] = segs[s].getID();
-		segTable[1*numSegs + s] = nodeIDMap.at(segs[s].getOrigin());
-		segTable[2*numSegs + s] = nodeIDMap.at(segs[s].getTerminus());
+
+		if(segs[s].getOrigin() != Linkable::INVALID_ID)
+			segTable[1*numSegs + s] = nodeIDMap.at(segs[s].getOrigin());
+
+		if(segs[s].getTerminus() != Linkable::INVALID_ID)
+			segTable[2*numSegs + s] = nodeIDMap.at(segs[s].getTerminus());
+
 		segTable[3*numSegs + s] = astrohelion::sign(segs[s].getTOF());
 	}
 
+	// DO copy the data (it is freed at the end of the function!)
 	size_t dims[2] = {numSegs, 4};
-	return Mat_VarCreate(pVarName, MAT_C_INT32, MAT_T_INT32, 2, dims, &(segTable.front()), 0);	// Do copy the data (it is freed at the end of the function!)
+	return Mat_VarCreate(pVarName, MAT_C_INT32, MAT_T_INT32, 2, dims, 
+		&(segTable.front()), 0);
 }//====================================================
 
 /**
@@ -3162,7 +3209,8 @@ bool BaseArcset::readVar_SegCtrlLaw(matvar_t *pVar,
 			
 			if(fields){
 
-				// Loop through the controllers; should be same as number of segs (checked above)
+				// Loop through the controllers; should be same as number of 
+				// segs (checked above)
 				for(unsigned int s = 0; s < numStructs; s++){
 					unsigned int id = 0;
 					std::vector<double> params;
@@ -3179,18 +3227,23 @@ bool BaseArcset::readVar_SegCtrlLaw(matvar_t *pVar,
 										oneField->data_type == MAT_T_INT32){
 										
 										unsigned int *intData = \
-											static_cast<unsigned int *>(oneField->data);
+											static_cast<unsigned int *>(
+												oneField->data);
 
 										if(intData)
 											id = intData[0];
 										else{
 											Mat_VarFree(pVar);
-											throw Exception("BaseArcset::readVar_SegCtrlLaw: controller ID data is nullptr");
+											throw Exception("BaseArcset::"
+												"readVar_SegCtrlLaw: controller "
+												"ID data is nullptr");
 										}
 									}else{
 										Mat_VarFree(pVar);
-										throw Exception("BaseArcset::readVar_SegCtrlLaw: controller ID field has"
-											" wrong class type or data type");
+										throw Exception("BaseArcset::"
+											"readVar_SegCtrlLaw: controller ID "
+											"field has wrong class type or "
+											"data type");
 									}
 									break;
 								}//-----------------------------------
@@ -3208,8 +3261,11 @@ bool BaseArcset::readVar_SegCtrlLaw(matvar_t *pVar,
 											static_cast<double *>(oneField->data);
 
 										if(doubleData){
-											unsigned int len = oneField->dims[0] * oneField->dims[1];
-											params.insert(params.begin(), doubleData, doubleData + len);	
+											unsigned int len = 
+												oneField->dims[0] * 
+												oneField->dims[1];
+											params.insert(params.begin(), 
+												doubleData, doubleData + len);	
 										}else{
 											Mat_VarFree(pVar);
 											throw Exception("BaseArcset::readVar_SegCtrlLaw: "
@@ -3230,10 +3286,17 @@ bool BaseArcset::readVar_SegCtrlLaw(matvar_t *pVar,
 					// Only proceed if the control is nontrivial
 					if(id != ControlLaw::NO_CTRL){
 
-						// Allocate a new control law on the stack; by using a function in 
-						// the DynamicsModel, we ensure that the system-specific derived class
-						// is constructed rather than the base class ControlLaw.
-						ControlLaw *newLaw = pSysData->getDynamicsModel()->createControlLaw(id, params);
+						if(id < (1<<11)){
+							// likely saved with old IDs
+							ControlLaw::convertID(id);
+						}
+						// Allocate a new control law on the stack; by using a 
+						// function in the DynamicsModel, we ensure that the 
+						// system-specific derived class is constructed rather 
+						// than the base class ControlLaw.
+						ControlLaw *newLaw = 
+							pSysData->getDynamicsModel()->createControlLaw(id, 
+								params);
 
 						// Check to see if the controller has been loaded already
 						bool foundDuplicate = false;

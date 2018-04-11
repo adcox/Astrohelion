@@ -198,7 +198,7 @@ void PseudoArcEngine::pac(const Arcset *pInitGuess, Arcset *pMember, Arcset *pTe
 	// Store the converged solution in pMember, which serves as the new solution for future iterations
 	// Also store the iteration data to construct the nullspace vector(s)
 	try{
-		familyItData = corrector.multShoot(pInitGuess, pMember);
+		corrector.multShoot(pInitGuess, pMember, &familyItData);
 		allArcs.push_back(*pMember);
 	}catch(DivergeException &e){
 		printErr("PseudoArcEngine::pac: Could not converge initial guess!\n");
@@ -264,7 +264,7 @@ void PseudoArcEngine::pac(const Arcset *pInitGuess, Arcset *pMember, Arcset *pTe
 				pTemp->reset();	// Reset arcset to store converged solution
 
 				// Attempt to correct the new member; pTemp stores the corrected result
-				familyItData = corrector.multShoot(pMember, pTemp);
+				corrector.multShoot(pMember, pTemp, &familyItData);
 				converged = true;
 			}catch(DivergeException &de){
 				// Nothing to do here; continue down the code

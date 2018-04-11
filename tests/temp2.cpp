@@ -6,162 +6,133 @@
 #include <vector>
 
 using namespace astrohelion;
+using ltlaw = ControlLaw_cr3bp_lt;
 
 int main(){
 
-	// Parameters to isolate the equilibria
-	double f = 7e-2;
-	double alpha = 55.0*PI/180.0;
-	SysData_cr3bp_lt sys("earth", "moon", 1);
-	std::vector<double> params {};
-	ControlLaw_cr3bp_lt law(ControlLaw::NO_CTRL, params);	// will be overwritten
+	/*
+	 *	Propagate an Earth-Moon CR3BP L1 Lyapunov manifold to the x=0 plane
+	 */
+	std::vector<double> q0 {0.95463, 0.31288, 0, 0.17574, -0.12038, 0, 1};
+	// double tof = 3*PI;
+	double tof = 2;
 
-	// For f = 7e-2, L3, L4, and L5 are all the same ZAC
-	std::vector<double> LPts;
-	DynamicsModel_cr3bp_lt::getEquilibPt(&sys, 3, f, 1e-6, &LPts);
-
-	// Find Eq pt closest to the desired angle
-	double minDiff = 4, dS = 0, dC = 0;
-	double eqPt[3] = {0};
-
-	// Find the equilibrium solution that is closes to the desired angle
-	// and also above the x-axis (Looking for L4-like points)
-	for(unsigned int i = 0; i < LPts.size()/3; i++){
-		dS = std::abs(sin(LPts[3*i]) - sin(alpha));
-		dC = std::abs(cos(LPts[3*i]) - cos(alpha));
-		if(dS + dC < minDiff && LPts[3*i+2] > 0.6){
-			minDiff = dS + dC;
-			eqPt[0] = LPts[3*i+1];
-			eqPt[1] = LPts[3*i+2];
-		}
-	}
-
-	if(minDiff == 4){
-		throw Exception("Did not find eq pt near desired angle");
-	}
-
-	LinMotionEngine_cr3bp_lt linEngine;
-	linEngine.setVerbosity(Verbosity_tp::ALL_MSG);
-	Arcset_cr3bp_lt linArc(&sys);
-
-	double x0[] = {0.0075, 0, 0};	// Step off of equilibria
-	linEngine.getLinear(eqPt, sqrt(f), alpha, x0, LinMotion_tp::OSC,
-		&linArc, &law, 5);
-
-	law.setType(ControlLaw_cr3bp_lt::CONST_MF_GENERAL);
-
-	linArc.saveToMat("linArc.mat");
-
-	MultShootEngine msEngine;
-	msEngine.setVerbosity(Verbosity_tp::SOME_MSG);
-	msEngine.setDoLineSearch(true);
-	msEngine.setMaxIts(200);
-	msEngine.setTOFType(MSTOF_tp::VAR_EQUALARC);
-
-	// Periodicity Constraint
-	double nf = linArc.getNumNodes() - 1;
-	std::vector<double> perConData {nf, nf, NAN, nf, nf, NAN};
-	Constraint perCon(Constraint_tp::MATCH_CUST, 0, perConData);
-	linArc.addConstraint(perCon);
-
-	// Fix initial Mass
-	std::vector<double> stateConData {NAN, NAN, NAN, NAN, NAN, NAN, 1};
-	Constraint stateCon(Constraint_tp::STATE, 0, stateConData);
-	linArc.addConstraint(stateCon);
-
-	Arcset_cr3bp_lt nonlinArc(&sys), nonlinArc2(&sys), nonlinArc3(&sys);
-
-	try{
-		msEngine.multShoot(&linArc, &nonlinArc);
-
-		// nonlinArc.print();
-		// char filename[128];
-		// sprintf(filename, "guess_L4_a%06.2f.mat", alpha*180/PI);
-		// nonlinArc.saveToMat(filename);
-	}catch(DivergeException &e){
-		printErr("Failed to converge: %s\n", e.what());
-		return EXIT_SUCCESS;
-	}
-
-	// Propagate to xdot = 0
-	std::vector<double> stateEvtData {3, 0};
-	Event stateEvt(Event_tp::STATE_PLANE, 0, true, stateEvtData);
 	SimEngine sim;
-	// sim.setVerbosity(Verbosity_tp::ALL_MSG);
-	sim.addEvent(stateEvt);
-	Arcset_cr3bp_lt arc(&sys);
-	bool foundPt = false;
-	for(unsigned int n = 0; n < nonlinArc.getNumNodes(); n++){
-		arc.reset();
-		std::vector<double> q0 = nonlinArc.getStateByIx(n);
-		std::vector<double> ctrl0 = nonlinArc.getNodeRefByIx(n).getExtraParamVec(PARAMKEY_CTRL);
-		double tof = nonlinArc.getTOFByIx(n);
-		sim.runSim(q0, ctrl0, 0, tof, &arc, &law);
+	SysData_cr3bp_lt sys("earth", "moon", 1);
+	unsigned int lawID = ltlaw::CSI_VAR_M | ltlaw::VAR_F_BND | ltlaw::GENERAL;
+	// unsigned int lawID = ltlaw::CSI_VAR_M | ltlaw::VAR_F_UBND | ltlaw::GENERAL;
 
-		if(arc.getNodeByIx(-1).getTriggerEvent() == Event_tp::STATE_PLANE){
-			// Great! Use this state as a new initial state for an arcset
-			foundPt = true;
-			q0 = arc.getStateByIx(-1);
-			nonlinArc.reset();
-			sim.clearEvents();
-			sim.runSim_manyNodes(q0, ctrl0, 0, linArc.getTotalTOF(), 5, 
-				&nonlinArc, &law);
-			break;
+	double Isp = 1500;
+	double fmax = 1e-1;
+	double f0 = fmax;
+	double g0 = asin(2*f0/fmax - 1);
+	// double g0 = sqrt(f0/fmax);
+	// double g0 = log10(f0)/4;
+	// double g0 = log(f0)/20;
+
+	std::vector<double> params {fmax, Isp};
+	ControlLaw_cr3bp_lt law(lawID, params);
+	std::vector<double> ctrl0{0,0,0};	// {alpha, beta, g}
+
+	Arcset_cr3bp natArc(&sys);
+
+	Event yzCross(Event_tp::YZ_PLANE, 0, true);
+	sim.addEvent(yzCross);
+	sim.runSim_manyNodes(q0, ctrl0, 0, tof, 2, &natArc, &law);
+	natArc.deleteNodeByIx(-1);	// No need for final node, we'll fix seg end
+	// natArc.saveToMat("temp.mat");
+
+	/*
+	 *	Formulate corrections problem
+	 */
+	// Fix initial state
+	Constraint initStateCon(Constraint_tp::STATE, natArc.getNodeByIx(0).getID(),
+		q0);
+	natArc.addConstraint(initStateCon);
+
+	// Target a final state
+	// std::vector<double> qf {0, 0.3, NAN, NAN, NAN, NAN, NAN};
+	// std::vector<double> qf {0.9, -0.3, NAN, NAN, NAN, NAN, NAN};
+	std::vector<double> qf {1.05, -0.3, NAN, NAN, NAN, NAN, NAN};
+	// Constraint finalStateCon(Constraint_tp::STATE, natArc.getNodeByIx(-1).getID(),
+	// 	qf);
+	// natArc.addConstraint(finalStateCon);
+
+
+	Constraint endSegCon(Constraint_tp::ENDSEG_STATE, 
+		natArc.getSegByIx(-1).getID(), qf);
+	natArc.addConstraint(endSegCon);
+
+	MultShootEngine shooter;
+	// shooter.setVerbosity(Verbosity_tp::NO_MSG);
+	// shooter.setVerbosity(Verbosity_tp::ALL_MSG);
+	shooter.setSaveEachIt(true);
+	shooter.setMaxIts(200);
+	shooter.setDoLineSearch(true);
+	shooter.setTOFType(MSTOF_tp::VAR_FIXSIGN);
+	ctrl0[2] = g0;
+
+	std::map<double, std::vector<double> > allData;
+	const std::vector<double> nanData {NAN, NAN, NAN};
+	double alpha0 = 24*PI/180.0;
+	unsigned int numSteps = 1;
+	double alphaStep = 2*PI/numSteps;
+	
+	#pragma omp parallel for firstprivate(ctrl0, natArc, shooter) schedule(dynamic)
+	for(unsigned int i = 0; i < numSteps; i++){
+		double a = alpha0 + i*alphaStep;
+		Arcset_cr3bp_lt transfer(&sys);
+		std::vector<double> data;
+		/*
+		 *	Prep guess for low-thrust
+		 */
+		ctrl0[0] = a;
+		for(unsigned int n = 0; n < natArc.getNumNodes(); n++){
+			natArc.getNodeRefByIx(n).setExtraParamVec(PARAMKEY_CTRL, ctrl0);
 		}
+
+		/*
+		 *	Do the corrections
+		 */
+		MultShootData it(&natArc);
+		try{
+			shooter.multShoot(&natArc, &transfer, &it);
+
+			std::vector<double> s = transfer.getSegRefByIx(0).getStateByRow(0);
+			double f = law.getThrustMag(0, &(s[0]), &sys);
+			// Save {f_f, alpha_f, beta_f, it_count}
+			std::vector<double> ctrlf = transfer.getNodeRefByIx(0).\
+				getExtraParamVec(PARAMKEY_CTRL);
+			
+			data.push_back(f);
+			data.push_back(ctrlf[0]);	// alpha
+			data.push_back(ctrlf[1]);	// beta
+			printColor(GREEN, "alpha = %06.2f deg converged\n", a*180/PI);
+		}catch(const Exception &e){
+			// Put NAN values in for the converged control variables
+			data.insert(data.end(), nanData.begin(), nanData.end());
+			printColor(RED, "alpha = %06.2f deg diverged\n", a*180/PI);
+		}catch(std::exception &e){
+			data.insert(data.end(), nanData.begin(), nanData.end());
+			printColor(RED, "alpha = %06.2f deg diverged (std::except)\n",
+				a*180/PI);
+		}
+
+		data.push_back(it.count);
+
+		allData[a] = data;
 	}
 
-	if(!foundPt){
-		printErr("Did not find dx/dt = 0\n");
-		return EXIT_SUCCESS;
+	std::vector<double> outData(5*allData.size(), NAN);
+	unsigned int i = 0;
+	for(auto entry : allData){
+		outData[5*i] = entry.first;
+		std::vector<double> &d = entry.second;
+		std::copy(d.begin(), d.end(), outData.begin() + 5*i+1);
+		i++;
 	}
-
-	// Update periodicity constraint
-	nf = nonlinArc.getNodeByIx(-1).getID();
-	perConData = std::vector<double> {nf, nf, NAN, NAN, nf, NAN};
-	perCon.setData(perConData);
-
-	// Update state consraint
-	stateConData = std::vector<double> {NAN, NAN, NAN, 0, NAN, NAN, 1};
-	stateCon.setData(stateConData);
-
-	nonlinArc.addConstraint(perCon);
-	nonlinArc.addConstraint(stateCon);
-
-	// Correct again for periodicity
-	try{
-		msEngine.multShoot(&nonlinArc, &nonlinArc2);
-		nonlinArc2.saveToMat("nonlin2.mat");
-	}catch(DivergeException &e){
-		printErr("Failed to converge: %s\n", e.what());
-		return EXIT_SUCCESS;
-	}
-	// nonlinArc2.print();
-
-	// Remove control from the free variables; it remains fixed
-	std::vector<double> ctrl0 {alpha, 0}, ctrlCont {1, 1};
-	Constraint fixCtrlCon(Constraint_tp::CTRL, 
-		nonlinArc2.getNodeByIx(0).getID(), ctrl0);
-	nonlinArc2.addConstraint(fixCtrlCon);
-	for(unsigned int i = 0; i < nonlinArc2.getNumSegs(); i++){
-		Constraint contCon(Constraint_tp::CONT_CTRL, 
-			nonlinArc2.getSegByIx(i).getID(), ctrlCont);
-		nonlinArc2.addConstraint(contCon);
-	}
-
-	// nonlinArc2.print();
-
-	// Correct Again for periodicity with fixed thrust angle
-	// msEngine.setVerbosity(Verbosity_tp::ALL_MSG);
-	try{
-		msEngine.multShoot(&nonlinArc2, &nonlinArc3);
-
-		char filename[128];
-		sprintf(filename, "guess_L4_a%06.2f.mat", alpha*180/PI);
-		nonlinArc3.saveToMat(filename);
-	}catch(DivergeException &e){
-		printErr("Failed to converge: %s\n", e.what());
-		return EXIT_SUCCESS;
-	}
+	// saveMatrixToFile("MultShootResults.mat", "results", outData, 
+	// 	outData.size()/5, 5);
 
 	return EXIT_SUCCESS;
 }

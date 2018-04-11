@@ -61,11 +61,14 @@ public:
 	 *  \name Core Analysis Functions
 	 *  \{
 	 */
-	static void getEquilibPt(const SysData_cr3bp_lt*, int, double, double, std::vector<double>*, Verbosity_tp verb = Verbosity_tp::NO_MSG);
-	static double getHamiltonian(double, const double*, const SysData_cr3bp_lt*, const ControlLaw_cr3bp_lt*);
+	static void getEquilibPt(const SysData_cr3bp_lt*, int, double, double, 
+		std::vector<double>*, Verbosity_tp verb = Verbosity_tp::NO_MSG);
+	static double getHamiltonian(double, const double*, const SysData_cr3bp_lt*, 
+		const ControlLaw_cr3bp_lt*);
 	DynamicsModel::eom_fcn getFullEOM_fcn() const;
 	DynamicsModel::eom_fcn getSimpleEOM_fcn() const;
-	std::vector<double> getStateDeriv(double, std::vector<double>, EOM_ParamStruct*) const;
+	std::vector<double> getStateDeriv(double, std::vector<double>, 
+		EOM_ParamStruct*) const;
 	//\}
 
 	/**
@@ -87,7 +90,8 @@ public:
 	 *  \name Multiple Shooting Analysis Functions
 	 *  \{
 	 */
-	void multShoot_applyConstraint(MultShootData&, const Constraint&, int) const override;
+	void multShoot_applyConstraint(MultShootData&, const Constraint&, 
+		int) const override;
 	void multShoot_initIterData(MultShootData& it) const override;
 	void multShoot_targetHLT(MultShootData &, const Constraint&, int) const;
 	//\}

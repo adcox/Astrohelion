@@ -19,8 +19,8 @@ BOOST_AUTO_TEST_CASE(FAMILY_OPERATIONS){
 	std::vector<ControlLaw*> laws;
 	fam.readFromMat("../../data/families/cr3bp_earth-moon/L1_Lyap.mat", laws);
 
-	fam.sortEigs();
-	std::vector<unsigned int> bifs = fam.findBifurcations();
+	// fam.sortEigs();
+	// std::vector<unsigned int> bifs = fam.findBifurcations();
 	// if(bifs.size() > 0){
 	// 	printf("Found bifurcations at:\n");
 	// 	for(unsigned int i = 0; i < bifs.size(); i++){
@@ -36,7 +36,7 @@ BOOST_AUTO_TEST_CASE(FAMILY_OPERATIONS){
 	for(unsigned int i = 0; i < matches.size(); i++){
 		// printf("   %03u: x = %f ", i, matches[i].getIC()[0]);
 		// std::cout << (std::abs(matches[i].getIC()[0] - matchX) < 1e-9 ? PASS : FAIL) << std::endl;
-		BOOST_CHECK(std::abs(matches[i].getStateByIx(0)[0] - matchX) < 1e-9);
+		BOOST_CHECK_SMALL(matches[i].getStateByIx(0)[0] - matchX, 1e-9);
 	}
 
 	printf("Checking Match Jacobi:\n");
@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_CASE(FAMILY_OPERATIONS){
 		// printf("   %03u: JC = %f ", i, matches[i].getJacobi());
 		// std::cout << (std::abs(matches[i].getJacobi() - matchJC) < 1e-9 ? PASS : FAIL) << std::endl;
 		Arcset_cr3bp temp(matches[i]);
-		BOOST_CHECK(std::abs(temp.getJacobiByIx(0) - matchJC) < 1e-9);
+		BOOST_CHECK_SMALL(temp.getJacobiByIx(0) - matchJC, 1e-9);
 	}
 
 	printf("Checking Match TOF:\n");
@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(FAMILY_OPERATIONS){
 	for(unsigned int i = 0; i < matches.size(); i++){
 		// printf("   %03u: TOF = %f ", i, matches[i].getTOF());
 		// std::cout << (std::abs(matches[i].getTOF() - matchTOF) < 1e-9 ? PASS : FAIL) << std::endl;
-		BOOST_CHECK(std::abs(matches[i].getTotalTOF() - matchTOF) < 1e-9);
+		BOOST_CHECK_SMALL(matches[i].getTotalTOF() - matchTOF, 1e-9);
 	}
 
 	for(unsigned int i = 0; i < laws.size(); i++){

@@ -80,9 +80,9 @@ directories:
 	$(MKDIR_P) $(OBJ)
 	$(MKDIR_P) $(BIN)/unit
 
-unit: arcData arcset bc4bpDef calc cr3bpFam lambertArc linMotion manifoldEngine\
-	multShootCons_bc4bp multShootCons_cr3bp multShootCons_cr3bp_lt multShootEngine\
-	simEngine utilities event
+unit: arcData arcset bc4bpDef calc cr3bpFam ltFam lambertArc linMotion\
+ 	manifoldEngine multShootCons_bc4bp multShootCons_cr3bp\
+ 	multShootCons_cr3bp_lt multShootEngine simEngine utilities event
 
 run:
 	$(BIN)/unit/arcData
@@ -90,6 +90,7 @@ run:
 	$(BIN)/unit/bc4bpDef
 	$(BIN)/unit/calc
 	$(BIN)/unit/cr3bpFam
+	$(BIN)/unit/ltFam
 	#$(BIN)/unit/lambertArc	# Fails right now
 	$(BIN)/unit/linMotion
 	$(BIN)/unit/manifoldEngine
@@ -136,6 +137,9 @@ lambertArc: $(OBJECTS)
 linMotion: $(OBJECTS)
 	$(COMP) -I $(INC) $(INC_SYS) $^  unittest_linMotion.cpp $(LDFLAGS) -o $(BIN)/unit/$@	
 
+ltFam: $(OBJECTS)
+	$(COMP) -I $(INC) $(INC_SYS) $^  unittest_cr3bp-lt_family.cpp $(LDFLAGS) -o $(BIN)/unit/$@	
+
 manifoldEngine: $(OBJECTS)
 	$(COMP) -I $(INC) $(INC_SYS) $^  unittest_manifold.cpp $(LDFLAGS) -o $(BIN)/unit/$@	
 
@@ -179,6 +183,9 @@ calcTest: $(OBJECTS)
 
 conicTest: $(OBJECTS)
 	$(COMP) -I $(INC) $(INC_SYS) $^ test_2bp.cpp $(LDFLAGS) -o $(BIN)/$@
+
+convertLT: $(OBJECTS)
+	$(COMP) -I $(INC) $(INC_SYS) $^  convertLTFiles.cpp $(LDFLAGS) -o $(BIN)/$@	
 
 famGen: $(OBJECTS)
 	$(COMP) -I $(INC) $(INC_SYS) $^ test_famGeneration.cpp $(LDFLAGS) -o $(BIN)/$@

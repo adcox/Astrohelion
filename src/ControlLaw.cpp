@@ -29,6 +29,9 @@
 #include "Exceptions.hpp"
 #include "SysData.hpp"
 
+// temp include to do the law conversion
+#include "ControlLaw_cr3bp_lt.hpp"
+
 namespace astrohelion{
 
 //-----------------------------------------------------------------------------
@@ -424,5 +427,50 @@ std::string ControlLaw::typeToString(unsigned int id){
 	}
 }//====================================================
 
+/**
+ * @brief Temporary funtion to convert low-thrust law IDs
+ * @details [long description]
+ * 
+ * @param int [description]
+ */
+void ControlLaw::convertID(unsigned int &id){
+	using L = ControlLaw_cr3bp_lt;
+	switch(id){
+		case 1:	// Const_FC_2D_LEFT
+			id = L::CONST_F | L::CONST_C_2D | L::CSI_VAR_M | L::VEL_LEFT;
+			break;
+		case 2: // CONST_FC_2D_RIGHT
+			id = L::CONST_F | L::CONST_C_2D | L::CSI_VAR_M | L::VEL_RIGHT;
+			break;
+		case 3: // CONST_F_PRO_VEL
+			id = L::CONST_F | L::VEL_PT | L::CSI_VAR_M | L::VEL_PRO;
+			break;
+		case 4: // CONST_F_ANTI_VEL
+			id = L::CONST_F | L::VEL_PT | L::CSI_VAR_M | L::VEL_ANTI;
+			break;
+		case 5: // CONST_F_GENERAL
+			id = L::CONST_F | L::GENERAL | L::CSI_VAR_M;
+			break;
+		case 105: // CONST_MF_GENERAL
+			id = L::CONST_F | L::GENERAL | L::CONST_M;
+			break;
+		case 1001: // VAR_F_CONST_C_2D_LEFT
+			id = L::VAR_F_UBND | L::CONST_C_2D | L::CSI_VAR_M | L::VEL_LEFT;
+			break;
+		case 1002: // VAR_F_CONST_C_2D_RIGHT
+			id = L::VAR_F_UBND | L::CONST_C_2D | L::CSI_VAR_M | L::VEL_RIGHT;
+			break;
+		case 1003: // VAR_F_PRO_VEL
+			id = L::VAR_F_UBND | L::VEL_PT | L::CSI_VAR_M | L::VEL_PRO;
+			break;
+		case 1004: // VAR_F_ANTI_VEL
+			id = L::VAR_F_UBND | L::VEL_PT | L::CSI_VAR_M | L::VEL_ANTI;
+			break;
+		case 1005: // VAR_F_GENERAL
+			id = L::VAR_F_UBND | L::GENERAL | L::CSI_VAR_M;
+			break;
+		default: break;
+	}
+}
 
 }// End of astrohelion namespace

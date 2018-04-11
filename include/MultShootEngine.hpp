@@ -116,8 +116,9 @@ class MultShootEngine : public Core, public Engine{
 		 *  \name Analysis Functions
 		 *  \{
 		 */
-		MultShootData multShoot(const Arcset*, Arcset*);
-		MultShootData multShoot(MultShootData);
+		void multShoot(const Arcset*, Arcset*,
+			MultShootData *pData = nullptr);
+		void multShoot(MultShootData*);
 		//\}
 
 		/**

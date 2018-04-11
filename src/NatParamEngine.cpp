@@ -539,7 +539,7 @@ void NatParamEngine::continuePO(const Arcset *pInitGuess, Arcset *pInput, Arcset
 
 			msEngine.setDoLineSearch(false);
 			msEngine.setMaxIts(noSearchMaxIts);
-			*pItData = msEngine.multShoot(pInput, pConverged);
+			msEngine.multShoot(pInput, pConverged, pItData);
 			
 			diverged = false;
 			printf("Orbit %03d converged!\n", static_cast<int>(allArcs.size()));
@@ -551,7 +551,7 @@ void NatParamEngine::continuePO(const Arcset *pInitGuess, Arcset *pInput, Arcset
 				msEngine.setDoLineSearch(true);
 				msEngine.setMaxIts(lineSearchMaxIts);
 
-				*pItData = msEngine.multShoot(pInput, pConverged);
+				msEngine.multShoot(pInput, pConverged, pItData);
 				diverged = false;
 				printf("Orbit %03d converged!\n", static_cast<int>(allArcs.size()));
 			}catch(DivergeException &de2){

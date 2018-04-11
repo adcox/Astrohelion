@@ -643,14 +643,16 @@ void MultShootEngine::multShoot(MultShootData *pData){
 	}// end of corrections loop
 
 	if(!bIgnoreDiverge){
-		if( (errF > maxErr) || (errF > tolF && errX > tolX)){
+		if( (errF > maxErr) || (errF > tolF && errF_infty > tolF)){
 			char msg[256];
 			if(errF > maxErr){
 				sprintf(msg, "MultShootEngine: Diverged! "
 					"Constraint Error = %e > maxErr = %e", errF, maxErr);
 			}else{
 				sprintf(msg, "MultShootEngine: Diverged! "
-					"Constraint Error = %e > tolF = %e", errF, tolF);
+					"||F(X)||_2 = %6.4e / %4.2e : "
+					"||F(X)||_inf = %6.4e / %4.2e : ", errF, tolF, errF_infty,
+					tolF);
 			}
 
 			throw DivergeException(msg);

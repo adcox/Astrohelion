@@ -26,7 +26,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with Astrohelion.  If not, see <http://www.gnu.org/licenses/>.
  */
- 
+
 #include "ControlLaw_cr3bp_lt.hpp"
 
 #include <cmath>
@@ -98,15 +98,11 @@ double ControlLaw_cr3bp_lt::get_dmdt(double t, const double *s,
 					return -params[0]*pSys->getCharL()/
 						(pSys->getCharT()*params[1]*G_GRAV_0);
 				case VAR_F_BND:
+				case VAR_F_UBND:
 					// params : {fmax, Isp}
 					// s = {x, y, z, vx, vy, vz, m, g, ...}
 					return -getThrustMag(t, s, pSys)*pSys->getCharL()/
 						(pSys->getCharT()*params[1]*G_GRAV_0);
-				case VAR_F_UBND:
-					// params : {Isp}
-					// s = {x, y, z, vx, vy, vz, m, g, ...}
-					return -getThrustMag(t, s, pSys)*pSys->getCharL()/
-						(pSys->getCharT()*params[0]*G_GRAV_0);
 			}
 		case CONST_M:
 		default:
@@ -152,8 +148,8 @@ double ControlLaw_cr3bp_lt::getThrustMag(double t, const double *s,
 			// params = {fmax, ...}
 			return 0.5*params[0]*(sin(g) + 1);
 		case VAR_F_UBND: 
-			// params = {...} (first parameter is likely Isp)
-			return pow(10.0, 4.0*g);
+			// params = {fmax, ...}
+			return params[0]*g*g;
 		default:
 			throw Exception("ControlLaw_cr3bp_lt::getThrustMag: "
 				"Control has unrecognized combo of BASE and F types");
@@ -435,7 +431,7 @@ void ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_ConstC_2D(double t, const dou
 		 *	VAR_F laws:
 		 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
 		 *		ctrl: {g}
-		 *		params: {Isp} or {fmax, Isp}
+		 *		params: {fmax, Isp}
 		 *		
 		 *	partials:
 		 *		row 0 = partials of a_x w.r.t. s
@@ -496,7 +492,7 @@ void ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_AlongVel(double t, const doub
 		 *	VAR_F laws:
 		 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
 		 *		ctrl: {g}
-		 *		params: {Isp} or {fmax, Isp}
+		 *		params: {fmax, Isp}
 		 *		
 		 *	partials:
 		 *		row 0 = partials of a_x w.r.t. s
@@ -562,7 +558,7 @@ void ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_GeneralDir(double t,
 		 *	VAR_F laws:
 		 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
 		 *		ctrl: {alpha, beta, g}
-		 *		params: {Isp} or {fmax, Isp}
+		 *		params: {fmax, Isp}
 		 *		
 		 *	partials:
 		 *		row 0 = partials of a_x w.r.t. s
@@ -635,26 +631,27 @@ void ControlLaw_cr3bp_lt::getPartials_EOMsWRTCtrl_VarF(double t, const double *s
 		if((lawType & F_MASK) == VAR_F_BND){
 			// a_lt = (1/2)*fmax*(sin(g) + 1)*u
 			// params = {fmax, Isp}
-			double dfdg = 0.5*params[0]*cos(s[7]);
+			double coeff = 0.5*params[0]*cos(s[7]);
 			if(f > 0){
 				// partials of xddot (3), yddot (4), zddot(5) and mdot (5)
 				// w.r.t. g
-				partials[numStates*3 + 0] = dfdg*a_lt[0]/(f*s[6]);
-				partials[numStates*4 + 0] = dfdg*a_lt[1]/(f*s[6]);
-				partials[numStates*5 + 0] = dfdg*a_lt[2]/(f*s[6]);
-				partials[numStates*6 + 0] = -1*dfdg*pSys->getCharL()/
+				partials[numStates*3 + 0] = coeff*a_lt[0]/(f*s[6]);
+				partials[numStates*4 + 0] = coeff*a_lt[1]/(f*s[6]);
+				partials[numStates*5 + 0] = coeff*a_lt[2]/(f*s[6]);
+				partials[numStates*6 + 0] = -1*coeff*pSys->getCharL()/
 					(params[1]*G_GRAV_0*pSys->getCharT());
 			}
 		}else if( (lawType & F_MASK) == VAR_F_UBND){
-			// a_lt = 10^(4g)*u
-			// params = {Isp}
-			double coeff = log(10)*4;
+			// a_lt = fmax*g^2
+			// params = {fmax, Isp}
+			double coeff = std::abs(s[7]) > 0 ? 2/s[7] : 0;
+
 			// partials of xddot (3), yddot (4), zddot(5) and mdot (5) w.r.t. g
 			partials[numStates*3 + 0] = coeff*a_lt[0];
 			partials[numStates*4 + 0] = coeff*a_lt[1];
 			partials[numStates*5 + 0] = coeff*a_lt[2];
 			partials[numStates*6 + 0] = -coeff*f*pSys->getCharL()/
-				(params[0]*G_GRAV_0*pSys->getCharT());
+				(params[1]*G_GRAV_0*pSys->getCharT());
 		}else{
 			printErr("Control Law: \n");
 			print();
@@ -702,7 +699,7 @@ void ControlLaw_cr3bp_lt::getPartials_EOMsWRTCtrl_GeneralDir(double t,
 		 *	VAR_F laws:
 		 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
 		 *		ctrl: {alpha, beta, g}
-		 *		params: {Isp} or {fmax, Isp}
+		 *		params: {fmax, Isp}
 		 *		
 		 *	partials:
 		 *		row 0 = partials of v_x w.r.t. ctrl
@@ -728,19 +725,19 @@ void ControlLaw_cr3bp_lt::getPartials_EOMsWRTCtrl_GeneralDir(double t,
 			if((lawType & F_MASK) == VAR_F_BND){
 				// a_lt = (1/2)*fmax*(sin(g) + 1)*u
 				// params = {fmax, Isp}
-				dfdg = 0.5*params[0]*cos(s[7]);
+				dfdg = 0.5*params[0]*cos(s[9]);
 				
 				// partial of mdot w.r.t. g
 				partials[numStates*6 + 2] = -dfdg*pSys->getCharL()/
 					(params[1]*G_GRAV_0*pSys->getCharT());
 			}else if( (lawType & F_MASK) == VAR_F_UBND){
-				// a_lt = 10^(4g)*u,
-				// params = {Isp}
-				dfdg = log(10)*4*f;
+				// a_lt = fmax*g^2
+				// params = {fmask, Isp}
+				dfdg = 2*params[0]*s[9];
 
 				// partial of mdot w.r.t. g
 				partials[numStates*6 + 2] = -dfdg*pSys->getCharL()/
-					(params[0]*G_GRAV_0*pSys->getCharT());
+					(params[1]*G_GRAV_0*pSys->getCharT());
 			}else{
 				printErr("Control Law:\n");
 				print();
@@ -748,12 +745,10 @@ void ControlLaw_cr3bp_lt::getPartials_EOMsWRTCtrl_GeneralDir(double t,
 					"thrust parameterization is not supported.");
 			}
 
-			if(dfdg != 0){
-				// partials of xddot (3), yddot (4), and zddot (5) w.r.t. g
-				partials[numStates*3 + 2] = dfdg*cos(s[8])*cos(s[7])/s[6];
-				partials[numStates*4 + 2] = dfdg*cos(s[8])*sin(s[7])/s[6];
-				partials[numStates*5 + 2] = dfdg*sin(s[8])/s[6];
-			}
+			// partials of xddot (3), yddot (4), and zddot (5) w.r.t. g
+			partials[numStates*3 + 2] = dfdg*cos(s[8])*cos(s[7])/s[6];
+			partials[numStates*4 + 2] = dfdg*cos(s[8])*sin(s[7])/s[6];
+			partials[numStates*5 + 2] = dfdg*sin(s[8])/s[6];
 		}
 	}else{
 		printErr("Control Law:\n");
@@ -797,11 +792,9 @@ void ControlLaw_cr3bp_lt::init(){
 			numParams++;	// Parameter for f
 			break;
 		case VAR_F_BND:
+		case VAR_F_UBND:
 			numParams++;	// Parameter for fmax
 			numStates++;	// Variable for f
-			break;
-		case VAR_F_UBND:
-			numStates++;	// variable for f
 			break;
 	}
 
@@ -1061,7 +1054,9 @@ void ControlLaw_cr3bp_lt::convertTo_GeneralConstF(Arcset_cr3bp_lt *pArcset,
  *  @param outOfPlane The out-of-plane angle of the vector; measured from xy-plane, sign
  *  matches sign of z
  */
-void ControlLaw_cr3bp_lt::pointingVecToAngles(Eigen::Vector3d vec, double *inPlane, double *outOfPlane){
+void ControlLaw_cr3bp_lt::pointingVecToAngles(Eigen::Vector3d vec, 
+	double *inPlane, double *outOfPlane){
+
 	if(vec.norm() == 0){
 		if(inPlane)
 			*inPlane = 0;

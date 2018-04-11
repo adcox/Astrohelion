@@ -19,17 +19,18 @@ int main(){
 
 	SimEngine sim;
 	SysData_cr3bp_lt sys("earth", "moon", 1);
-	// unsigned int lawID = ltlaw::CSI_VAR_M | ltlaw::VAR_F_BND | ltlaw::GENERAL;
-	unsigned int lawID = ltlaw::CSI_VAR_M | ltlaw::VAR_F_UBND | ltlaw::GENERAL;
+	unsigned int lawID = ltlaw::CSI_VAR_M | ltlaw::VAR_F_BND | ltlaw::GENERAL;
+	// unsigned int lawID = ltlaw::CSI_VAR_M | ltlaw::VAR_F_UBND | ltlaw::GENERAL;
 
 	double Isp = 1500;
 	double fmax = 1e-1;
-	double f0 = 1e-4;
-	// double g0 = asin(2*f0/fmax - 1);
-	double g0 = log10(f0)/4;
+	double f0 = fmax;
+	double g0 = asin(2*f0/fmax - 1);
+	// double g0 = sqrt(f0/fmax);
+	// double g0 = log10(f0)/4;
+	// double g0 = log(f0)/20;
 
-	// std::vector<double> params {fmax, Isp};
-	std::vector<double> params {Isp};
+	std::vector<double> params {fmax, Isp};
 	ControlLaw_cr3bp_lt law(lawID, params);
 	std::vector<double> ctrl0{0,0,0};	// {alpha, beta, g}
 
@@ -63,17 +64,18 @@ int main(){
 	natArc.addConstraint(endSegCon);
 
 	MultShootEngine shooter;
-	shooter.setVerbosity(Verbosity_tp::NO_MSG);
+	// shooter.setVerbosity(Verbosity_tp::NO_MSG);
 	// shooter.setVerbosity(Verbosity_tp::ALL_MSG);
-	// shooter.setSaveEachIt(true);
+	shooter.setSaveEachIt(true);
 	shooter.setMaxIts(200);
 	shooter.setDoLineSearch(true);
+	shooter.setTOFType(MSTOF_tp::VAR_FIXSIGN);
 	ctrl0[2] = g0;
 
 	std::map<double, std::vector<double> > allData;
 	const std::vector<double> nanData {NAN, NAN, NAN};
-	double alpha0 = 0;
-	unsigned int numSteps = 90;
+	double alpha0 = 24*PI/180.0;
+	unsigned int numSteps = 1;
 	double alphaStep = 2*PI/numSteps;
 	
 	#pragma omp parallel for firstprivate(ctrl0, natArc, shooter) schedule(dynamic)
@@ -106,10 +108,14 @@ int main(){
 			data.push_back(ctrlf[0]);	// alpha
 			data.push_back(ctrlf[1]);	// beta
 			printColor(GREEN, "alpha = %06.2f deg converged\n", a*180/PI);
-		}catch(Exception &e){
+		}catch(const Exception &e){
 			// Put NAN values in for the converged control variables
 			data.insert(data.end(), nanData.begin(), nanData.end());
 			printColor(RED, "alpha = %06.2f deg diverged\n", a*180/PI);
+		}catch(std::exception &e){
+			data.insert(data.end(), nanData.begin(), nanData.end());
+			printColor(RED, "alpha = %06.2f deg diverged (std::except)\n",
+				a*180/PI);
 		}
 
 		data.push_back(it.count);
@@ -125,8 +131,8 @@ int main(){
 		std::copy(d.begin(), d.end(), outData.begin() + 5*i+1);
 		i++;
 	}
-	saveMatrixToFile("MultShootResults.mat", "results", outData, 
-		outData.size()/5, 5);
+	// saveMatrixToFile("MultShootResults.mat", "results", outData, 
+	// 	outData.size()/5, 5);
 
 	return EXIT_SUCCESS;
 }

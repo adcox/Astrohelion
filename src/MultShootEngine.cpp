@@ -724,7 +724,7 @@ void MultShootEngine::propSegsFromFreeVars(MultShootData& it, SimEngine &sim,
 
 		try{
 			sim.runSim(ic, ctrl0, t0, tof, &(it.propSegs[s]), pLaw);
-		}catch(DivergeException &e){
+		}catch(const DivergeException &e){
 			if(verbosity >= Verbosity_tp::SOME_MSG){
 				printf("%s", RED);
 				printf("SimEngine integration diverged on segment %u...\n", s);
@@ -734,7 +734,7 @@ void MultShootEngine::propSegsFromFreeVars(MultShootData& it, SimEngine &sim,
 				}
 				printf("]\n  > t0 = %.4f\n  > tof = %.4f\n", t0, tof);
 			}
-		}catch(Exception &e){
+		}catch(const Exception &e){
 			printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, RED, 
 				"SimEngine Error on segment %u:\n%s\nEnding corrections.\n",
 				s, e.what());

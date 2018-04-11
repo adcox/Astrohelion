@@ -96,17 +96,27 @@ class SysData_cr3bp_lt;
  *  \f[
  *  	\mathbf{A} =
  *		\begin{bmatrix}
- *			\mathbf{0}_{3\times 3} & \mathbf{I}_3 & \vec{0}_{3\times 1} & \vec{0}_{3 \times n}\\[1em]
- *			\mathbf{D_{a,r}} & \mathbf{D_{a,v}} & \dpd{\vec{a}}{m} & \mathbf{D_{a,\gamma}}\\[1em]
- *			\vec{0}_{1\times 3} & \vec{0}_{1\times 3} & 0 & \dpd{\dot{m}}{\vec{\gamma}}\\[1em]
- *			\dpd{\dot{\vec{\gamma}}}{\vec{r}} & \dpd{\dot{\vec{\gamma}}}{\vec{v}} & \dpd{\dot{\vec{\gamma}}}{m} & \dpd{\dot{\vec{\gamma}}}{\vec{\gamma}}
+ *			\mathbf{0}_{3\times 3} & \mathbf{I}_3 & \vec{0}_{3\times 1} & 
+ *				\vec{0}_{3 \times n}\\[1em]
+ *			\mathbf{D_{a,r}} & \mathbf{D_{a,v}} & \dpd{\vec{a}}{m} & 
+ *				\mathbf{D_{a,\gamma}}\\[1em]
+ *			\vec{0}_{1\times 3} & \vec{0}_{1\times 3} & 0 & 
+ *				\dpd{\dot{m}}{\vec{\gamma}}\\[1em]
+ *			\dpd{\dot{\vec{\gamma}}}{\vec{r}} & 
+ *				\dpd{\dot{\vec{\gamma}}}{\vec{v}} & 
+ *				\dpd{\dot{\vec{\gamma}}}{m} & 
+ *				\dpd{\dot{\vec{\gamma}}}{\vec{\gamma}}
  *		\end{bmatrix}\,,
  *  \f]
  *  where
  *  \f{align*}{
- *  	\mathbf{D_{a,r}} &= \dpd{\vec{a}}{\vec{r}} = \dpd[2]{\Omega}{\vec{r}} + \dpd{\vec{a}_{lt}}{\vec{r}},\\
- *  	\mathbf{D_{a,v}} &= \dpd{\vec{a}}{\vec{v}} = \mathbf{K_v} + \dpd{\vec{a}_{lt}}{\vec{v}},\\
- *  	\mathbf{D_{a,\gamma}} &= \dpd{\vec{a}}{\vec{\gamma}} = \dmd{\Omega}{2}{\vec{r}}{}{\vec{\gamma}}{} +  \dpd{\vec{a}_{lt}}{\vec{\gamma}} = \dpd{\vec{a}_{lt}}{\vec{\gamma}}\,.
+ *  	\mathbf{D_{a,r}} &= \dpd{\vec{a}}{\vec{r}} = \dpd[2]{\Omega}{\vec{r}} + 
+ *  		\dpd{\vec{a}_{lt}}{\vec{r}},\\
+ *  	\mathbf{D_{a,v}} &= \dpd{\vec{a}}{\vec{v}} = \mathbf{K_v} + 
+ *  		\dpd{\vec{a}_{lt}}{\vec{v}},\\
+ *  	\mathbf{D_{a,\gamma}} &= \dpd{\vec{a}}{\vec{\gamma}} = 
+ *  		\dmd{\Omega}{2}{\vec{r}}{}{\vec{\gamma}}{} +  
+ *  		\dpd{\vec{a}_{lt}}{\vec{\gamma}} = \dpd{\vec{a}_{lt}}{\vec{\gamma}}\,.
  *  \f}
  *  These partials are computed via several functions. First, consider the 
  *  `getPartials_OutputWRTCoreState()` function,
@@ -315,17 +325,16 @@ public:
 
 	/** \brief Represents variable thrust with no implicit upper bound
 	 * 
-	 * 	No additional parameters are required for this formulation.
+	 * 	The nondimensional maximum thrust magnitude is appended to the vector
+	 * 	of constant parameters, e.g., `params = {fmax}`
 	 * 	
 	 * 	The nondimensional thrust magnitude is modeled via an exponential 
-	 * 	function, \f[ f = 10^{4 g}\,, \f] where `g` is the control variable and
-	 * 	is appended to the control state vector, e.g.,
+	 * 	function, \f[ f = f_{\text{max}} g^2\,, \f] where `g` is the control 
+	 * 	variable and is appended to the control state vector, e.g.,
 	 * 	`ctrl = {alpha, beta, g}`.
 	 * 	
 	 * 	In this formulation, thrust magnitude tends to zero as `g` tends to
-	 * 	negative infinity, but the magnitude is never *exactly* zero.
-	 * 	Practically, the magnitude is *numerically* zero when `g = -4`. There is 
-	 * 	no upper bound on the thrust magnitude.
+	 * 	zero and there is no upper bound on the magnitude
 	 */
 	static const unsigned int VAR_F_UBND = 2 << 8;		// 00000 010 00 000000
 	

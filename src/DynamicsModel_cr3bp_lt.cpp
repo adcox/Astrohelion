@@ -597,8 +597,8 @@ void DynamicsModel_cr3bp_lt::getEquilibPt(const SysData_cr3bp_lt *pSys, int L, d
             }
 
         }else{  // end of L > 3; thus L = 1, 2, or 3
-            // No analytical solution is available for the locations of L1, L2, L3, so use
-            // a Newton-Raphson algorithm to solve.
+            // No analytical solution is available for the locations of L1, L2, 
+            // L3, so use a Newton-Raphson algorithm to solve.
             //
             // Assume alpha0 = 0 for these
 
@@ -611,18 +611,27 @@ void DynamicsModel_cr3bp_lt::getEquilibPt(const SysData_cr3bp_lt *pSys, int L, d
                 gamma_prev = gamma;
                 switch(L){
                     case 1:
-                        gamma -= (mu/(gamma*gamma) - (1-mu)/((1-gamma)*(1-gamma)) - gamma - mu + 1 + f) / (-2*mu/pow(gamma, 3) - 2*(1-mu)/pow(1-gamma, 3) - 1);
+                        gamma -= (mu/(gamma*gamma) - 
+                            (1-mu)/((1-gamma)*(1-gamma)) - gamma - 
+                            mu + 1 + f) / (-2*mu/pow(gamma, 3) - 
+                            2*(1-mu)/pow(1-gamma, 3) - 1);
                         break;
                     case 2:
-                        gamma -= (-mu/(gamma*gamma) - (1-mu)/((1+gamma)*(1+gamma)) + gamma - mu + 1 + f) / (2*mu/pow(gamma, 3) + 2*(1-mu)/pow(1+gamma, 3) + 1);
+                        gamma -= (-mu/(gamma*gamma) - 
+                            (1-mu)/((1+gamma)*(1+gamma)) + gamma - 
+                            mu + 1 + f) / (2*mu/pow(gamma, 3) + 
+                            2*(1-mu)/pow(1+gamma, 3) + 1);
                         break;
                     case 3:
-                        gamma -= (mu/((1+gamma)*(1+gamma)) + (1-mu)/(gamma*gamma) - gamma - mu + f) / (-2*mu/pow(1+gamma, 3) - 2*(1-mu)/pow(gamma, 3) - 1);
+                        gamma -= (mu/((1+gamma)*(1+gamma)) + 
+                            (1-mu)/(gamma*gamma) - gamma - mu + f) / 
+                            (-2*mu/pow(1+gamma, 3) - 2*(1-mu)/pow(gamma, 3) - 1);
                         break;
                     default:
                     {
                         char msg[128];
-                        sprintf(msg, "DynamicsModel_cr3bp_lt::getEquilibPt: Invalid L = %d in Newton-Raphson process", L);
+                        sprintf(msg, "DynamicsModel_cr3bp_lt::getEquilibPt:"
+                            " Invalid L = %d in Newton-Raphson process", L);
                         throw Exception(msg);
                     }
                 }
@@ -630,7 +639,8 @@ void DynamicsModel_cr3bp_lt::getEquilibPt(const SysData_cr3bp_lt *pSys, int L, d
 
             if(std::abs(gamma - gamma_prev) > tol){
                 char msg[128];
-                sprintf(msg, "DynamicsModel_cr3bp_lt::getEquilibPt: L%d Newton process did not converge for alpha = 0", L);
+                sprintf(msg, "DynamicsModel_cr3bp_lt::getEquilibPt: "
+                    "L%d Newton process did not converge for alpha = 0", L);
                 throw Exception(msg);
             }
 

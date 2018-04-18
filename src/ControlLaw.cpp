@@ -406,11 +406,10 @@ void ControlLaw::copyMe(const ControlLaw &law){
  */
 void ControlLaw::init(){
 	switch(lawType){
-		case NO_CTRL:
+		default:
 			numStates = 0;
 			numOutputs = 0;
 			break;
-		default: break;
 	}
 }//====================================================
 

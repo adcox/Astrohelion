@@ -786,6 +786,7 @@ void ControlLaw_cr3bp_lt::init(){
 			break;				// no states or parameters yet
 		default:
 			ControlLaw::init();
+			return;
 	}
 
 	switch(lawType & F_MASK){

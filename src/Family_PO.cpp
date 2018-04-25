@@ -518,21 +518,36 @@ std::vector<Arcset_periodic> Family_PO::getMatchingMember(double val,
 			// Delete any constraints that might directly conflict with matchCon
 			// There may still be indirect conflicts... ammend as necessary if 
 			// those cases emerge
+			std::vector<Constraint> cons;
 			switch(matchCon.getAppType()){
 				case ConstraintApp_tp::APP_TO_NODE:
+					// Get constraints on relevant node, then clear them
+					cons = copyOrbit.getNodeRef(matchCon.getID()).getConstraints();
 					copyOrbit.getNodeRef(matchCon.getID()).clearConstraints();
 					break;
 				case ConstraintApp_tp::APP_TO_SEG:
+					// get constraints on relevant segment, then clear them
+					cons = copyOrbit.getSegRef(matchCon.getID()).getConstraints();
 					copyOrbit.getSegRef(matchCon.getID()).clearConstraints();
 					break;
 				case ConstraintApp_tp::APP_TO_ARC:
+					// get constraints only on arc, then clear them
+					cons = copyOrbit.getArcConstraints();
 					copyOrbit.clearArcConstraints();
 					break;
 			}
+			// Re-add any constraints that do not conflict with matchCon
+			for(unsigned int i = 0; i < cons.size(); i++){
+				if(cons[i].getType() != matchCon.getType()){
+					copyOrbit.addConstraint(cons[i]);
+				}
+			}
+
+			// Add match con
 			copyOrbit.addConstraint(matchCon);
 
+			// Do the corrections
 			Arcset_periodic newOrbit(pSysData);
-
 			try{
 				corrector.multShoot(&copyOrbit, &newOrbit);
 				matchMembers.push_back(newOrbit);

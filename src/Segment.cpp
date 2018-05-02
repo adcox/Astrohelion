@@ -145,7 +145,7 @@ bool operator != (const Segment &lhs, const Segment &rhs){
 void Segment::addConstraint(const Constraint &c){
 	for(const Constraint &con : cons){
 		if(con.conflicts(c)){
-			printWarn("Constraints conflict:\n");
+			printWarn("Possible constraint conflict:\n");
 			con.print();
 			c.print();
 		}

@@ -157,7 +157,7 @@ bool operator != (const Node &lhs, const Node &rhs){
 void Node::addConstraint(const Constraint &c){
 	for(const Constraint &con : cons){
 		if(con.conflicts(c)){
-			printWarn("Constraints conflict:\n");
+			printWarn("Possible constraint conflict:\n");
 			con.print();
 			c.print();
 		}

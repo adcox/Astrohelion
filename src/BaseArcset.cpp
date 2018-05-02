@@ -146,7 +146,7 @@ void BaseArcset::addConstraint(Constraint con){
 		case ConstraintApp_tp::APP_TO_ARC:
 			for(const Constraint &c : cons){
 				if(c.conflicts(con)){
-					printWarn("Constraints conflict:\n");
+					printWarn("Possible constraint conflict:\n");
 					c.print();
 					con.print();
 				}

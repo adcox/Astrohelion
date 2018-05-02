@@ -273,6 +273,38 @@ void Constraint::setData(const double *dat, int len){
 //-----------------------------------------------------
 
 /**
+ * @brief Determine if this constraint conflics with another
+ * @details Conflicts may result in singular Jacobian matrices or simply 
+ * nonconvergence
+ * 
+ * @param con reference to another constraint
+ * @return true if this constraint conflicts with con
+ */
+bool Constraint::conflicts(const Constraint &con) const{
+	if(appType == con.getAppType()){
+		if(type == con.getType()){
+			return true;
+		}else{
+			switch(type){
+				case Constraint_tp::JC:
+				case Constraint_tp::HLT:
+					// Energy constraints conflict with state constraints
+					return con.getType() == Constraint_tp::STATE;
+
+				case Constraint_tp::STATE:
+					// State constraints conflict with energy constraints
+					return con.getType() == Constraint_tp::JC ||
+						con.getType() == Constraint_tp::HLT;
+				default:
+					return false;
+			}
+		}
+	}else{
+		return false;
+	}
+}//====================================================
+
+/**
  *  @brief Copy the constraint
  * 
  *  @param c reference to a constraint object

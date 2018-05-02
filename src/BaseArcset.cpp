@@ -144,6 +144,13 @@ void BaseArcset::addConstraint(Constraint con){
 			segs[segIDMap[id]].addConstraint(con);
 			break;
 		case ConstraintApp_tp::APP_TO_ARC:
+			for(const Constraint &c : cons){
+				if(c.conflicts(con)){
+					printWarn("Constraints conflict:\n");
+					c.print();
+					con.print();
+				}
+			}
 			cons.push_back(con);
 			break;
 		default:

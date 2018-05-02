@@ -154,7 +154,14 @@ bool operator != (const Node &lhs, const Node &rhs){
  *	@brief Add a constraint to the current set for this node
  *	@param c a new constraint
  */
-void Node::addConstraint(Constraint c){
+void Node::addConstraint(const Constraint &c){
+	for(const Constraint &con : cons){
+		if(con.conflicts(c)){
+			printWarn("Constraints conflict:\n");
+			con.print();
+			c.print();
+		}
+	}
 	cons.push_back(c);
 }//====================================================
 

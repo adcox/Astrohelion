@@ -371,6 +371,7 @@ class Constraint : public Core{
 		 *  \{
 		 */
 		int countConstrainedStates() const;
+		bool conflicts(const Constraint&) const;
 		//\}
 
 		/**

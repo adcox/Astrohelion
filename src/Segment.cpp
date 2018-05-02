@@ -30,7 +30,7 @@
 #include "Segment.hpp"
 
 #include "Exceptions.hpp"
- 
+#include "Utilities.hpp"
 
 namespace astrohelion{
 //-----------------------------------------------------
@@ -142,7 +142,14 @@ bool operator != (const Segment &lhs, const Segment &rhs){
  *	@brief Add a constraint to the current set for this segment
  *	@param c a new constraint
  */
-void Segment::addConstraint(Constraint c){
+void Segment::addConstraint(const Constraint &c){
+	for(const Constraint &con : cons){
+		if(con.conflicts(c)){
+			printWarn("Constraints conflict:\n");
+			con.print();
+			c.print();
+		}
+	}
 	cons.push_back(c);
 }//====================================================
 

@@ -538,7 +538,7 @@ std::vector<Arcset_periodic> Family_PO::getMatchingMember(double val,
 			}
 			// Re-add any constraints that do not conflict with matchCon
 			for(unsigned int i = 0; i < cons.size(); i++){
-				if(cons[i].getType() != matchCon.getType()){
+				if(!cons[i].conflicts(matchCon)){
 					copyOrbit.addConstraint(cons[i]);
 				}
 			}

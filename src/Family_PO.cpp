@@ -660,8 +660,9 @@ void Family_PO::readFromMat(const char *filename,
 /**
  *  @brief Save the family to a Matlab file
  *  @param filename file name (or path)
+ *  @param saveTp describes how members are saved
  */
-void Family_PO::saveToMat(const char *filename) const{
+void Family_PO::saveToMat(const char *filename, Save_tp saveTp) const{
 	/*	Create a new Matlab MAT file with the given name and optional
 	 *	header string. If no header string is given, the default string 
 	 *	used containing the software, version, and date in it. If a header
@@ -676,7 +677,7 @@ void Family_PO::saveToMat(const char *filename) const{
 		astrohelion::printErr("Fam_cr3bp::saveToMat: Error creating MAT file\n");
 	}else{
 		// save things
-		saveMembers(matfp);
+		saveMembers(matfp, saveTp);
 		saveMiscData(matfp);
 		saveEigVals(matfp);
 		saveEigVecs(matfp);
@@ -861,8 +862,9 @@ void Family_PO::loadMiscData(mat_t *pMatFile){
  *  @details Each family member is saved as an entry in a structure array
  * 
  *  @param pMatFile pointer to an open Matlab file
+ *  @param saveTp describes how members are saved
  */
-void Family_PO::saveMembers(mat_t *pMatFile) const{
+void Family_PO::saveMembers(mat_t *pMatFile, Save_tp saveTp) const{
 	if(members.size() == 0)
 		return;
 
@@ -881,7 +883,7 @@ void Family_PO::saveMembers(mat_t *pMatFile) const{
 	}
 
 	for(unsigned int m = 0; m < numMembers; m++){
-		members[m].saveToStruct(pStruct, m, Save_tp::SAVE_FRAME);
+		members[m].saveToStruct(pStruct, m, saveTp);
 	}
 
 	saveVar(pMatFile, pStruct, VARNAME_FAM_MEMBER, MAT_COMPRESSION_NONE);

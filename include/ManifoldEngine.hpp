@@ -101,23 +101,31 @@ public:
 	 *  \{
 	 */
 	
-	std::vector<Arcset_cr3bp> computeSetFromPeriodic(Manifold_tp, const Arcset_cr3bp*, unsigned int,
-		double, Manifold_StepOff_tp stepType = Manifold_StepOff_tp::STEP_VEC_NORMFULL);
+	std::vector<Arcset_cr3bp> computeSetFromPeriodic(Manifold_tp, 
+		const Arcset_cr3bp*, unsigned int, double, 
+		Manifold_StepOff_tp stepType = Manifold_StepOff_tp::STEP_VEC_NORMFULL);
 
-	std::vector<Arcset_cr3bp_lt> computeSetFromLTPeriodic(Manifold_tp, const Arcset_cr3bp_lt*, ControlLaw_cr3bp_lt*,
-		unsigned int, double, Manifold_StepOff_tp = Manifold_StepOff_tp::STEP_VEC_NORMFULL);
+	std::vector<Arcset_cr3bp_lt> computeSetFromLTPeriodic(Manifold_tp, 
+		const Arcset_cr3bp_lt*, ControlLaw_cr3bp_lt*, unsigned int, double, 
+		Manifold_StepOff_tp = Manifold_StepOff_tp::STEP_VEC_NORMFULL);
 
-	MatrixXRd eigVecValFromPeriodic(Manifold_tp, const Arcset_cr3bp*, std::vector<cdouble> *eigVal_final = nullptr);
+	MatrixXRd eigVecValFromPeriodic(Manifold_tp, const Arcset_cr3bp*, 
+		std::vector<cdouble> *eigVal_final = nullptr);
 
-	std::vector<Arcset_cr3bp> computeSingleFromPeriodic(Manifold_tp, const Arcset_cr3bp*, double,
-		double, Manifold_StepOff_tp stepType = Manifold_StepOff_tp::STEP_VEC_NORMFULL);
+	std::vector<Arcset_cr3bp> computeSingleFromPeriodic(Manifold_tp, 
+		const Arcset_cr3bp*, double, double, 
+		Manifold_StepOff_tp stepType = Manifold_StepOff_tp::STEP_VEC_NORMFULL);
 	
-	std::vector<Arcset_cr3bp> manifoldsFromPOPoint(Manifold_tp, std::vector<double>, MatrixXRd, std::vector<cdouble>,
-		MatrixXRd, double, const SysData_cr3bp*, Manifold_StepOff_tp stepType = Manifold_StepOff_tp::STEP_VEC_NORMFULL);
+	std::vector<Arcset_cr3bp> manifoldsFromPOPoint(Manifold_tp, 
+		std::vector<double>, MatrixXRd, std::vector<cdouble>, MatrixXRd, double, 
+		const SysData_cr3bp*, 
+		Manifold_StepOff_tp stepType = Manifold_StepOff_tp::STEP_VEC_NORMFULL);
 	
 	
-	std::vector<Arcset_cr3bp_lt> manifoldsFromLTPOPoint(Manifold_tp, std::vector<double>, MatrixXRd, std::vector<cdouble>,
-		MatrixXRd, double, const SysData_cr3bp_lt*, ControlLaw_cr3bp_lt*,
+	std::vector<Arcset_cr3bp_lt> manifoldsFromLTPOPoint(Manifold_tp, 
+		std::vector<double>, std::vector<double>, MatrixXRd, 
+		std::vector<cdouble>, MatrixXRd, double, const SysData_cr3bp_lt*, 
+		ControlLaw_cr3bp_lt*,
 		Manifold_StepOff_tp stepType = Manifold_StepOff_tp::STEP_VEC_NORMFULL);
 	
 	//\}
@@ -130,7 +138,11 @@ public:
 	//\}
 private:
 
-	double tol_eigVal = 1e-5;	//!< Tolerance with which eigenvalues are evaluated to determine if they are on the unit circle
+	/**
+	 * @brief Tolerance with which eigenvalues are evaluated to determine if 
+	 * they are on the unit circle
+	 */
+	double tol_eigVal = 1e-5;
 	double stepOffDist = 20;	//!< Dimensional distance to step along eigenvector, km
 
 	/**

@@ -90,29 +90,34 @@ void ManifoldEngine::setStepOffDist(double dist){ stepOffDist = dist; }
 /**
  *  @brief Compute manifold arcs from a number of points spaced equally around a
  *  low-thrust periodic orbit.
- *  @details Make sure that the STMs along the orbit represent the cumulative evolution
- *  rather than the segment-wise evolution. This characteristic can be guaranteed by calling
- *  setSTMs_sequence() on the Arcset in question.
+ *  @details Make sure that the STMs along the orbit represent the cumulative 
+ *  evolution rather than the segment-wise evolution. This characteristic can be 
+ *  guaranteed by calling setSTMs_sequence() on the Arcset in question.
  *  
  *  @param manifoldType The type of manifolds to generate
- *  @param pPerOrbit A periodic, CR3BP orbit. No checks are made to ensure periodicity,
- *  so this function also performs well for nearly periodic segments of quasi-periodic
- *  arcs. If an arc that is not approximately periodic is input, the behavior may be... strange.
+ *  @param pPerOrbit A periodic, CR3BP orbit. No checks are made to ensure 
+ *  periodicity, so this function also performs well for nearly periodic 
+ *  segments of quasi-periodic arcs. If an arc that is not approximately 
+ *  periodic is input, the behavior may be... strange.
  *  @param numMans The number of manifolds to generate
- *  @param tof Time-of-flight along each manifold arc after stepping off the specified orbit. If
- *  tof is set to zero, none of the trajectories will be integrated; each will contain a single
- *  node with the initial condition.
- *  @param stepType Describes the method leveraged to step off of the fixed point along the 
- *  stable or unstable eigenvector
+ *  @param tof Time-of-flight along each manifold arc after stepping off the 
+ *  specified orbit. If tof is set to zero, none of the trajectories will be 
+ *  integrated; each will contain a single node with the initial condition.
+ *  @param stepType Describes the method leveraged to step off of the fixed 
+ *  point along the stable or unstable eigenvector
  *  
  *  @return a vector of trajectory objects, one for each manifold arc.
  *  @throws Exception if the eigenvalues cannot be computed, or if only one
- *  stable or unstable eigenvalue is computed (likely because of an impropper monodromy matrix)
+ *  stable or unstable eigenvalue is computed (likely because of an impropper 
+ *  monodromy matrix)
+ *  
  *  @see computeSingleFromPeriodic()
  *  @see manifoldsFromPOPoint()
  */
-std::vector<Arcset_cr3bp_lt> ManifoldEngine::computeSetFromLTPeriodic(Manifold_tp manifoldType, const Arcset_cr3bp_lt *pPerOrbit,
-    ControlLaw_cr3bp_lt *pLaw, unsigned int numMans, double tof, Manifold_StepOff_tp stepType){
+std::vector<Arcset_cr3bp_lt> ManifoldEngine::computeSetFromLTPeriodic(
+    Manifold_tp manifoldType, const Arcset_cr3bp_lt *pPerOrbit,
+    ControlLaw_cr3bp_lt *pLaw, unsigned int numMans, double tof, 
+    Manifold_StepOff_tp stepType){
 
     std::vector<Arcset_cr3bp_lt> allManifolds;
 
@@ -133,11 +138,14 @@ std::vector<Arcset_cr3bp_lt> ManifoldEngine::computeSetFromLTPeriodic(Manifold_t
     // Get a bunch of points to use as starting guesses for the manifolds
     if(numMans > pPerOrbit->getNumNodes()){
         if(verbosity >= Verbosity_tp::SOME_MSG)
-            astrohelion::printWarn("ManifoldEngine::computeSetFromLTPeriodic: Requested too many manifolds... will return fewer\n");
+            astrohelion::printWarn("ManifoldEngine::computeSetFromLTPeriodic: "
+                "Requested too many manifolds... will return fewer\n");
         numMans = pPerOrbit->getNumNodes();
     }
 
-    double stepSize = (static_cast<double>(pPerOrbit->getNumSegs()))/(static_cast<double>(numMans));
+    double stepSize = (static_cast<double>(pPerOrbit->getNumSegs()))/
+        (static_cast<double>(numMans));
+
     std::vector<int> pointIx(numMans, 0);
     for(unsigned int i = 0; i < numMans; i++){
         pointIx[i] = floor(i*stepSize+0.5);
@@ -151,15 +159,22 @@ std::vector<Arcset_cr3bp_lt> ManifoldEngine::computeSetFromLTPeriodic(Manifold_t
     for(unsigned int m = 0; m < numMans; m++){
         // Get the state on the periodic orbit to step away from
         std::vector<double> state = pPerOrbit->getStateByIx(pointIx[m]);
+        std::vector<double> ctrl0 {};
+        try{
+            ctrl0 = pPerOrbit->getExtraParamVecByIx(pointIx[m], PARAMKEY_CTRL);
+        }catch(const Exception &e){}
 
-        MatrixXRd STM = pointIx[m] == 0 ? MatrixXRd::Identity(6,6) : pPerOrbit->getSTMByIx(pointIx[m] - 1);
+        MatrixXRd STM = pointIx[m] == 0 ? MatrixXRd::Identity(6,6) : 
+            pPerOrbit->getSTMByIx(pointIx[m] - 1);
 
         if(STM.rows() > 6 && STM.cols() > 6)
             STM = STM.block<6,6>(0,0);
 
         // Compute manifolds from this point and add them to the big list
-        std::vector<Arcset_cr3bp_lt> subset = manifoldsFromLTPOPoint(manifoldType, state, STM, eigVals, eigVecs, tof,
-            static_cast<const SysData_cr3bp_lt *>(pPerOrbit->getSysData()), pLaw, stepType);
+        std::vector<Arcset_cr3bp_lt> subset = manifoldsFromLTPOPoint(manifoldType, 
+            state, ctrl0, STM, eigVals, eigVecs, tof,
+            static_cast<const SysData_cr3bp_lt *>(pPerOrbit->getSysData()), 
+            pLaw, stepType);
         allManifolds.insert(allManifolds.end(), subset.begin(), subset.end());
     }// End of point on periodic orbit loop
 
@@ -190,8 +205,9 @@ std::vector<Arcset_cr3bp_lt> ManifoldEngine::computeSetFromLTPeriodic(Manifold_t
  *  @see computeSingleFromPeriodic()
  *  @see manifoldsFromPOPoint()
  */
-std::vector<Arcset_cr3bp> ManifoldEngine::computeSetFromPeriodic(Manifold_tp manifoldType, const Arcset_cr3bp *pPerOrbit, unsigned int numMans, double tof,
-	Manifold_StepOff_tp stepType){
+std::vector<Arcset_cr3bp> ManifoldEngine::computeSetFromPeriodic(
+    Manifold_tp manifoldType, const Arcset_cr3bp *pPerOrbit, 
+    unsigned int numMans, double tof, Manifold_StepOff_tp stepType){
 
 	std::vector<Arcset_cr3bp> allManifolds;
 
@@ -246,21 +262,24 @@ std::vector<Arcset_cr3bp> ManifoldEngine::computeSetFromPeriodic(Manifold_tp man
  *  @brief Compute manifold arc(s) from a single point on a periodic orbit
  * 
  *  @param manifoldType Type of manifold
- *  @param pPerOrbit Pointer to a periodic orbit; only include one revolution of the orbit in the
- *  rotating frame.
+ *  @param pPerOrbit Pointer to a periodic orbit; only include one revolution of 
+ *  the orbit in the rotating frame.
  *  @param pPerOrbit pointer to the periodic orbit arcset object
- *  @param orbitTOF Specifies the point on the periodic orbit that the manifold should emenate from.
- *  If the TOF is negative or greater than the period of the periodic orbit, the TOF is adjusted so
- *  that the initial state is propagated for no more than one period of the periodic orbit to avoid
- *  numerical errors.
- *  @param manifoldTOF Amount of time to propagate the manifold arc from the initial state on 
- *  the periodic orbit.
- *  @param stepType Describes how the initial step along the eigenvector is computed
+ *  @param orbitTOF Specifies the point on the periodic orbit that the manifold 
+ *  should emenate from.
+ *  If the TOF is negative or greater than the period of the periodic orbit, the 
+ *  TOF is adjusted so that the initial state is propagated for no more than one 
+ *  period of the periodic orbit to avoid numerical errors.
+ *  @param manifoldTOF Amount of time to propagate the manifold arc from the 
+ *  initial state on the periodic orbit.
+ *  @param stepType Describes how the initial step along the eigenvector is 
+ *  computed
  *  
  *  @return A manifold arc
  *  @see manifoldsFromPOPoint()
  */
-std::vector<Arcset_cr3bp> ManifoldEngine::computeSingleFromPeriodic(Manifold_tp manifoldType, const Arcset_cr3bp *pPerOrbit,
+std::vector<Arcset_cr3bp> ManifoldEngine::computeSingleFromPeriodic(
+    Manifold_tp manifoldType, const Arcset_cr3bp *pPerOrbit,
     double orbitTOF, double manifoldTOF, Manifold_StepOff_tp stepType){
 
 	// Change orbitTOF to be between 0 and the periodic orbit period
@@ -275,17 +294,19 @@ std::vector<Arcset_cr3bp> ManifoldEngine::computeSingleFromPeriodic(Manifold_tp 
 	std::vector<cdouble> eigVals;
 	MatrixXRd eigVecs = eigVecValFromPeriodic(manifoldType, pPerOrbit, &eigVals);
 
-    // Get the state and STM from the initial periodic orbit state to the desired state at orbitTOF
+    // Get the state and STM from the initial periodic orbit state to the 
+    // desired state at orbitTOF
 	SimEngine sim;
     sim.setVerbosity(static_cast<Verbosity_tp>(to_underlying(verbosity) - 1));
-	sim.setVarStepSize(false);	// Do really simple propagation; only need the final state
+	sim.setVarStepSize(false);	// Do simple propagation; only need final state
 	sim.setNumSteps(2);
 
 	const SysData_cr3bp *sys = static_cast<const SysData_cr3bp *>(pPerOrbit->getSysData());
 	Arcset_cr3bp arc(sys);
 	sim.runSim(pPerOrbit->getStateByIx(0), orbitTOF, &arc);
 
-	return manifoldsFromPOPoint(manifoldType, arc.getStateByIx(-1), arc.getSTMByIx(-1), eigVals, eigVecs, manifoldTOF, sys, stepType);
+	return manifoldsFromPOPoint(manifoldType, arc.getStateByIx(-1), 
+        arc.getSTMByIx(-1), eigVals, eigVecs, manifoldTOF, sys, stepType);
 }//====================================================
 
 /**
@@ -383,24 +404,33 @@ std::vector<Arcset_cr3bp> ManifoldEngine::manifoldsFromPOPoint(Manifold_tp manif
 }//====================================================
 
 /**
- *  @brief Compute manifolds arcs from a point on a low-thrust periodic orbit (LTPO)
+ *  @brief Compute manifolds arcs from a point on a low-thrust periodic orbit 
+ *  (LTPO)
  * 
  *  @param manifoldType Describes the type of manifold(s) to be computed
  *  @param state The state on the periodic orbit to compute manifold arcs from
- *  @param STM State Transition Matrix from time t0 to time t1; t1 corresponds with <code>state</code>; Note that
- *  this is NOT the monodromy matrix (in general).
- *  @param eigVals Eigenvalues of the monodromy matrix, Phi(t0+T, t0), where T is the period of the periodic orbit
- *  @param eigVecs Eigenvectors of the monodromy matrix that correspond to the eigenvalues in <code>eigVals</code>
- *  @param tof Amount of time (nondimensional) for which to propagate the manifold arc; sign is unimportant. If
- *  tof is set to zero, none of the trajectories will be integrated; each will contain a single
- *  node with the initial condition.
+ *  @param STM State Transition Matrix from time t0 to time t1; t1 corresponds 
+ *  with <code>state</code>; Note that this is NOT the monodromy matrix 
+ *  (in general).
+ *  @param eigVals Eigenvalues of the monodromy matrix, Phi(t0+T, t0), where T 
+ *  is the period of the periodic orbit
+ *  @param eigVecs Eigenvectors of the monodromy matrix that correspond to the 
+ *  eigenvalues in <code>eigVals</code>
+ *  @param tof Amount of time (nondimensional) for which to propagate the 
+ *  manifold arc; sign is unimportant. If tof is set to zero, none of the 
+ *  trajectories will be integrated; each will contain a single node with the 
+ *  initial condition.
  *  @param pSys Pointer to a SysData object consistent with the periodic orbit
- *  @param stepType Describes how the step is taken away from <code>state</code> along the eigenvector
+ *  @param stepType Describes how the step is taken away from <code>state</code> 
+ *  along the eigenvector
  *  
  *  @return The computed manifold arc(s)
  */
-std::vector<Arcset_cr3bp_lt> ManifoldEngine::manifoldsFromLTPOPoint(Manifold_tp manifoldType, std::vector<double> state, MatrixXRd STM,
-    std::vector<cdouble> eigVals, MatrixXRd eigVecs, double tof, const SysData_cr3bp_lt *pSys, ControlLaw_cr3bp_lt *pLaw,
+std::vector<Arcset_cr3bp_lt> ManifoldEngine::manifoldsFromLTPOPoint(
+    Manifold_tp manifoldType, std::vector<double> state, 
+    std::vector<double> ctrl0, MatrixXRd STM,
+    std::vector<cdouble> eigVals, MatrixXRd eigVecs, double tof, 
+    const SysData_cr3bp_lt *pSys, ControlLaw_cr3bp_lt *pLaw,
     Manifold_StepOff_tp stepType){
 
     assert(pSys->getDynamicsModel()->getCoreStateSize() == 7);
@@ -465,10 +495,12 @@ std::vector<Arcset_cr3bp_lt> ManifoldEngine::manifoldsFromLTPOPoint(Manifold_tp 
                 ic.block<3,1>(3,0) = v; // Reassign the velocity components of ic
             }
 
+            std::vector<double> ic_vec(ic.data(), ic.data() + ic.size());
+
             // Simulate for some time to generate a manifold arc
             Arcset_cr3bp_lt traj(static_cast<const SysData_cr3bp_lt *>(pSys));
             if(tof > 0){
-                sim.runSim(ic.data(), tof, &traj, pLaw);
+                sim.runSim(ic_vec, ctrl0, 0, tof, &traj, pLaw);
             }else{
                 traj.addNode(Node(ic.data(), ic.size(), 0));
             }

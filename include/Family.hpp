@@ -26,7 +26,7 @@
 #include <vector>
 
 #include "Core.hpp"
-
+#include "Common.hpp"
 #include "SysData.hpp"
 
 namespace astrohelion{
@@ -124,8 +124,10 @@ class Family : public Core{
 		/**
 		 * @brief Save the family to a Matlab data file
 		 * @param name path to the file; must include the .mat extension
+		 * @param saveTp describes how members are saved
 		 */
-		virtual void saveToMat(const char* name) const = 0;
+		virtual void saveToMat(const char* name, 
+			Save_tp saveTp = Save_tp::SAVE_FRAME) const = 0;
 		//\}
 
 		/**

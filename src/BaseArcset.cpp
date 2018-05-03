@@ -144,13 +144,13 @@ void BaseArcset::addConstraint(Constraint con){
 			segs[segIDMap[id]].addConstraint(con);
 			break;
 		case ConstraintApp_tp::APP_TO_ARC:
-			for(const Constraint &c : cons){
-				if(c.conflicts(con)){
-					printWarn("Possible constraint conflict:\n");
-					c.print();
-					con.print();
-				}
-			}
+			// for(const Constraint &c : cons){
+			// 	if(c.conflicts(con)){
+			// 		printWarn("Possible constraint conflict:\n");
+			// 		c.print();
+			// 		con.print();
+			// 	}
+			// }
 			cons.push_back(con);
 			break;
 		default:
@@ -1104,7 +1104,6 @@ std::vector<double> BaseArcset::getCoord(unsigned int ix) const{
 
 /**
  *  @brief Retrieve the control law ID for a segment at the specified index
- *  @details [long description]
  * 
  *  @param ix Index of the segment within the storage vector. If ix < 0, it 
  *  will count backwards from the end of the storage vector.
@@ -1112,12 +1111,37 @@ std::vector<double> BaseArcset::getCoord(unsigned int ix) const{
  *  @return control law ID for the specified segment
  *  @throws Exception if ix is out of bounds.
  */
-const ControlLaw* BaseArcset::getCtrlLawByIx(int ix) const{
+ControlLaw* BaseArcset::getCtrlLawByIx(int ix){
 	if(ix < 0)
 		ix += segs.size();
 
-	if(ix < 0 || ix >= static_cast<int>(segs.size()))
-		throw Exception("BaseArcset::getCtrlLawIDByIx: Index out of range");
+	if(ix < 0 || ix >= static_cast<int>(segs.size())){
+		char msg[128];
+		sprintf(msg, "BaseArcset::getCtrlLawIDByIx: Index %d out of range", ix);
+		throw Exception(msg);
+	}
+
+	return segs[ix].getCtrlLaw();
+}//====================================================
+
+/**
+ *  @brief Retrieve the control law ID for a segment at the specified index
+ * 
+ *  @param ix Index of the segment within the storage vector. If ix < 0, it 
+ *  will count backwards from the end of the storage vector.
+ *  s
+ *  @return control law ID for the specified segment
+ *  @throws Exception if ix is out of bounds.
+ */
+const ControlLaw* BaseArcset::getCtrlLawByIx_const(int ix) const{
+	if(ix < 0)
+		ix += segs.size();
+
+	if(ix < 0 || ix >= static_cast<int>(segs.size())){
+		char msg[128];
+		sprintf(msg, "BaseArcset::getCtrlLawIDByIx_const: Index %d out of range", ix);
+		throw Exception(msg);
+	}
 
 	return segs[ix].getCtrlLaw();
 }//====================================================

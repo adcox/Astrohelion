@@ -143,13 +143,13 @@ bool operator != (const Segment &lhs, const Segment &rhs){
  *	@param c a new constraint
  */
 void Segment::addConstraint(const Constraint &c){
-	for(const Constraint &con : cons){
-		if(con.conflicts(c)){
-			printWarn("Possible constraint conflict:\n");
-			con.print();
-			c.print();
-		}
-	}
+	// for(const Constraint &con : cons){
+	// 	if(con.conflicts(c)){
+	// 		printWarn("Possible constraint conflict:\n");
+	// 		con.print();
+	// 		c.print();
+	// 	}
+	// }
 	cons.push_back(c);
 }//====================================================
 

@@ -155,13 +155,13 @@ bool operator != (const Node &lhs, const Node &rhs){
  *	@param c a new constraint
  */
 void Node::addConstraint(const Constraint &c){
-	for(const Constraint &con : cons){
-		if(con.conflicts(c)){
-			printWarn("Possible constraint conflict:\n");
-			con.print();
-			c.print();
-		}
-	}
+	// for(const Constraint &con : cons){
+	// 	if(con.conflicts(c)){
+	// 		printWarn("Possible constraint conflict:\n");
+	// 		con.print();
+	// 		c.print();
+	// 	}
+	// }
 	cons.push_back(c);
 }//====================================================
 
@@ -220,7 +220,9 @@ double Node::getExtraParam(std::string key) const {
 	if(extraParam.count(key) > 0){
 		return extraParam.at(key);
 	}else{
-		throw Exception("Node::getExtraParam: Cannot access extra param; invalid key");
+		char msg[128];
+		sprintf(msg, "Node::getExtraParam: Extra param key '%s' is invalid", key.c_str());
+		throw Exception(msg);
 	}
 }//====================================================
 
@@ -245,7 +247,10 @@ std::vector<double> Node::getExtraParamVec(std::string key) const{
 	if(extraParamVecs.count(key) > 0){
 		return extraParamVecs.at(key);
 	}else{
-		throw Exception("Node::getExtraParamVec: Cannot access extra param vector; invalid key");
+		char msg[128];
+		sprintf(msg, "Node::getExtraParamVec: Extra param vector key '%s' is invalid",
+			key.c_str());
+		throw Exception(msg);
 	}
 }//====================================================
 

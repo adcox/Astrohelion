@@ -1139,30 +1139,40 @@ void DynamicsModel::multShoot_targetMatchAll(MultShootData& it, const Constraint
 }//=============================================
 
 /**
- *	@brief Compute partials and constraint functions for nodes constrained with `Constraint_tp::MATCH_CUST`
+ *	@brief Compute partials and constraint functions for nodes constrained with 
+ *	`Constraint_tp::MATCH_CUST`
  *
- *	This method *should* provide full functionality for any model; Only 1's and 0's are applied
- *	to the Jacobian matrix.
+ *	This method *should* provide full functionality for any model; Only 1's and 
+ *	0's are applied to the Jacobian matrix.
  *
- *	@param it a reference to the class containing all the data relevant to the corrections process
+ *	@param it a reference to the class containing all the data relevant to the 
+ *	corrections process
  *	@param con a copy of the constraint object
  *	@param row0 the index of the row this constraint begins at
  */
-void DynamicsModel::multShoot_targetMatchCust(MultShootData& it, const Constraint& con, int row0) const{
+void DynamicsModel::multShoot_targetMatchCust(MultShootData& it, 
+	const Constraint& con, int row0) const{
+
 	int ix = 0;
 	int ID2 = static_cast<int>(con.getFirstDataValue(&ix));
 	if(ix < 0)
-		throw Exception("DynamicsModel::multShoot_targetMatchCust: No segment ID was located in the cosntraint data vector");
+		throw Exception("DynamicsModel::multShoot_targetMatchCust: "
+			"No segment ID was located in the cosntraint data vector");
 
 	std::vector<double> conData = con.getData();
 	MSVarMap_Obj state1_var = it.getVarMap_obj(MSVar_tp::STATE, con.getID());
 	MSVarMap_Obj state2_var = it.getVarMap_obj(MSVar_tp::STATE, ID2);
 	
 	if(state1_var.row0 == -1 && state2_var.row0 == -1)
-		throw Exception("DynamicsModel::multShoot_targetMatchAll: Neither state vector is free; constraint is uncontrollabel.");
+		throw Exception("DynamicsModel::multShoot_targetMatchAll: Neither "
+			"state vector is free; constraint is uncontrollabel.");
 
-	const double *state1 = state1_var.row0 == -1 ? &(it.pArcIn->getNodeRef_const(state1_var.key.id).getStateRef_const().front()) : &(it.X[state1_var.row0]);
-	const double *state2 = state2_var.row0 == -1 ? &(it.pArcIn->getNodeRef_const(state2_var.key.id).getStateRef_const().front()) : &(it.X[state2_var.row0]);
+	const double *state1 = state1_var.row0 == -1 ? 
+		&(it.pArcIn->getNodeRef_const(state1_var.key.id).getStateRef_const().front()) : 
+		&(it.X[state1_var.row0]);
+	const double *state2 = state2_var.row0 == -1 ? 
+		&(it.pArcIn->getNodeRef_const(state2_var.key.id).getStateRef_const().front()) : 
+		&(it.X[state2_var.row0]);
 
 	int count = 0;
 	for(unsigned int s = 0; s < conData.size(); s++){
@@ -1170,12 +1180,16 @@ void DynamicsModel::multShoot_targetMatchCust(MultShootData& it, const Constrain
 			it.FX[row0 + count] = state1[s] - state2[s];
 
 			// partial of this constraint wrt THIS node = 1
-			if(state1_var.row0 != -1)
-				it.DF_elements.push_back(Tripletd(row0+count, state1_var.row0+s, 1.0));
+			if(state1_var.row0 != -1){
+				it.DF_elements.push_back(Tripletd(row0+count, 
+					state1_var.row0+s, 1.0));
+			}
 
 			// partial of this constraint wrt other node = -1
-			if(state2_var.row0 != -1)
-				it.DF_elements.push_back(Tripletd(row0+count, state2_var.row0+s, -1.0));
+			if(state2_var.row0 != -1){
+				it.DF_elements.push_back(Tripletd(row0+count, 
+					state2_var.row0+s, -1.0));
+			}
 
 			count++;
 		}

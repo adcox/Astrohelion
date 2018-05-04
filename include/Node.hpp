@@ -106,7 +106,7 @@ public:
 	 *  \name Analysis Functions
 	 *  \{
 	 */
-	void addConstraint(Constraint);
+	void addConstraint(const Constraint&);
 	void clearConstraints();
 	void removeConstraint(int);
 	//\}

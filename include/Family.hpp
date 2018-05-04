@@ -26,7 +26,7 @@
 #include <vector>
 
 #include "Core.hpp"
-
+#include "Common.hpp"
 #include "SysData.hpp"
 
 namespace astrohelion{
@@ -108,16 +108,44 @@ class Family : public Core{
 		 *  \name File I/O
 		 *  \{
 		 */
-		virtual void readFromMat(const char*, std::vector<ControlLaw*>&, 
+
+		/**
+		 * @brief Load a family from a Matlab data file
+		 * 
+		 * @param name path to the file
+		 * @param laws vector in which to store any laws loaded from the file
+		 * @param bReconstruct whether or not to propagate each segment of each
+		 * family member for a more complete representation of the motion
+		 */
+		virtual void readFromMat(const char* name, 
+			std::vector<ControlLaw*>& laws, 
 			bool bReconstruct = false) = 0;
-		virtual void saveToMat(const char*) const = 0;
+
+		/**
+		 * @brief Save the family to a Matlab data file
+		 * @param name path to the file; must include the .mat extension
+		 * @param saveTp describes how members are saved
+		 */
+		virtual void saveToMat(const char* name, 
+			Save_tp saveTp = Save_tp::SAVE_FRAME) const = 0;
 		//\}
 
 		/**
 		 *  \name Analysis Functions
 		 *  \{
 		 */
+
+		/**
+		 * @brief Sort family members according to their sort type
+		 * @see setSortType()
+		 * @see getSortType()
+		 */
 		virtual void sortMembers() = 0;
+
+		/**
+		 * @brief Reverse the order of the family members from their current
+		 * order.
+		 */
 		virtual void reverseOrder() = 0;
 		//\}
 

@@ -74,6 +74,8 @@ class Family_PO : public Family{
 		 *  \name Set and Get Functions
 		 *  \{
 		 */
+		std::vector<cdouble> getEigVals(int) const;
+		MatrixXRcd getEigVecs(int) const;
 		Arcset_periodic getMember(int) const;
 		Arcset_periodic& getMemberRef(int);
 		std::vector<Arcset_periodic> getMemberByState(double, unsigned int) const;
@@ -85,8 +87,9 @@ class Family_PO : public Family{
 		 *  \name File I/O
 		 *  \{
 		 */
-		void readFromMat(const char*, std::vector<ControlLaw*>&, bool bReconstruct = false);
-		void saveToMat(const char*) const;
+		void readFromMat(const char*, std::vector<ControlLaw*>&, 
+			bool bReconstruct = false);
+		void saveToMat(const char*, Save_tp saveTp = Save_tp::SAVE_FRAME) const;
 		//\}
 
 	protected:
@@ -116,7 +119,7 @@ class Family_PO : public Family{
 		void loadEigVals(mat_t*);
 		void loadEigVecs(mat_t*);
 		
-		void saveMembers(mat_t*) const;
+		void saveMembers(mat_t*, Save_tp) const;
 		void saveMiscData(mat_t*) const;
 		void saveEigVals(mat_t*) const;
 		void saveEigVecs(mat_t*) const;

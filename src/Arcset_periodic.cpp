@@ -40,9 +40,27 @@ namespace astrohelion{
 //      Constructors and Desctructor
 //-----------------------------------------------------------------------------
 
+/**
+ * @brief Default constructor, requires system data pointer
+ * @param pSys pointer to System data associated with arcset
+ */
 Arcset_periodic::Arcset_periodic(const SysData *pSys) : Arcset(pSys) {}
+
+/**
+ * @brief Construct from another object
+ * @param a another Arcset_periodic orbject
+ */
 Arcset_periodic::Arcset_periodic(const Arcset_periodic &a) : Arcset(a) {}
+
+/**
+ * @brief Construct from another object
+ * @param a another Arcset orbject
+ */
 Arcset_periodic::Arcset_periodic(const Arcset &a) : Arcset(a) {}
+
+/**
+ * @brief Default destructor; does nothing
+ */
 Arcset_periodic::~Arcset_periodic() {}
 
 //-----------------------------------------------------------------------------
@@ -52,7 +70,8 @@ Arcset_periodic::~Arcset_periodic() {}
 /**
  *  @brief Compute the eigenvalues and eigenvectors of the monodromy matrix
  *
- *	@param pVals pointer to a vector of complex doubles to store the eigenvalues in
+ *	@param pVals pointer to a vector of complex doubles to store the eigenvalues 
+ *	in
  *	@param pVecs pointer to a matrix to store the eigenvectors in (as columns)
  *	
  *	@throws Exception if either input pointer is nullptr
@@ -76,7 +95,9 @@ void Arcset_periodic::getEigData(std::vector<cdouble> *pVals, MatrixXRcd *pVecs)
 		}
 	}
 	if(maxval < 1e-10)
-		printWarn("Arcset_periodic::getEigData: Monodromy matrix appears to be all zeros;\n\tthe arcset probably needs to be reconstructed from a minimal frame representation\n");
+		printWarn("Arcset_periodic::getEigData: Monodromy matrix appears to "
+			"be all zeros;\n\tthe arcset probably needs to be reconstructed "
+			"from a minimal frame representation\n");
 
 	std::vector<cdouble> vals {};
 	vals = getBalancedEigData(mono, pVecs);
@@ -92,8 +113,12 @@ void Arcset_periodic::getEigData(std::vector<cdouble> *pVals, MatrixXRcd *pVecs)
  *  @return the monodromy matrix
  */
 MatrixXRd Arcset_periodic::getMonodromy(){
-	setSTMs_cumulative();	// Puts arcset in chronological order if it isn't already and computes the cumulative STMs
-	return getSTMByIx(-1);	// the final STM represents the transition for the full orbit
+	// Puts arcset in chronological order if it isn't already and computes the 
+	// cumulative STMs
+	setSTMs_cumulative();
+
+	// the final STM represents the transition for the full orbit
+	return getSTMByIx(-1);
 }//====================================================
 
 /**
@@ -133,8 +158,8 @@ double Arcset_periodic::getAmp(unsigned int stateIx) const{
 
 		if(stateIx >= w){
 			char msg[128];
-			sprintf(msg, "Arcset_periodic::getAmp: stateIx = %u is out of bounds on segment ID = %u",
-				stateIx, segs[s].getID());
+			sprintf(msg, "Arcset_periodic::getAmp: stateIx = %u is out of "
+				"bounds on segment ID = %u", stateIx, segs[s].getID());
 			throw Exception(msg);
 		}
 

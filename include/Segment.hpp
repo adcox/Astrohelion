@@ -134,7 +134,7 @@ public:
 	 *  \name Analysis Functions
 	 *  \{
 	 */
-	void addConstraint(Constraint);
+	void addConstraint(const Constraint&);
 	void appendState(const double*, unsigned int);
 	void appendState(const std::vector<double>);
 	void appendTime(double);

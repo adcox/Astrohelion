@@ -439,13 +439,14 @@ void ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_ConstC_2D(double t, const dou
 		 *		row 2 = partials of a_z w.r.t. s
 		 */
 		double v = sqrt(s[3]*s[3] + s[4]*s[4] + s[5]*s[5]);
+		double v3 = v*v*v;
 
-		partials[7*0 + 3] = -sign*f*s[3]*s[4]/(s[6]*pow(v,3));					// dax/dvx
-		partials[7*0 + 4] = sign*(f/(s[6]*v) - f*s[4]*s[4]/(s[6]*pow(v,3)));	// dax/dvy
+		partials[7*0 + 3] = -sign*f*s[3]*s[4]/(s[6]*v3);					// dax/dvx
+		partials[7*0 + 4] = sign*(f/(s[6]*v) - f*s[4]*s[4]/(s[6]*v3));	// dax/dvy
 		partials[7*0 + 6] = -sign*f*s[4]/(s[6]*s[6]*v);							// dax/dm
 
-		partials[7*1 + 3] = -sign*(f/(s[6]*v) - f*s[3]*s[3]/(s[6]*pow(v,3)));	// day/dvx
-		partials[7*1 + 4] = sign*f*s[3]*s[4]/(s[6]*pow(v,3));					// day/dvy
+		partials[7*1 + 3] = -sign*(f/(s[6]*v) - f*s[3]*s[3]/(s[6]*v3));	// day/dvx
+		partials[7*1 + 4] = sign*f*s[3]*s[4]/(s[6]*v3);					// day/dvy
 		partials[7*1 + 6] = sign*f*s[3]/(s[6]*s[6]*v);							// day/dm
 	}else{
 		printWarn("ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_ConstC_2D: "
@@ -483,7 +484,7 @@ void ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_AlongVel(double t, const doub
 		double f = getThrustMag(t, s, pSys);
 		int sign = (lawType & OP1_MASK) ? -1 : 1;	// +1 for PRO, -1 for ANTI
 		double v = sqrt(s[3]*s[3] + s[4]*s[4] + s[5]*s[5]);
-
+		double v3 = v*v*v;
 
 		/*	CONST_F laws:
 		 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
@@ -499,19 +500,19 @@ void ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_AlongVel(double t, const doub
 		 *		row 1 = partials of a_y w.r.t. s
 		 *		row 2 = partials of a_z w.r.t. s
 		 */
-		partials[7*0 + 3] =  sign*(f/s[6]) * (1.0/v - s[3]*s[3]/pow(v,3));		// dax/dvx
-		partials[7*0 + 4] = -sign*(f/s[6]) * s[3]*s[4]/pow(v,3);				// dax/dvy
-		partials[7*0 + 5] = -sign*(f/s[6]) * s[3]*s[5]/pow(v,3);				// dax/dvz
+		partials[7*0 + 3] =  sign*(f/s[6]) * (1.0/v - s[3]*s[3]/v3);		// dax/dvx
+		partials[7*0 + 4] = -sign*(f/s[6]) * s[3]*s[4]/v3;				// dax/dvy
+		partials[7*0 + 5] = -sign*(f/s[6]) * s[3]*s[5]/v3;				// dax/dvz
 		partials[7*0 + 6] = -sign*(f/s[6]) * s[3]/(v*s[6]);						// dax/dm
 
 		partials[7*1 + 3] = partials[7*0 + 4];									// day/dvz
-		partials[7*1 + 4] =  sign*(f/s[6]) * (1.0/v - s[4]*s[4]/pow(v,3));		// day/dvy
-		partials[7*1 + 5] = -sign*(f/s[6]) * s[4]*s[5]/pow(v,3);				// day/dvz
+		partials[7*1 + 4] =  sign*(f/s[6]) * (1.0/v - s[4]*s[4]/v3);		// day/dvy
+		partials[7*1 + 5] = -sign*(f/s[6]) * s[4]*s[5]/v3;				// day/dvz
 		partials[7*1 + 6] = -sign*(f/s[6]) * s[4]/(v*s[6]);						// day/dm
 
 		partials[7*2 + 3] = partials[7*1 + 5];									// daz/dvx
 		partials[7*2 + 4] = partials[7*2 + 5];									// daz/dvy
-		partials[7*2 + 5] =  sign*(f/s[6]) * (1.0/v - s[5]*s[5]/pow(v,3));		// daz/dvz
+		partials[7*2 + 5] =  sign*(f/s[6]) * (1.0/v - s[5]*s[5]/v3);		// daz/dvz
 		partials[7*2 + 6] = -sign*(f/s[6]) * s[5]/(v*s[6]);						// daz/dm
 	}else{
 		printWarn("ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_AlongVel: "
@@ -785,6 +786,7 @@ void ControlLaw_cr3bp_lt::init(){
 			break;				// no states or parameters yet
 		default:
 			ControlLaw::init();
+			return;
 	}
 
 	switch(lawType & F_MASK){
@@ -987,7 +989,8 @@ void ControlLaw_cr3bp_lt::convertTo_GeneralConstF(Arcset_cr3bp_lt *pArcset,
 
 		// state width is the sum of coreDim + ctrlDim + (coreDim + ctrlDim)^2 + extraDim
 		// The squared term is the number of elements in the STM
-		const unsigned int newStateWidth = oldStateWidth - oldCtrlDim - pow(coreDim + oldCtrlDim, 2) + newCtrlDim + pow(coreDim + newCtrlDim, 2);
+		const unsigned int newStateWidth = oldStateWidth - oldCtrlDim - 
+			pow(coreDim + oldCtrlDim, 2) + newCtrlDim + pow(coreDim + newCtrlDim, 2);
 		std::vector<double> newSegStates;
 		newSegStates.reserve(numStates*newStateWidth);
 

@@ -124,7 +124,8 @@ public:
 	std::vector<Constraint> getAllConstraints() const;
 	std::vector<ArcPiece> getChronoOrder() const;
 	std::vector<double> getCoord(unsigned int) const;
-	const ControlLaw* getCtrlLawByIx(int) const;
+	ControlLaw* getCtrlLawByIx(int);
+	const ControlLaw* getCtrlLawByIx_const(int) const;
 	double getEpoch(int) const;
 	double getEpochByIx(int) const;
 	std::vector<double> getEpochs() const;

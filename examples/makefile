@@ -80,10 +80,10 @@ directories:
 	$(MKDIR_P) $(OBJ)
 	$(MKDIR_P) $(BIN)
 
-examples: finiteDiff_checkA
+examples: finiteDiff_checkAMatrix
 
 run:
-	$(BIN)/finiteDiff_checkA
+	$(BIN)/finiteDiff_checkAMatrix
 
 ############################################################
 ## EXAMPLE SCRIPTS

@@ -88,22 +88,39 @@ double ControlLaw_cr3bp_lt::get_dmdt(double t, const double *s,
 	(void) t;
 	switch(lawType & M_MASK){
 		case CSI_VAR_M:
+		{
+			double f;
+			unsigned int ix_param_shift = 0;
+			switch(lawType & BASE_MASK){
+				case GEN_INERT:
+					// These laws store a reference angle as the first parameter
+					// params: [theta0, ...]
+					ix_param_shift++;
+					break;
+			}
+
 			switch(lawType & F_MASK){
 				case CONST_F:
 					// These laws all store thrust magnitude and Isp as 
 					// constant parameters:
-					// params : [f, Isp]
+					// params : [..., f, Isp]
 					// nondimensional mass flow rate, simplified by cancelling
 					// some of the constants
-					return -params[0]*pSys->getCharL()/
-						(pSys->getCharT()*params[1]*G_GRAV_0);
+					f = params[ix_param_shift + 0];
+					break;
 				case VAR_F_BND:
 				case VAR_F_UBND:
-					// params : {fmax, Isp}
+					// params : {..., fmax, Isp}
 					// s = {x, y, z, vx, vy, vz, m, g, ...}
-					return -getThrustMag(t, s, pSys)*pSys->getCharL()/
-						(pSys->getCharT()*params[1]*G_GRAV_0);
+					f = getThrustMag(t, s, pSys);
+					break;
+				default:
+					throw Exception("ControlLaw_cr3bp_lt::get_dmdt: "
+						"unrecognized thrust parameterization");
 			}
+
+			return -f*pSys->getCharL()/(pSys->getCharT()*params[ix_param_shift + 1]*G_GRAV_0);
+		}
 		case CONST_M:
 		default:
 			return 0;
@@ -126,13 +143,23 @@ double ControlLaw_cr3bp_lt::getThrustMag(double t, const double *s,
 	(void) t;
 	(void) pSys;
 
+	unsigned int ix_param_shift = 0;
+	switch(lawType & BASE_MASK){
+		case GEN_INERT:
+			// This law stores an angle to orient rotating frame as first param
+			// params = [theta0, ...]
+			ix_param_shift++;
+			break;
+	}
+
 	double g = 0;
 	if((lawType & F_MASK) == CONST_F){
-		return params[0];		// Thrust magnitude stored as first param
+		return params[ix_param_shift];		// Thrust magnitude stored as first param
 	}else{
 		// Variable-Thrust Laws; First, get the thrust magnitude variable
 		switch(lawType & BASE_MASK){
 			case GENERAL:
+			case GEN_INERT:
 				// s = {x, y, z, vx, vy, vz, m, alpha, beta, g, ...}
 				g = s[9];
 				break;
@@ -142,17 +169,18 @@ double ControlLaw_cr3bp_lt::getThrustMag(double t, const double *s,
 				g = s[7];
 				break;
 		}
-	}
-	switch(lawType & F_MASK){	
-		case VAR_F_BND: 
-			// params = {fmax, ...}
-			return 0.5*params[0]*(sin(g) + 1);
-		case VAR_F_UBND: 
-			// params = {fmax, ...}
-			return params[0]*g*g;
-		default:
-			throw Exception("ControlLaw_cr3bp_lt::getThrustMag: "
-				"Control has unrecognized combo of BASE and F types");
+
+		switch(lawType & F_MASK){	
+			case VAR_F_BND: 
+				// params = {..., fmax, ...}
+				return 0.5*params[ix_param_shift]*(sin(g) + 1);
+			case VAR_F_UBND: 
+				// params = {..., fmax, ...}
+				return params[ix_param_shift]*g*g;
+			default:
+				throw Exception("ControlLaw_cr3bp_lt::getThrustMag: "
+					"Control has unrecognized combo of BASE and F types");
+		}
 	}
 }//====================================================
 
@@ -189,7 +217,10 @@ void ControlLaw_cr3bp_lt::getOutput(double t, const double *s,
 			getAccel_AlongVel(t, s, pSysData_lt, output, len);
 			break;
 		case GENERAL:
-			getAccel_GeneralDir(t, s, pSysData_lt, output, len);
+			getAccel_GeneralRot(t, s, pSysData_lt, output, len);
+			break;
+		case GEN_INERT:
+			getAccel_GeneralInert(t, s, pSysData_lt, output, len);
 			break;
 		default:
 			ControlLaw::getOutput(t, s, pSysData, output, len);
@@ -227,7 +258,10 @@ void ControlLaw_cr3bp_lt::getPartials_OutputWRTCoreState(double t,
 			getPartials_AccelWRTCore_AlongVel(t, s, pSysData_lt, partials, len);
 			break;
 		case GENERAL:
-			getPartials_AccelWRTCore_GeneralDir(t, s, pSysData_lt, partials, len);
+			getPartials_AccelWRTCore_GeneralRot(t, s, pSysData_lt, partials, len);
+			break;
+		case GEN_INERT:
+			getPartials_AccelWRTCore_GeneralInert(t, s, pSysData_lt, partials, len);
 			break;
 		default:
 			ControlLaw::getPartials_OutputWRTCoreState(t, s, pSysData_lt,
@@ -263,18 +297,36 @@ void ControlLaw_cr3bp_lt::getPartials_EOMsWRTCtrlState(double t,
 		static_cast<const SysData_cr3bp_lt *>(pSys);
 	assert(pSysData_lt->getDynamicsModel()->getCoreStateSize() == 7);
 
-	if((lawType & BASE_MASK) == GENERAL){
-		getPartials_EOMsWRTCtrl_GeneralDir(t, s, pSysData_lt, partials, len);
-		return;
+	switch(lawType & BASE_MASK){
+		case GENERAL:
+		case GEN_INERT:
+			getPartials_EOMsWRTCtrl_GeneralDir(t, s, pSysData_lt, partials, len);
+			break;
+		default:
+			switch(lawType & F_MASK){
+				case CONST_F:
+					// Other control laws default to the base behavior (all 
+					// partials are zero)
+					ControlLaw::getPartials_EOMsWRTCtrlState(t, s, pSys, 
+						partials, len);
+					break;
+				default:
+					getPartials_EOMsWRTCtrl_VarF(t, s, pSysData_lt, partials, 
+						len);
+			}
 	}
+	// if((lawType & BASE_MASK) == GENERAL){
+	// 	getPartials_EOMsWRTCtrl_GeneralDir(t, s, pSysData_lt, partials, len);
+	// 	return;
+	// }
 
-	if((lawType & F_MASK) != CONST_F){
-		getPartials_EOMsWRTCtrl_VarF(t, s, pSysData_lt, partials, len);
-		return;
-	}else{
-		// Other control laws default to the base behavior (all partials are zero)
-		ControlLaw::getPartials_EOMsWRTCtrlState(t, s, pSys, partials, len);
-	}
+	// if((lawType & F_MASK) != CONST_F){
+	// 	getPartials_EOMsWRTCtrl_VarF(t, s, pSysData_lt, partials, len);
+	// 	return;
+	// }else{
+	// 	// Other control laws default to the base behavior (all partials are zero)
+	// 	ControlLaw::getPartials_EOMsWRTCtrlState(t, s, pSys, partials, len);
+	// }
 	
 }//====================================================
 
@@ -297,25 +349,21 @@ void ControlLaw_cr3bp_lt::getPartials_EOMsWRTCtrlState(double t,
 void ControlLaw_cr3bp_lt::getAccel_ConstC_2D(double t, const double *s,
 	const SysData_cr3bp_lt *pSys, double *law, unsigned int len) const{
 
-	if((lawType & BASE_MASK) == CONST_C_2D){
-		double f = getThrustMag(t, s, pSys);
-		int sign = (lawType & OP1_MASK) ? 1 : -1;	// +1 for RIGHT, -1 for LEFT
+	double f = getThrustMag(t, s, pSys);
+	int sign = (lawType & OP1_MASK) ? 1 : -1;	// +1 for RIGHT, -1 for LEFT
 
-		if(len < numOutputs){
-			throw Exception("ControlLaw_cr3bp_lt::getLaw_ConstC_2D: "
-				"law data length must be at least 3!");
-		}
-
-		double v = sqrt(s[3]*s[3] + s[4]*s[4]);
-		law[0] = sign*(f/s[6])*s[4]/v;
-		law[1] = -sign*(f/s[6])*s[3]/v;
-		law[2] = 0;
-	}else{
-		throw Exception("ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_ConstC_2D: "
-			"Law type is not one of the Const-C types");
+	if(len < numOutputs){
+		char msg[64];
+		sprintf(msg, "ControlLaw_cr3bp_lt::getAccel_ConstC_2D: "
+			"law data length is %u but must be at least %u", len, numOutputs);
+		throw Exception (msg);
 	}
+
+	double v = sqrt(s[3]*s[3] + s[4]*s[4]);
+	law[0] = sign*(f/s[6])*s[4]/v;
+	law[1] = -sign*(f/s[6])*s[3]/v;
+	law[2] = 0;
 	
-	(void) pSys;
 	(void) t;
 }//====================================================
 
@@ -335,30 +383,26 @@ void ControlLaw_cr3bp_lt::getAccel_ConstC_2D(double t, const double *s,
 void ControlLaw_cr3bp_lt::getAccel_AlongVel(double t, const double *s,
 	const SysData_cr3bp_lt *pSys, double *law, unsigned int len) const{
 
-	if((lawType & BASE_MASK) == VEL_PT){
-		double f = getThrustMag(t, s, pSys);
-		int sign = (lawType & OP1_MASK) ? -1 : 1;	// +1 for PRO, -1 for ANTI
+	double f = getThrustMag(t, s, pSys);
+	int sign = (lawType & OP1_MASK) ? -1 : 1;	// +1 for PRO, -1 for ANTI
 
-		if(len < numOutputs)
-			throw Exception("ControlLaw_cr3bp_lt::getLaw_CONST_F_PRO_VEL: "
-				"law data length must be at least 3!");
-
-		double v = sqrt(s[3]*s[3] + s[4]*s[4] + s[5]*s[5]);
-		law[0] = sign*(f/s[6])*s[3]/v;
-		law[1] = sign*(f/s[6])*s[4]/v;
-		law[2] = sign*(f/s[6])*s[5]/v;
-	}else{
-		throw Exception("ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_AlongVel: "
-			"Law type is not one of the parallel-to-velocity types");
+	if(len < numOutputs){
+		char msg[64];
+		sprintf(msg, "ControlLaw_cr3bp_lt::getAccel_AlongVel: "
+			"law data length is %u but must be at least %u", len, numOutputs);
+		throw Exception (msg);
 	}
 
-	(void) pSys;
+	double v = sqrt(s[3]*s[3] + s[4]*s[4] + s[5]*s[5]);
+	law[0] = sign*(f/s[6])*s[3]/v;
+	law[1] = sign*(f/s[6])*s[4]/v;
+	law[2] = sign*(f/s[6])*s[5]/v;
+
 	(void) t;
 }//====================================================
 
 /**
- *  @brief Retrieve the output of the general direction, constant thrust 
- *  control law
+ *  @brief Retrieve the output of the general direction (rotating) control law
  * 	@details A set of outputs are computed according to the specified control 
  * 	law, given the input time, state, and system data.
  * 	
@@ -369,27 +413,55 @@ void ControlLaw_cr3bp_lt::getAccel_AlongVel(double t, const double *s,
  *  @param law empty, initialized array to store the control law output in
  *  @param len number of elements in the `law` array
  */
-void ControlLaw_cr3bp_lt::getAccel_GeneralDir(double t, const double *s,
+void ControlLaw_cr3bp_lt::getAccel_GeneralRot(double t, const double *s,
 	const SysData_cr3bp_lt *pSys, double *law, unsigned int len) const{
 
-	if((lawType & BASE_MASK) == GENERAL){
-		double f = getThrustMag(t, s, pSys);
-		// s = {x, y, z, vx, vy, vz, m, alpha, beta, ...}
+	double f = getThrustMag(t, s, pSys);
+	// s = {x, y, z, vx, vy, vz, m, alpha, beta, ...}
 
-		if(len < numOutputs)
-			throw Exception("ControlLaw_cr3bp_lt::getLaw_GeneralDir: "
-				"law data length must be at least 3!");
-
-		law[0] = (f/s[6])*cos(s[8])*cos(s[7]);	// a_x
-		law[1] = (f/s[6])*cos(s[8])*sin(s[7]);	// a_y
-		law[2] = (f/s[6])*sin(s[8]);			// a_z
-	}else{
-		throw Exception("ControlLaw_cr3bp_lt::getAccel_GeneralDir: "
-			"Law type is not general direction");
+	if(len < numOutputs){
+		char msg[64];
+		sprintf(msg, "ControlLaw_cr3bp_lt::getAccel_GeneralRot: "
+			"law data length is %u but must be at least %u", len, numOutputs);
+		throw Exception (msg);
 	}
 
-	(void) pSys;
+	law[0] = (f/s[6])*cos(s[8])*cos(s[7]);	// a_x
+	law[1] = (f/s[6])*cos(s[8])*sin(s[7]);	// a_y
+	law[2] = (f/s[6])*sin(s[8]);			// a_z
+
 	(void) t;
+}//====================================================
+
+/**
+ *  @brief Retrieve the output of the general direction (inertial) control law
+ * 	@details A set of outputs are computed according to the specified control 
+ * 	law, given the input time, state, and system data.
+ * 	
+ *  @param t time parameter
+ *  @param s full state vector; contains core state, control states, STM 
+ *  elements, and extra states
+ *  @param pSys system data object
+ *  @param law empty, initialized array to store the control law output in
+ *  @param len number of elements in the `law` array
+ */
+void ControlLaw_cr3bp_lt::getAccel_GeneralInert(double t, const double *s,
+	const SysData_cr3bp_lt *pSys, double *law, unsigned int len) const{
+
+	double f = getThrustMag(t, s, pSys);
+	// s = {x, y, z, vx, vy, vz, m, psi, beta, ...}
+	// params = [theta0, ...]
+
+	if(len < numOutputs){
+		char msg[64];
+		sprintf(msg, "ControlLaw_cr3bp_lt::getAccel_GeneralInert: "
+			"law data length is %u but must be at least %u", len, numOutputs);
+		throw Exception (msg);
+	}
+
+	law[0] = (f/s[6])*cos(s[8])*cos(s[7] - params[0] - t);
+	law[1] = (f/s[6])*cos(s[8])*sin(s[7] - params[0] - t);
+	law[2] = (f/s[6])*sin(s[8]);
 }//====================================================
 
 //-----------------------------------------------------------------------------
@@ -411,49 +483,47 @@ void ControlLaw_cr3bp_lt::getAccel_GeneralDir(double t, const double *s,
  *  derivatives in. The partials are stored in mxn row-major order array
  *  where each row represents the partials of one of the m control outputs
  *  with respect to each of the n core states
- *  @param len number of elements in the `law` array
+ *  @param len number of elements in the `partials` array
  */
 void ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_ConstC_2D(double t, const double *s,
 	const SysData_cr3bp_lt *pSys, double *partials, unsigned int len) const{
 
-	if(	(lawType & BASE_MASK) == CONST_C_2D ){
 
-		if(len != numOutputs*7)
-			throw Exception("ControlLaw_cr3bp_lt::"
-				"getPartials_AccelWRTCore_ConstC_2D: Expects len = 21");
-		double f = getThrustMag(t, s, pSys);
-		int sign = (lawType & OP1_MASK) ? 1 : -1;	// +1 for RIGHT, -1 for LEFT
-
-		/*	CONST_F laws:
-		 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
-		 *		ctrl: {}
-		 *		params: {f, Isp}
-		 *	VAR_F laws:
-		 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
-		 *		ctrl: {g}
-		 *		params: {fmax, Isp}
-		 *		
-		 *	partials:
-		 *		row 0 = partials of a_x w.r.t. s
-		 *		row 1 = partials of a_y w.r.t. s
-		 *		row 2 = partials of a_z w.r.t. s
-		 */
-		double v = sqrt(s[3]*s[3] + s[4]*s[4] + s[5]*s[5]);
-		double v3 = v*v*v;
-
-		partials[7*0 + 3] = -sign*f*s[3]*s[4]/(s[6]*v3);					// dax/dvx
-		partials[7*0 + 4] = sign*(f/(s[6]*v) - f*s[4]*s[4]/(s[6]*v3));	// dax/dvy
-		partials[7*0 + 6] = -sign*f*s[4]/(s[6]*s[6]*v);							// dax/dm
-
-		partials[7*1 + 3] = -sign*(f/(s[6]*v) - f*s[3]*s[3]/(s[6]*v3));	// day/dvx
-		partials[7*1 + 4] = sign*f*s[3]*s[4]/(s[6]*v3);					// day/dvy
-		partials[7*1 + 6] = sign*f*s[3]/(s[6]*s[6]*v);							// day/dm
-	}else{
-		printWarn("ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_ConstC_2D: "
-			"Law type is not one of the Const-C types");
+	if(len != numOutputs*7){
+		char msg[128];
+		sprintf(msg, "ControlLaw_cr3bp_lt::"
+			"getPartials_AccelWRTCore_ConstC_2D: len = %u, expects len = %u",
+			len, numOutputs*7);
+		throw Exception(msg);
 	}
+	double f = getThrustMag(t, s, pSys);
+	int sign = (lawType & OP1_MASK) ? 1 : -1;	// +1 for RIGHT, -1 for LEFT
 
-	(void) pSys;
+	/*	CONST_F laws:
+	 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
+	 *		ctrl: {}
+	 *		params: {f, Isp}
+	 *	VAR_F laws:
+	 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
+	 *		ctrl: {g}
+	 *		params: {fmax, Isp}
+	 *		
+	 *	partials:
+	 *		row 0 = partials of a_x w.r.t. s
+	 *		row 1 = partials of a_y w.r.t. s
+	 *		row 2 = partials of a_z w.r.t. s
+	 */
+	double v = sqrt(s[3]*s[3] + s[4]*s[4] + s[5]*s[5]);
+	double v3 = v*v*v;
+
+	partials[7*0 + 3] = -sign*f*s[3]*s[4]/(s[6]*v3);				// dax/dvx
+	partials[7*0 + 4] = sign*(f/(s[6]*v) - f*s[4]*s[4]/(s[6]*v3));	// dax/dvy
+	partials[7*0 + 6] = -sign*f*s[4]/(s[6]*s[6]*v);					// dax/dm
+
+	partials[7*1 + 3] = -sign*(f/(s[6]*v) - f*s[3]*s[3]/(s[6]*v3));	// day/dvx
+	partials[7*1 + 4] = sign*f*s[3]*s[4]/(s[6]*v3);					// day/dvy
+	partials[7*1 + 6] = sign*f*s[3]/(s[6]*s[6]*v);					// day/dm
+
 	(void) t;
 }//====================================================
 
@@ -470,55 +540,53 @@ void ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_ConstC_2D(double t, const dou
  *  derivatives in. The partials are stored in mxn row-major order array
  *  where each row represents the partials of one of the m control outputs
  *  with respect to each of the n core states
- *  @param len number of elements in the `law` array
+ *  @param len number of elements in the `partials` array
  */
 void ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_AlongVel(double t, const double *s,
 	const SysData_cr3bp_lt *pSys, double *partials, unsigned int len) const{
 
-	if( (lawType & BASE_MASK) == VEL_PT){
-
-		if(len != numOutputs*7)
-			throw Exception("ControlLaw_cr3bp_lt::"
-				"getPartials_AccelWRTCore_AlongVel: Expects len = 21");
-
-		double f = getThrustMag(t, s, pSys);
-		int sign = (lawType & OP1_MASK) ? -1 : 1;	// +1 for PRO, -1 for ANTI
-		double v = sqrt(s[3]*s[3] + s[4]*s[4] + s[5]*s[5]);
-		double v3 = v*v*v;
-
-		/*	CONST_F laws:
-		 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
-		 *		ctrl: {}
-		 *		params: {f, Isp}
-		 *	VAR_F laws:
-		 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
-		 *		ctrl: {g}
-		 *		params: {fmax, Isp}
-		 *		
-		 *	partials:
-		 *		row 0 = partials of a_x w.r.t. s
-		 *		row 1 = partials of a_y w.r.t. s
-		 *		row 2 = partials of a_z w.r.t. s
-		 */
-		partials[7*0 + 3] =  sign*(f/s[6]) * (1.0/v - s[3]*s[3]/v3);		// dax/dvx
-		partials[7*0 + 4] = -sign*(f/s[6]) * s[3]*s[4]/v3;				// dax/dvy
-		partials[7*0 + 5] = -sign*(f/s[6]) * s[3]*s[5]/v3;				// dax/dvz
-		partials[7*0 + 6] = -sign*(f/s[6]) * s[3]/(v*s[6]);						// dax/dm
-
-		partials[7*1 + 3] = partials[7*0 + 4];									// day/dvz
-		partials[7*1 + 4] =  sign*(f/s[6]) * (1.0/v - s[4]*s[4]/v3);		// day/dvy
-		partials[7*1 + 5] = -sign*(f/s[6]) * s[4]*s[5]/v3;				// day/dvz
-		partials[7*1 + 6] = -sign*(f/s[6]) * s[4]/(v*s[6]);						// day/dm
-
-		partials[7*2 + 3] = partials[7*1 + 5];									// daz/dvx
-		partials[7*2 + 4] = partials[7*2 + 5];									// daz/dvy
-		partials[7*2 + 5] =  sign*(f/s[6]) * (1.0/v - s[5]*s[5]/v3);		// daz/dvz
-		partials[7*2 + 6] = -sign*(f/s[6]) * s[5]/(v*s[6]);						// daz/dm
-	}else{
-		printWarn("ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_AlongVel: "
-			"Law type is not one of the parallel-to-velocity types");
+	if(len != numOutputs*7){
+		char msg[128];
+		sprintf(msg, "ControlLaw_cr3bp_lt::"
+			"getPartials_AccelWRTCore_AlongVel: len = %u, expects len = %u",
+			len, numOutputs*7);
+		throw Exception(msg);
 	}
-	(void) pSys;
+
+	double f = getThrustMag(t, s, pSys);
+	int sign = (lawType & OP1_MASK) ? -1 : 1;	// +1 for PRO, -1 for ANTI
+	double v = sqrt(s[3]*s[3] + s[4]*s[4] + s[5]*s[5]);
+	double v3 = v*v*v;
+
+	/*	CONST_F laws:
+	 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
+	 *		ctrl: {}
+	 *		params: {f, Isp}
+	 *	VAR_F laws:
+	 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
+	 *		ctrl: {g}
+	 *		params: {fmax, Isp}
+	 *		
+	 *	partials:
+	 *		row 0 = partials of a_x w.r.t. s
+	 *		row 1 = partials of a_y w.r.t. s
+	 *		row 2 = partials of a_z w.r.t. s
+	 */
+	partials[7*0 + 3] =  sign*(f/s[6]) * (1.0/v - s[3]*s[3]/v3);	// dax/dvx
+	partials[7*0 + 4] = -sign*(f/s[6]) * s[3]*s[4]/v3;				// dax/dvy
+	partials[7*0 + 5] = -sign*(f/s[6]) * s[3]*s[5]/v3;				// dax/dvz
+	partials[7*0 + 6] = -sign*(f/s[6]) * s[3]/(v*s[6]);				// dax/dm
+
+	partials[7*1 + 3] = partials[7*0 + 4];							// day/dvz
+	partials[7*1 + 4] =  sign*(f/s[6]) * (1.0/v - s[4]*s[4]/v3);	// day/dvy
+	partials[7*1 + 5] = -sign*(f/s[6]) * s[4]*s[5]/v3;				// day/dvz
+	partials[7*1 + 6] = -sign*(f/s[6]) * s[4]/(v*s[6]);				// day/dm
+
+	partials[7*2 + 3] = partials[7*1 + 5];							// daz/dvx
+	partials[7*2 + 4] = partials[7*2 + 5];							// daz/dvy
+	partials[7*2 + 5] =  sign*(f/s[6]) * (1.0/v - s[5]*s[5]/v3);	// daz/dvz
+	partials[7*2 + 6] = -sign*(f/s[6]) * s[5]/(v*s[6]);				// daz/dm
+
 	(void) t;
 }//====================================================
 
@@ -537,44 +605,94 @@ void ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_AlongVel(double t, const doub
  *  derivatives in. The partials are stored in mxn row-major order array
  *  where each row represents the partials of one of the m control outputs
  *  with respect to each of the n core states
- *  @param len number of elements in the `law` array
+ *  @param len number of elements in the `partials` array
  */
-void ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_GeneralDir(double t, 
+void ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_GeneralRot(double t, 
 	const double *s, const SysData_cr3bp_lt *pSys, double *partials,
 	unsigned int len) const{
-	
-	if( (lawType & BASE_MASK) == GENERAL ){
 
-		if(len != numOutputs*7)	// 7 core states
-			throw Exception("ControlLaw_cr3bp_lt::"
-				"getPartials_AccelWRTCore_GeneralDir: unexpected array length");
-
-		double f = getThrustMag(t, s, pSys);
-	
-		/*	CONST_F and CONST_MF laws:
-		 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
-		 *		ctrl: {alpha, beta}
-		 *		params: {f, Isp}
-		 *		
-		 *	VAR_F laws:
-		 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
-		 *		ctrl: {alpha, beta, g}
-		 *		params: {fmax, Isp}
-		 *		
-		 *	partials:
-		 *		row 0 = partials of a_x w.r.t. s
-		 *		row 1 = partials of a_y w.r.t. s
-		 *		row 2 = partials of a_z w.r.t. s
-		 */
-		partials[7*0 + 6] = -f*cos(s[8])*cos(s[7])/(s[6]*s[6]);	// dax/dm
-		partials[7*1 + 6] = -f*cos(s[8])*sin(s[7])/(s[6]*s[6]);	// day/dm
-		partials[7*2 + 6] = -f*sin(s[8])/(s[6]*s[6]);			// daz/dm
-	}else{
-		printWarn("ControlLaw_cr3bp_lt::getAccel_GeneralDir: "
-			"Law type is not general direction");
+	if(len != numOutputs*7){
+		char msg[128];
+		sprintf(msg, "ControlLaw_cr3bp_lt::"
+			"getPartials_AccelWRTCore_GeneralRot: len = %u, expects len = %u",
+			len, numOutputs*7);
+		throw Exception(msg);
 	}
 
-	(void) pSys;
+	double f = getThrustMag(t, s, pSys);
+
+	/*	CONST_F and CONST_MF laws:
+	 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
+	 *		ctrl: {alpha, beta}
+	 *		params: {f, Isp}
+	 *		
+	 *	VAR_F laws:
+	 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
+	 *		ctrl: {alpha, beta, g}
+	 *		params: {fmax, Isp}
+	 *		
+	 *	partials:
+	 *		row 0 = partials of a_x w.r.t. s
+	 *		row 1 = partials of a_y w.r.t. s
+	 *		row 2 = partials of a_z w.r.t. s
+	 */
+	partials[7*0 + 6] = -f*cos(s[8])*cos(s[7])/(s[6]*s[6]);	// dax/dm
+	partials[7*1 + 6] = -f*cos(s[8])*sin(s[7])/(s[6]*s[6]);	// day/dm
+	partials[7*2 + 6] = -f*sin(s[8])/(s[6]*s[6]);			// daz/dm
+
+	(void) t;
+}//====================================================
+
+/**
+ *  @brief Retrieve the partial derivatives of the control law output with 
+ *  respect to state variables
+ *  @details A set of partial derivatives of the control law outputs are 
+ *  computed with respect to the states at the given time, state, in the 
+ *  specified system
+ * 
+ *  @param t time parameter
+ *  @param s full state vector; contains core state, control states, STM 
+ *  elements, and extra states
+ *  @param pSys system data object
+ * 	@param partials empty, initialized array of zeros to store the control law 
+ *  derivatives in. The partials are stored in mxn row-major order array
+ *  where each row represents the partials of one of the m control outputs
+ *  with respect to each of the n core states
+ *  @param len number of elements in the `partials` array
+ */
+void ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_GeneralInert(double t, 
+	const double *s, const SysData_cr3bp_lt *pSys, double *partials,
+	unsigned int len) const{
+
+	if(len != numOutputs*7){
+		char msg[128];
+		sprintf(msg, "ControlLaw_cr3bp_lt::"
+			"getPartials_AccelWRTCore_GeneralInert: len = %u, expects len = %u",
+			len, numOutputs*7);
+		throw Exception(msg);
+	}
+
+	double f = getThrustMag(t, s, pSys);
+
+	/*	CONST_F and CONST_MF laws:
+	 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
+	 *		ctrl: {psi, beta}
+	 *		params: {theta0, f, Isp}
+	 *		
+	 *	VAR_F laws:
+	 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
+	 *		ctrl: {psi, beta, g}
+	 *		params: {theta0, fmax, Isp}
+	 *		
+	 *	partials:
+	 *		row 0 = partials of a_x w.r.t. s
+	 *		row 1 = partials of a_y w.r.t. s
+	 *		row 2 = partials of a_z w.r.t. s
+	 */
+	partials[7*0 + 6] = -f*cos(s[8])*cos(s[7] - params[0] - t)/(s[6]*s[6]);	// dax/dm
+	partials[7*1 + 6] = -f*cos(s[8])*sin(s[7] - params[0] - t)/(s[6]*s[6]);	// day/dm
+	partials[7*2 + 6] = -f*sin(s[8])/(s[6]*s[6]);							// daz/dm
+
 	(void) t;
 }//====================================================
 
@@ -605,19 +723,24 @@ void ControlLaw_cr3bp_lt::getPartials_EOMsWRTCtrl_VarF(double t, const double *s
 
 	if( (lawType & BASE_MASK) == CONST_C_2D || (lawType & BASE_MASK) == VEL_PT){
 
-		if(len != numStates*7)
-			throw Exception("ControlLaw_cr3bp_lt::getPartials_EOMsWRTCtrl_VarF: "
-				"unexpected array length");
+		if(len != numStates*7){
+			char msg[128];
+			sprintf(msg, "ControlLaw_cr3bp_lt::"
+				"getPartials_EOMsWRTCtrl_VarF: len = %u, expects len = %u",
+				len, numStates*7);
+			throw Exception(msg);
+		}
 
 		// Get the output and divide by thrust magnitude to get the partials
 		double a_lt[3] = {0};
 		getOutput(t, s, pSys, a_lt, 3);
 		double f = sqrt(a_lt[0]*a_lt[0] + a_lt[1]*a_lt[1] + a_lt[2]*a_lt[2]);
 
+
 		/*	VAR_F laws:
 		 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
 		 *		ctrl: {g}
-		 *		params: {Isp} or {fmax, Isp}
+		 *		params: {fmax, Isp}
 		 *		
 		 *	partials:
 		 *		row 0 = partials of v_x w.r.t. ctrl
@@ -631,7 +754,7 @@ void ControlLaw_cr3bp_lt::getPartials_EOMsWRTCtrl_VarF(double t, const double *s
 
 		if((lawType & F_MASK) == VAR_F_BND){
 			// a_lt = (1/2)*fmax*(sin(g) + 1)*u
-			// params = {fmax, Isp}
+			// params = {..., fmax, Isp}
 			double coeff = 0.5*params[0]*cos(s[7]);
 			if(f > 0){
 				// partials of xddot (3), yddot (4), zddot(5) and mdot (5)
@@ -644,7 +767,7 @@ void ControlLaw_cr3bp_lt::getPartials_EOMsWRTCtrl_VarF(double t, const double *s
 			}
 		}else if( (lawType & F_MASK) == VAR_F_UBND){
 			// a_lt = fmax*g^2
-			// params = {fmax, Isp}
+			// params = {..., fmax, Isp}
 			double coeff = std::abs(s[7]) > 0 ? 2/s[7] : 0;
 
 			// partials of xddot (3), yddot (4), zddot(5) and mdot (5) w.r.t. g
@@ -684,23 +807,35 @@ void ControlLaw_cr3bp_lt::getPartials_EOMsWRTCtrl_GeneralDir(double t,
 	const double *s, const SysData_cr3bp_lt *pSys, double *partials, 
 	unsigned int len) const{
 
-	if( (lawType & BASE_MASK) == GENERAL){
+	if( (lawType & BASE_MASK) == GENERAL || (lawType & BASE_MASK) == GEN_INERT){
 
-		if(len != numStates*7)	// 7 core states
-			throw Exception("ControlLaw_cr3bp_lt::"
-				"getPartials_EOMsWRTCtrl_GeneralDir: unexpected array length");
+		if(len != numStates*7){
+			char msg[128];
+			sprintf(msg, "ControlLaw_cr3bp_lt::"
+				"getPartials_EOMsWRTCtrl_GeneralDir: len = %u, expects len = %u",
+				len, numStates*7);
+			throw Exception(msg);
+		}
 
 		double f = getThrustMag(t, s, pSys);
+
+		// Shift the index by the number of parameters used by the base type
+		unsigned int ix_param_shift = 0;
+		double alpha = s[7];
+		if((lawType & BASE_MASK) == GEN_INERT){
+			ix_param_shift++;
+			alpha -= params[0] - t;
+		}
 
 		/*	CONST_F and CONST_MF laws:
 		 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
 		 *		ctrl: {alpha, beta}
-		 *		params: {f, Isp}
+		 *		params: {..., f, Isp}
 		 *		
 		 *	VAR_F laws:
 		 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
 		 *		ctrl: {alpha, beta, g}
-		 *		params: {fmax, Isp}
+		 *		params: {..., fmax, Isp}
 		 *		
 		 *	partials:
 		 *		row 0 = partials of v_x w.r.t. ctrl
@@ -714,10 +849,10 @@ void ControlLaw_cr3bp_lt::getPartials_EOMsWRTCtrl_GeneralDir(double t,
 		
 		// Partials of xddot (3), yddot (4), zddot (5), and mdot (6) w.r.t.
 		// alpha (0) and beta (1)
-		partials[numStates*3 + 0] = -f/s[6] * cos(s[8])*sin(s[7]);
-		partials[numStates*3 + 1] = -f/s[6] * sin(s[8])*cos(s[7]);
-		partials[numStates*4 + 0] = f/s[6] * cos(s[8]) * cos(s[7]);
-		partials[numStates*4 + 1] = -f/s[6] * sin(s[8])*sin(s[7]);
+		partials[numStates*3 + 0] = -f/s[6] * cos(s[8])*sin(alpha);
+		partials[numStates*3 + 1] = -f/s[6] * sin(s[8])*cos(alpha);
+		partials[numStates*4 + 0] = f/s[6] * cos(s[8])*cos(alpha);
+		partials[numStates*4 + 1] = -f/s[6] * sin(s[8])*sin(alpha);
 		partials[numStates*5 + 1] = f/s[6] * cos(s[8]);
 
 		// Additional partials for variable-thrust paramaterizations
@@ -725,20 +860,20 @@ void ControlLaw_cr3bp_lt::getPartials_EOMsWRTCtrl_GeneralDir(double t,
 			double dfdg = 0;
 			if((lawType & F_MASK) == VAR_F_BND){
 				// a_lt = (1/2)*fmax*(sin(g) + 1)*u
-				// params = {fmax, Isp}
-				dfdg = 0.5*params[0]*cos(s[9]);
+				// params = {..., fmax, Isp}
+				dfdg = 0.5*params[ix_param_shift + 0]*cos(s[9]);
 				
 				// partial of mdot w.r.t. g
 				partials[numStates*6 + 2] = -dfdg*pSys->getCharL()/
-					(params[1]*G_GRAV_0*pSys->getCharT());
+					(params[ix_param_shift + 1]*G_GRAV_0*pSys->getCharT());
 			}else if( (lawType & F_MASK) == VAR_F_UBND){
 				// a_lt = fmax*g^2
-				// params = {fmask, Isp}
-				dfdg = 2*params[0]*s[9];
+				// params = {..., fmask, Isp}
+				dfdg = 2*params[ix_param_shift + 0]*s[9];
 
 				// partial of mdot w.r.t. g
 				partials[numStates*6 + 2] = -dfdg*pSys->getCharL()/
-					(params[1]*G_GRAV_0*pSys->getCharT());
+					(params[ix_param_shift + 1]*G_GRAV_0*pSys->getCharT());
 			}else{
 				printErr("Control Law:\n");
 				print();
@@ -747,19 +882,16 @@ void ControlLaw_cr3bp_lt::getPartials_EOMsWRTCtrl_GeneralDir(double t,
 			}
 
 			// partials of xddot (3), yddot (4), and zddot (5) w.r.t. g
-			partials[numStates*3 + 2] = dfdg*cos(s[8])*cos(s[7])/s[6];
-			partials[numStates*4 + 2] = dfdg*cos(s[8])*sin(s[7])/s[6];
+			partials[numStates*3 + 2] = dfdg*cos(s[8])*cos(alpha)/s[6];
+			partials[numStates*4 + 2] = dfdg*cos(s[8])*sin(alpha)/s[6];
 			partials[numStates*5 + 2] = dfdg*sin(s[8])/s[6];
 		}
 	}else{
 		printErr("Control Law:\n");
 		print();
-		throw Exception("ControlLaw_cr3bp_lt::getAccel_GeneralDir: "
+		throw Exception("ControlLaw_cr3bp_lt::getAccel_GeneralRot: "
 			"Law type is not general direction");
 	}
-
-	(void) pSys;
-	(void) t;
 }//====================================================
 
 //-----------------------------------------------------------------------------
@@ -778,8 +910,10 @@ void ControlLaw_cr3bp_lt::init(){
 	numOutputs = 3;		// {ax, ay, az}
 
 	switch(lawType & BASE_MASK){
+		case GEN_INERT:
+			numParams++;		// Parameter for theta0
 		case GENERAL:
-			numStates += 2;		// alpha, beta
+			numStates += 2;		// (alpha or psi), beta
 			break;
 		case VEL_PT:
 		case CONST_C_2D:
@@ -802,7 +936,7 @@ void ControlLaw_cr3bp_lt::init(){
 
 	switch(lawType & M_MASK){
 		case CSI_VAR_M:
-			numParams++;	// Isp
+			numParams++;	// Parameter for Isp
 			break;
 	}
 
@@ -824,7 +958,8 @@ void ControlLaw_cr3bp_lt::init(){
 std::string ControlLaw_cr3bp_lt::typeToString(unsigned int id){
 	std::string out = "";
 	switch(id & BASE_MASK){
-		case GENERAL: out.append("General Pointing, "); break;
+		case GENERAL: out.append("General Pointing (Rot), "); break;
+		case GEN_INERT: out.append("General Pointing (Inert), "); break;
 		case VEL_PT:
 			out.append("Velocity-Pointing ");
 			out.append((id & OP1_MASK) ? "(Anti), " : "(Pro), ");

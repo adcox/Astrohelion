@@ -6,26 +6,63 @@
 #include <vector>
 
 using namespace astrohelion;
+using ltlaw = astrohelion::ControlLaw_cr3bp_lt;
 
 int main(int argc, char** argv){
-	double errTol = 1e-14;
-	std::vector<double> ic {0.82575887, 0, 0.08, 0, 0.19369725, 0, 1};
-	std::vector<double> ctrl0 {1.25, 0.1};
+	// Check the A-matrix for the CR3BP-LT with GEN_INERT
+	SysData_cr3bp_lt sys("earth", "moon", 100);
+	unsigned int lawID = ltlaw::GEN_INERT | ltlaw::CONST_F | ltlaw::CSI_VAR_M;
+	std::vector<double> params {1.234, 1e-2, 1500};
+	ControlLaw_cr3bp_lt law(lawID, params);
 
-	SysData_cr3bp_lt ltData("earth", "moon", 14);
-	std::vector<double> ltParams {0.3, 1500};
-	ControlLaw_cr3bp_lt control(ControlLaw_cr3bp_lt::Law_tp::CONST_F_GENERAL, ltParams);
+	double q0[] = {0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 1.0, 0.123, 0.321, 
+		1, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 1, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 1, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 1, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 1, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 1, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 1, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 1, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 1};
+	double t = 0.4;
 
-	Arcset_cr3bp_lt ltSet(&ltData);
-	SimEngine sim;
-	sim.setVerbosity(Verbosity_tp::NO_MSG);
-	sim.runSim_manyNodes(ic, ctrl0, 0, 2.8, 5, &ltSet, &control);
-	
-	// ltSet.print();
-	ltSet.saveToMat("data/ltSet.mat");
-	Arcset_cr3bp_lt temp(&ltData);
-	std::vector<ControlLaw*> loadedLaws {};
-	temp.readFromMat("data/ltSet.mat", loadedLaws);
+	EOM_ParamStruct eomParams(&sys, &law);
 
+	MatrixXRd A_analytic(9,9), A_numeric(9,9);
+
+	// Get the A matrix analytically
+	double dq[90] = {0};
+	DynamicsModel_cr3bp_lt::fullEOMs(t, q0, dq, &eomParams);
+	A_analytic = Eigen::Map<MatrixXRd>(dq+9, 9, 9);
+
+	double err = 1e-7;
+	for(unsigned int i = 0; i < 9; i++){
+		double qp[90] = {0}, qdot[90] = {0}, qdot2[90] = {0};
+
+		// Perturb the state vector in forward direction
+		std::copy(q0, q0+90, qp);
+		qp[i] += err;
+
+		// Compute the state derivative
+		DynamicsModel_cr3bp_lt::fullEOMs(t, qp, qdot, &eomParams);
+		Eigen::VectorXd Af = Eigen::Map<Eigen::VectorXd>(qdot, 9, 1);
+
+		// Perturb the state vector in the backward direction
+		std::copy(q0, q0+90, qp);
+		qp[i] -= err;
+		
+		// Compute state derivatives
+		DynamicsModel_cr3bp_lt::fullEOMs(t, qp, qdot2, &eomParams);
+		Eigen::VectorXd Ab = Eigen::Map<Eigen::VectorXd>(qdot2, 9, 1);
+
+		A_numeric.col(i) = (Af - Ab)/(2*err);
+	}
+
+	MatrixXRd diff = A_analytic - A_numeric;
+
+	std::cout << "Analytic:\n" << A_analytic << std::endl;
+	std::cout << "Numeric:\n" << A_numeric << std::endl;
+	std::cout << "Difference:\n" << diff.cwiseAbs() << std::endl;
 	return EXIT_SUCCESS;
 }

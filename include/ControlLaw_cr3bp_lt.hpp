@@ -254,20 +254,42 @@ public:
 	/** \brief masks the sixth option */
 	static const unsigned int OP6_MASK = 1 << 0;		// 00000 000 00 000001
 
-	/** \brief Represents a control law with arbitrary pointing in 3D space.
+	/** \brief Represents a control law with arbitrary pointing in 3D space, 
+	 * 	relative to the rotating frame.
 	 *	
 	 *	Constant parameters: `params = {}`
 	 *	
 	 *	Variable control states: `ctrl = {alpha, beta}`
 	 *	
-	 *	where alpha represents the in-plane pointing angle and beta represents 
+	 *	where `alpha` represents the in-plane pointing angle and `beta` represents 
 	 *	the out-of-plane pointing angle (i.e., spherical coordinates). Alpha is 
 	 *	zero when the thrust is in the XZ-plane with a positive x-component and 
 	 *	increases with right-handed rotation about z. Beta is zero when the 
 	 *	thrust is in the XY-plane and is positive when the z-component is 
 	 *	positive.
+	 *	
+	 *	\see GEN_INERT
 	 */
 	static const unsigned int GENERAL = 1 << 11;		// 00001 000 00 000000
+
+	/** \brief Represents a control law with arbitrary pointing in 3D space,
+	 * 	relative to the inertial frame
+	 * 	
+	 * 	Constant parameters: `params = {theta0}`
+	 * 	
+	 * 	where `theta0` represents the orientation of the rotating frame w.r.t. 
+	 * 	the inertial frame at time t = 0.
+	 * 	
+	 * 	Variable control states: `ctrl = {psi, beta}`
+	 * 	
+	 * 	where `psi` is the in-plane pointing angle relative to the inertial 
+	 * 	X-axis and `beta` is the out of plane angle relative to the XY-plane.
+	 * 	The inertial frame is assumed to be coplanar with the rotating frame 
+	 * 	where inertial Z = rotating z.
+	 * 
+	 *  \see GENERAL
+	 */
+	static const unsigned int GEN_INERT = 4 << 11;		// 00100 000 00 000000
 
 	/** \brief Represents a control law with thrust aligned with the velocity 
 	 * 	vector.
@@ -426,14 +448,18 @@ protected:
 		double*, unsigned int) const;
 	void getAccel_ConstC_2D(double, const double*, const SysData_cr3bp_lt*,
 		double*, unsigned int) const;
-	void getAccel_GeneralDir(double, const double*, const SysData_cr3bp_lt*,
+	void getAccel_GeneralRot(double, const double*, const SysData_cr3bp_lt*,
+		double*, unsigned int) const;
+	void getAccel_GeneralInert(double, const double*, const SysData_cr3bp_lt*,
 		double*, unsigned int) const;
 
 	void getPartials_AccelWRTCore_AlongVel(double, const double*,
 		const SysData_cr3bp_lt*, double*, unsigned int) const;
 	void getPartials_AccelWRTCore_ConstC_2D(double, const double*,
 		const SysData_cr3bp_lt*, double*, unsigned int) const;
-	void getPartials_AccelWRTCore_GeneralDir(double, const double*,
+	void getPartials_AccelWRTCore_GeneralRot(double, const double*,
+		const SysData_cr3bp_lt*, double*, unsigned int) const;
+	void getPartials_AccelWRTCore_GeneralInert(double, const double*,
 		const SysData_cr3bp_lt*, double*, unsigned int) const;
 
 	void getPartials_EOMsWRTCtrl_GeneralDir(double, const double*,

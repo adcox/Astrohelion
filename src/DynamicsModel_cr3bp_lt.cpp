@@ -320,7 +320,7 @@ void DynamicsModel_cr3bp_lt::multShoot_initIterData(MultShootData& it) const{
  *  @param t the current time of the integration
  *  @param s the state vector passed in from the SimEngine. This vector includes
  *  the core states, STM states, extra states, and control states, in that order.
- *  @param sdot the 43-d state derivative vector
+ *  @param sdot the state derivative vector, initialized to zero
  *  @param *params pointer to extra parameters required for integration. For this
  *  function, the pointer points to an EOM_ParamStruct object
  */

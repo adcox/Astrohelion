@@ -85,7 +85,6 @@ std::string ControlLaw_cr3bp_lt::getTypeString() const{
 double ControlLaw_cr3bp_lt::get_dmdt(double t, const double *s,
 	const SysData *pSys) const{
 
-	(void) t;
 	switch(lawType & M_MASK){
 		case CSI_VAR_M:
 		{
@@ -363,8 +362,6 @@ void ControlLaw_cr3bp_lt::getAccel_ConstC_2D(double t, const double *s,
 	law[0] = sign*(f/s[6])*s[4]/v;
 	law[1] = -sign*(f/s[6])*s[3]/v;
 	law[2] = 0;
-	
-	(void) t;
 }//====================================================
 
 /**
@@ -397,8 +394,6 @@ void ControlLaw_cr3bp_lt::getAccel_AlongVel(double t, const double *s,
 	law[0] = sign*(f/s[6])*s[3]/v;
 	law[1] = sign*(f/s[6])*s[4]/v;
 	law[2] = sign*(f/s[6])*s[5]/v;
-
-	(void) t;
 }//====================================================
 
 /**
@@ -429,8 +424,6 @@ void ControlLaw_cr3bp_lt::getAccel_GeneralRot(double t, const double *s,
 	law[0] = (f/s[6])*cos(s[8])*cos(s[7]);	// a_x
 	law[1] = (f/s[6])*cos(s[8])*sin(s[7]);	// a_y
 	law[2] = (f/s[6])*sin(s[8]);			// a_z
-
-	(void) t;
 }//====================================================
 
 /**
@@ -523,8 +516,6 @@ void ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_ConstC_2D(double t, const dou
 	partials[7*1 + 3] = -sign*(f/(s[6]*v) - f*s[3]*s[3]/(s[6]*v3));	// day/dvx
 	partials[7*1 + 4] = sign*f*s[3]*s[4]/(s[6]*v3);					// day/dvy
 	partials[7*1 + 6] = sign*f*s[3]/(s[6]*s[6]*v);					// day/dm
-
-	(void) t;
 }//====================================================
 
 /**
@@ -586,8 +577,6 @@ void ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_AlongVel(double t, const doub
 	partials[7*2 + 4] = partials[7*2 + 5];							// daz/dvy
 	partials[7*2 + 5] =  sign*(f/s[6]) * (1.0/v - s[5]*s[5]/v3);	// daz/dvz
 	partials[7*2 + 6] = -sign*(f/s[6]) * s[5]/(v*s[6]);				// daz/dm
-
-	(void) t;
 }//====================================================
 
 /**
@@ -639,8 +628,6 @@ void ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_GeneralRot(double t,
 	partials[7*0 + 6] = -f*cos(s[8])*cos(s[7])/(s[6]*s[6]);	// dax/dm
 	partials[7*1 + 6] = -f*cos(s[8])*sin(s[7])/(s[6]*s[6]);	// day/dm
 	partials[7*2 + 6] = -f*sin(s[8])/(s[6]*s[6]);			// daz/dm
-
-	(void) t;
 }//====================================================
 
 /**
@@ -692,8 +679,6 @@ void ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_GeneralInert(double t,
 	partials[7*0 + 6] = -f*cos(s[8])*cos(s[7] - params[0] - t)/(s[6]*s[6]);	// dax/dm
 	partials[7*1 + 6] = -f*cos(s[8])*sin(s[7] - params[0] - t)/(s[6]*s[6]);	// day/dm
 	partials[7*2 + 6] = -f*sin(s[8])/(s[6]*s[6]);							// daz/dm
-
-	(void) t;
 }//====================================================
 
 /**
@@ -824,7 +809,7 @@ void ControlLaw_cr3bp_lt::getPartials_EOMsWRTCtrl_GeneralDir(double t,
 		double alpha = s[7];
 		if((lawType & BASE_MASK) == GEN_INERT){
 			ix_param_shift++;
-			alpha -= params[0] - t;
+			alpha -= params[0] + t;
 		}
 
 		/*	CONST_F and CONST_MF laws:
@@ -848,7 +833,7 @@ void ControlLaw_cr3bp_lt::getPartials_EOMsWRTCtrl_GeneralDir(double t,
 		 */
 		
 		// Partials of xddot (3), yddot (4), zddot (5), and mdot (6) w.r.t.
-		// alpha (0) and beta (1)
+		// alpha or psi (0) and beta (1)
 		partials[numStates*3 + 0] = -f/s[6] * cos(s[8])*sin(alpha);
 		partials[numStates*3 + 1] = -f/s[6] * sin(s[8])*cos(alpha);
 		partials[numStates*4 + 0] = f/s[6] * cos(s[8])*cos(alpha);

@@ -212,14 +212,16 @@ public:
 	 * 
 	 *  @param t Nondimensional time
 	 *  @param pSysData pointer to system data object
-	 *  @param pIx Index of the primary; a value of -1 will return the velocities of all primaries,
-	 *  in order of largest to smallest mass
-	 *  @param vel An array to store the primary velocity(s) in with all elements initialized to zero. 
-	 *  For a single primary velocity, the array must have at least three elements allocated. For all 
-	 *  primaries (i.e., pIx = -1), the array must have n*3 elements allocated where n is the number 
-	 *  of primaries.
+	 *  @param pIx Index of the primary; a value of -1 will return the 
+	 *  velocities of all primaries, in order of largest to smallest mass
+	 *  @param vel An array to store the primary velocity(s) in with all 
+	 *  elements initialized to zero. For a single primary velocity, the array 
+	 *  must have at least three elements allocated. For all primaries 
+	 *  (i.e., pIx = -1), the array must have n*3 elements allocated where n is 
+	 *  the number of primaries.
 	 */
-	virtual void getPrimVel(double t, const SysData *pSysData, int pIx, double *vel) const = 0;
+	virtual void getPrimVel(double t, const SysData *pSysData, int pIx, 
+		double *vel) const = 0;
 
 	virtual double getRDot(int, double, const double*, const SysData*) const;
 
@@ -233,7 +235,8 @@ public:
 	 *  @param params EOM parameter structure
 	 *  @return the time-derivative of the state vector
 	 */
-	virtual std::vector<double> getStateDeriv(double t, std::vector<double> state, EOM_ParamStruct *params) const = 0;
+	virtual std::vector<double> getStateDeriv(double t, 
+		std::vector<double> state, EOM_ParamStruct *params) const = 0;
 
 	//\}
 
@@ -250,23 +253,25 @@ public:
 
 	virtual void multShoot_initDesignVec(MultShootData&) const;
 	virtual void multShoot_createContCons(MultShootData&) const;
-	virtual void multShoot_getSimICs(const MultShootData&, int, double*, double*, double*, double*) const;
-	virtual void multShoot_applyConstraint(MultShootData&, const Constraint&, int) const;
-	virtual double multShoot_getSlackVarVal(const MultShootData&, const Constraint&)const ;
+	virtual void multShoot_getSimICs(const MultShootData&, int, double*, 
+		double*, double*, double*) const;
+	virtual void multShoot_applyConstraint(MultShootData&, 
+		const Constraint&, int) const;
+	virtual double multShoot_getSlackVarVal(const MultShootData&, 
+		const Constraint&)const ;
 
 	/**
-	 *  @brief Take the final, corrected free variable vector `X` and create an output 
-	 *  nodeset
+	 *  @brief Take the final, corrected free variable vector `X` and create an 
+	 *  output arcset
 	 *
-	 *  If `findEvent` is set to true, the
-	 *  output nodeset will contain extra information for the simulation engine to use. Rather than
-	 *  returning only the position and velocity states, the output nodeset will contain the STM 
-	 *  and other values for the final node; this information will be appended to the extraParameter
-	 *  vector in the final node.
+	 *  If `findEvent` is set to true, the output arcset will contain extra 
+	 *  information for the simulation engine to use. Rather than returning only 
+	 *  the position and velocity states, the output arcset will contain the STM 
+	 *  and other values for the final node; this information will be appended to 
+	 *  the extraParameter vector in the final node.
 	 *
-	 *  @param it an iteration data object containing all info from the corrections process
-	 *  
-	 *  @return a pointer to a nodeset containing the corrected nodes
+	 *  @param it an iteration data object containing all info from the 
+	 *  corrections process
 	 */
 	virtual void multShoot_createOutput(const MultShootData& it) const;
 	//\}
@@ -277,8 +282,10 @@ public:
 	 */
 
 	virtual std::vector<Event> sim_makeDefaultEvents(const SysData*) const;
-	virtual int sim_addNode(Node &node, const double *y, double t, Arcset* traj, EOM_ParamStruct *params, Event_tp tp) const;
-	virtual int sim_addSeg(Segment &seg, const double *y, double t, Arcset* traj, EOM_ParamStruct *params) const;
+	virtual int sim_addNode(Node &node, const double *y, double t, Arcset* traj, 
+		EOM_ParamStruct *params, Event_tp tp) const;
+	virtual int sim_addSeg(Segment &seg, const double *y, double t, Arcset* traj, 
+		EOM_ParamStruct *params) const;
 
 	//\}
 
@@ -298,6 +305,9 @@ public:
 	 *  \{
 	 */
 	virtual ControlLaw* createControlLaw(unsigned int, const std::vector<double> &params) const;
+	virtual bool finiteDiff_checkAMat(double *q, double t, double pertSize, 
+		EOM_ParamStruct *params, Verbosity_tp verb = Verbosity_tp::SOME_MSG, 
+		bool writeToFile = false) const;
 	//\}
 protected:
 	unsigned int coreDim = 6;		//!< The number of "core" states; these are computed in the simple EOM function; default is 6; STM is an nxn matrix with n = coreDim

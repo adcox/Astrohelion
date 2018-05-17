@@ -1415,7 +1415,7 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset,
     MatrixXRd DFest = MatrixXRd::Zero(it.totalCons, it.totalFree);
 
     if(writeToFile){
-        astrohelion::toCSV(DF, "FiniteDiff_DF.csv");
+        toCSV(DF, "FiniteDiff_DF.csv");
     }
 
     double pertSize = 1e-8;

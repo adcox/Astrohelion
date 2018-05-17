@@ -414,7 +414,7 @@ BOOST_DATA_TEST_CASE(test_continuity,
 	Arcset_cr3bp_lt halfLyapNodeset(&sys), correctedSet(&sys);
 	SimEngine sim;
 	sim.setVerbosity(Verbosity_tp::NO_MSG);
-	sim.runSim_manyNodes(emL1Lyap_ic, thrustAngles, 0, emL1Lyap_T, 2, 
+	sim.runSim_manyNodes(emL1Lyap_ic, thrustAngles, 0, 0.25*emL1Lyap_T, 2, 
 		&halfLyapNodeset, &law);
 
 	// Add control continuity constraint for full-rank Jacobian 
@@ -431,7 +431,7 @@ BOOST_DATA_TEST_CASE(test_continuity,
 	corrector.setTol(1e-11);
 
 	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, 
-		corrector, Verbosity_tp::SOME_MSG, false));
+		corrector, Verbosity_tp::NO_MSG, false));
 	// BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
 
 	try{

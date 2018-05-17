@@ -12,7 +12,7 @@ int main(int argc, char** argv){
 	// Check the A-matrix for the CR3BP-LT with GEN_INERT
 	SysData_cr3bp_lt sys("earth", "moon", 100);
 	unsigned int lawID = ltlaw::GEN_INERT | ltlaw::CONST_F | ltlaw::CSI_VAR_M;
-	std::vector<double> params {1.234, 1e-2, 1500};
+	std::vector<double> params {-3.134, 1e-2, 1500};
 	ControlLaw_cr3bp_lt law(lawID, params);
 
 	double q0[] = {0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 1.0, 0.123, 0.321, 
@@ -25,7 +25,7 @@ int main(int argc, char** argv){
 		0, 0, 0, 0, 0, 0, 1, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 1, 0,
 		0, 0, 0, 0, 0, 0, 0, 0, 1};
-	double t = 0.4;
+	double t = 10.4;
 
 	EOM_ParamStruct eomParams(&sys, &law);
 

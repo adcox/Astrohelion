@@ -1301,7 +1301,9 @@ Node BaseArcset::getNode(int id) const{
 	if(ix != Linkable::INVALID_ID && ix < static_cast<int>(nodes.size()) && ix >= 0){
 		return nodes[ix];
 	}else{
-		throw Exception("BaseArcset::getNode: Could not locate a node with the specified ID");
+		char msg[64];
+		sprintf(msg, "BaseArcset::getNode: ID %d not found", id);
+		throw Exception(msg);
 	}
 }//====================================================
 
@@ -1318,8 +1320,9 @@ Node BaseArcset::getNodeByIx(int ix) const{
 		ix += nodes.size();
 
 	if(ix < 0 || ix >= static_cast<int>(nodes.size())){
-		printErr("Attempted to access index %d\n", ix);
-		throw Exception("BaseArcset::getNodeByIx: Index out of bounds");
+		char msg[64];
+		sprintf(msg, "BaseArcset::getNodeByIx: Index %d out of bounds", ix);
+		throw Exception(msg);
 	}
 
 	return nodes[ix];
@@ -1342,7 +1345,9 @@ Node& BaseArcset::getNodeRef(int id){
 		bInChronoOrder = false;
 		return nodes[ix];
 	}else{
-		throw Exception("BaseArcset::getNodeRef: Could not locate a node with the specified ID");
+		char msg[64];
+		sprintf(msg, "BaseArcset::getNodeRef: ID %d not found", id);
+		throw Exception(msg);
 	}
 }//====================================================
 
@@ -1358,8 +1363,11 @@ const Node& BaseArcset::getNodeRefByIx_const(int ix) const{
 	while(ix < 0)
 		ix += nodes.size();
 
-	if(ix < 0 || ix >= static_cast<int>(nodes.size()))
-		throw Exception("BaseArcset::getNodeRefByIx: Index out of bounds");
+	if(ix < 0 || ix >= static_cast<int>(nodes.size())){
+		char msg[64];
+		sprintf(msg, "BaseArcset::getNodeRefByIx_const: Index %d out of bounds", ix);
+		throw Exception(msg);
+	}
 
 	return nodes[ix];
 }//=====================================================
@@ -1380,7 +1388,9 @@ const Node& BaseArcset::getNodeRef_const(int id) const{
 	if(ix != Linkable::INVALID_ID && ix < static_cast<int>(nodes.size()) && ix >= 0){
 		return nodes[ix];
 	}else{
-		throw Exception("BaseArcset::getNodeRef: Could not locate a node with the specified ID");
+		char msg[64];
+		sprintf(msg, "BaseArcset::getNodeRef_const: ID %d not found", id);
+		throw Exception(msg);
 	}
 }//====================================================
 
@@ -1396,8 +1406,11 @@ Node& BaseArcset::getNodeRefByIx(int ix){
 	while(ix < 0)
 		ix += nodes.size();
 
-	if(ix < 0 || ix >= static_cast<int>(nodes.size()))
-		throw Exception("BaseArcset::getNodeRefByIx: Index out of bounds");
+	if(ix < 0 || ix >= static_cast<int>(nodes.size())){
+		char msg[64];
+		sprintf(msg, "BaseArcset::getNodeRefByIx: Index %d out of bounds", ix);
+		throw Exception(msg);
+	}
 
 	bInChronoOrder = false;
 	return nodes[ix];
@@ -1411,8 +1424,11 @@ Node& BaseArcset::getNodeRefByIx(int ix){
  *  @throws Exception if `id` is out of bounds
  */
 int BaseArcset::getNodeIx(int id) const{
-	if(nodeIDMap.count(id) == 0)
-		throw Exception("BaseArcset::getNodeIx: Inavlid ID; out of bounds");
+	if(nodeIDMap.count(id) == 0){
+		char msg[64];
+		sprintf(msg, "BaseArcset::getNodeIx: ID %d not found", id);
+		throw Exception(msg);
+	}
 
 	return nodeIDMap.at(id);
 }//====================================================
@@ -1433,7 +1449,9 @@ Segment BaseArcset::getSeg(int id) const{
 	if(ix != Linkable::INVALID_ID && ix < static_cast<int>(segs.size()) && ix >= 0){
 		return segs[ix];
 	}else{
-		throw Exception("BaseArcset::getSeg: Could not locate a segment with the specified ID");
+		char msg[64];
+		sprintf(msg, "BaseArcset::getSeg: ID %d not found", id);
+		throw Exception(msg);
 	}
 }//====================================================
 
@@ -1449,8 +1467,11 @@ Segment BaseArcset::getSegByIx(int ix) const{
 	while(ix < 0)
 		ix += segs.size();
 
-	if(ix < 0 || ix >= static_cast<int>(segs.size()))
-		throw Exception("BaseArcset::getSegByIx: Index out of bounds");
+	if(ix < 0 || ix >= static_cast<int>(segs.size())){
+		char msg[64];
+		sprintf(msg, "BaseArcset::getSegByIx: Index %d out of bounds", ix);
+		throw Exception(msg);
+	}
 
 	return segs[ix];
 }//=====================================================
@@ -1472,7 +1493,9 @@ Segment& BaseArcset::getSegRef(int id){
 		bInChronoOrder = false;
 		return segs[ix];
 	}else{
-		throw Exception("BaseArcset::getSegRef: Could not locate a node with the specified ID");
+		char msg[64];
+		sprintf(msg, "BaseArcset::getSegRef: ID %d not found", id);
+		throw Exception(msg);
 	}
 }//====================================================
 
@@ -1488,8 +1511,11 @@ Segment& BaseArcset::getSegRefByIx(int ix){
 	while(ix < 0)
 		ix += segs.size();
 
-	if(ix < 0 || ix >= static_cast<int>(segs.size()))
-		throw Exception("BaseArcset::getSegRefByIx: Index out of bounds");
+	if(ix < 0 || ix >= static_cast<int>(segs.size())){
+		char msg[64];
+		sprintf(msg, "BaseArcset::getSegRefByIx: Index %d out of bounds", ix);
+		throw Exception(msg);
+	}
 
 	bInChronoOrder = false;
 	return segs[ix];
@@ -1511,7 +1537,9 @@ const Segment& BaseArcset::getSegRef_const(int id) const{
 	if(ix != Linkable::INVALID_ID && ix < static_cast<int>(segs.size()) && ix >= 0){
 		return segs[ix];
 	}else{
-		throw Exception("BaseArcset::getSegRef: Could not locate a node with the specified ID");
+		char msg[64];
+		sprintf(msg, "BaseArcset::getSegRef_const: ID %d not found", id);
+		throw Exception(msg);
 	}
 }//====================================================
 
@@ -1527,8 +1555,11 @@ const Segment& BaseArcset::getSegRefByIx_const(int ix) const{
 	while(ix < 0)
 		ix += segs.size();
 
-	if(ix < 0 || ix >= static_cast<int>(segs.size()))
-		throw Exception("BaseArcset::getSegRefByIx: Index out of bounds");
+	if(ix < 0 || ix >= static_cast<int>(segs.size())){
+		char msg[64];
+		sprintf(msg, "BaseArcset::getSegRefByIx_const: Index %d out of bounds", ix);
+		throw Exception(msg);
+	}
 
 	return segs[ix];
 }//=====================================================
@@ -1541,8 +1572,11 @@ const Segment& BaseArcset::getSegRefByIx_const(int ix) const{
  *  @throws Exception if `id` is out of bounds
  */
 int BaseArcset::getSegIx(int id) const{
-	if(segIDMap.count(id) == 0)
-		throw Exception("BaseArcset::getSegIx: Inavlid ID; out of bounds");
+	if(segIDMap.count(id) == 0){
+		char msg[64];
+		sprintf(msg, "BaseArcset::getSegIx: ID %d invalid", id);
+		throw Exception(msg);
+	}
 
 	return segIDMap.at(id);
 }//====================================================
@@ -1564,7 +1598,9 @@ std::vector<double> BaseArcset::getState(int id) const{
 	if(ix != Linkable::INVALID_ID && ix < static_cast<int>(nodes.size()) && ix >= 0){
 		return nodes[ix].getState();
 	}else{
-		throw Exception("BaseArcset::getState: Could not locate the node with the specified ID");
+		char msg[64];
+		sprintf(msg, "BaseArcset::getState: node ID %d not found", id);
+		throw Exception(msg);
 	}
 }//====================================================
 
@@ -1582,8 +1618,11 @@ std::vector<double> BaseArcset::getStateByIx(int ix) const{
 	while(ix < 0)
 		ix += nodes.size();
 
-	if(ix < 0 || ix >= static_cast<int>(nodes.size()))
-		throw Exception("BaseArcset::getStateByIx: node index out of bounds");
+	if(ix < 0 || ix >= static_cast<int>(nodes.size())){
+		char msg[64];
+		sprintf(msg, "BaseArcset::getStateByIx: Node index %d out of bounds", ix);
+		throw Exception(msg);
+	}
 
 	return nodes[ix].getState();
 }//====================================================
@@ -1605,7 +1644,9 @@ MatrixXRd BaseArcset::getSTM(int id) const{
 	if(ix != Linkable::INVALID_ID && ix < static_cast<int>(segs.size()) && ix >= 0){
 		return segs[ix].getSTM();
 	}else{
-		throw Exception("BaseArcset::getSTM: Could not locate the segment with the specified ID");
+		char msg[64];
+		sprintf(msg, "BaseArcset::getSTM: segment ID %d not found", id);
+		throw Exception(msg);
 	}
 }//====================================================
 
@@ -1622,9 +1663,9 @@ MatrixXRd BaseArcset::getSTMByIx(int ix) const{
 		ix += segs.size();
 
 	if(ix < 0 || ix >= static_cast<int>(segs.size())){
-		printErr("Attempted to reach STM with ix = %d (max = %zu)\n", ix, segs.size());
-		print();
-		throw Exception("BaseArcset::getSTMByIx: segment index out of bounds");
+		char msg[64];
+		sprintf(msg, "BaseArcset::getSTMByIx: Segment index %d out of bounds", ix);
+		throw Exception(msg);
 	}
 
 	return segs[ix].getSTM();
@@ -1653,7 +1694,9 @@ double BaseArcset::getTOF(int id) const{
 	if(ix != Linkable::INVALID_ID && ix < static_cast<int>(segs.size()) && ix >= 0){
 		return segs[ix].getTOF();
 	}else{
-		throw Exception("BaseArcset::getTOF: Could not locate the segment with the specified ID");
+		char msg[64];
+		sprintf(msg, "BaseArcset::getTOF: Segment ID %d not found", id);
+		throw Exception(msg);
 	}
 }//====================================================
 /**
@@ -1667,8 +1710,11 @@ double BaseArcset::getTOFByIx(int ix) const {
 	while(ix < 0)
 		ix += segs.size();
 
-	if(ix < 0 || ix >= static_cast<int>(segs.size()))
-		throw Exception("Arcset::getTOFByIx: invalid segment index");
+	if(ix < 0 || ix >= static_cast<int>(segs.size())){
+		char msg[64];
+		sprintf(msg, "BaseArcset::getTOFByIx: Segment index %d out of bounds", ix);
+		throw Exception(msg);
+	}
 
 	return segs[ix].getTOF();
 }//====================================================

@@ -43,8 +43,23 @@ void initForwardSet(){
 	forwardSet.addNode(Node(state1, 6, 0));
 	forwardSet.addNode(Node(state2, 6, 1.1));
 	forwardSet.addNode(Node(state3, 6, 3.3));
-	forwardSet.addSeg(Segment(0, 1, 1.1));
-	forwardSet.addSeg(Segment(1, 2, 2.2));
+
+	Segment seg1(0, 1, 1.1);
+	std::vector<double> t1 {0, 1.1};
+	std::vector<double> q1(state1+0, state1+6);
+	q1.insert(q1.end(), state2+0, state2+6);
+	seg1.setTimeVector(t1);
+	seg1.setStateVector(q1);
+
+	Segment seg2(1, 2, 2.2);
+	std::vector<double> t2 {1.1, 3.3};
+	std::vector<double> q2(state2+0, state2+6);
+	q2.insert(q2.end(), state3+0, state3+6);
+	seg2.setTimeVector(t2);
+	seg2.setStateVector(q2);
+
+	forwardSet.addSeg(seg1);
+	forwardSet.addSeg(seg2);
 }//====================================================
 
 void initRevSet(){
@@ -52,8 +67,23 @@ void initRevSet(){
 	revSet.addNode(Node(state1, 6, 0));
 	revSet.addNode(Node(state2, 6, -1.1));
 	revSet.addNode(Node(state3, 6, -3.3));
-	revSet.addSeg(Segment(0, 1, -1.1));
-	revSet.addSeg(Segment(1, 2, -2.2));
+
+	Segment seg1(0, 1, -1.1);
+	std::vector<double> t1 {0, -1.1};
+	std::vector<double> q1(state1+0, state1+6);
+	q1.insert(q1.end(), state2+0, state2+6);
+	seg1.setTimeVector(t1);
+	seg1.setStateVector(q1);
+
+	Segment seg2(1, 2, -2.2);
+	std::vector<double> t2 {-1.1, -3.3};
+	std::vector<double> q2(state2+0, state2+6);
+	q2.insert(q2.end(), state3+0, state3+6);
+	seg2.setTimeVector(t2);
+	seg2.setStateVector(q2);
+
+	revSet.addSeg(seg1);
+	revSet.addSeg(seg2);
 }//====================================================
 
 //************************************************************
@@ -605,12 +635,17 @@ BOOST_AUTO_TEST_CASE(ForwardTime){
 	
 	// Node Order
 	BOOST_CHECK_EQUAL(set1.getNodeByIx(0).getID(), 0); 
+	BOOST_CHECK_EQUAL(set1.getNodeIx(0), 0);
 	BOOST_CHECK_EQUAL(set1.getNodeByIx(1).getID(), 1); 
+	BOOST_CHECK_EQUAL(set1.getNodeIx(1), 1);
 	BOOST_CHECK_EQUAL(set1.getNodeByIx(2).getID(), 2);
+	BOOST_CHECK_EQUAL(set1.getNodeIx(2), 2);
 
 	// Segment Order
 	BOOST_CHECK_EQUAL(set1.getSegByIx(0).getID(), 0);
+	BOOST_CHECK_EQUAL(set1.getSegIx(0), 0);
 	BOOST_CHECK_EQUAL(set1.getSegByIx(1).getID(), 1);
+	BOOST_CHECK_EQUAL(set1.getSegIx(1), 1);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(ReverseTime){
@@ -623,11 +658,16 @@ BOOST_AUTO_TEST_CASE(ReverseTime){
 
 	set2.putInChronoOrder();
 	BOOST_CHECK_EQUAL(set2.getNodeByIx(0).getID(), 2);
+	BOOST_CHECK_EQUAL(set2.getNodeIx(2), 0);
 	BOOST_CHECK_EQUAL(set2.getNodeByIx(1).getID(), 1);
+	BOOST_CHECK_EQUAL(set2.getNodeIx(1), 1);
 	BOOST_CHECK_EQUAL(set2.getNodeByIx(2).getID(), 0);
-	
+	BOOST_CHECK_EQUAL(set2.getNodeIx(0), 2);
+
 	BOOST_CHECK_EQUAL(set2.getSegByIx(0).getID(), 1);
+	BOOST_CHECK_EQUAL(set2.getSegIx(1), 0);
 	BOOST_CHECK_EQUAL(set2.getSegByIx(1).getID(), 0);
+	BOOST_CHECK_EQUAL(set2.getSegIx(0), 1);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(ShuffledForwardTime){
@@ -641,11 +681,16 @@ BOOST_AUTO_TEST_CASE(ShuffledForwardTime){
 	set3.putInChronoOrder();
 	
 	BOOST_CHECK_EQUAL(set3.getNodeByIx(0).getID(), 1);
+	BOOST_CHECK_EQUAL(set3.getNodeIx(1), 0);
 	BOOST_CHECK_EQUAL(set3.getNodeByIx(1).getID(), 0);
+	BOOST_CHECK_EQUAL(set3.getNodeIx(0), 1);
 	BOOST_CHECK_EQUAL(set3.getNodeByIx(2).getID(), 2);
-	
+	BOOST_CHECK_EQUAL(set3.getNodeIx(2), 2);
+
 	BOOST_CHECK_EQUAL(set3.getSegByIx(0).getID(), 0);
+	BOOST_CHECK_EQUAL(set3.getSegIx(0), 0);
 	BOOST_CHECK_EQUAL(set3.getSegByIx(1).getID(), 1);
+	BOOST_CHECK_EQUAL(set3.getSegIx(1), 1);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(ShuffledReverseTime){
@@ -659,11 +704,16 @@ BOOST_AUTO_TEST_CASE(ShuffledReverseTime){
 	set4.putInChronoOrder();
 	
 	BOOST_CHECK_EQUAL(set4.getNodeByIx(0).getID(), 2);
+	BOOST_CHECK_EQUAL(set4.getNodeIx(2), 0);
 	BOOST_CHECK_EQUAL(set4.getNodeByIx(1).getID(), 0);
+	BOOST_CHECK_EQUAL(set4.getNodeIx(0), 1);
 	BOOST_CHECK_EQUAL(set4.getNodeByIx(2).getID(), 1);
-	
+	BOOST_CHECK_EQUAL(set4.getNodeIx(1), 2);
+
 	BOOST_CHECK_EQUAL(set4.getSegByIx(0).getID(), 1);
+	BOOST_CHECK_EQUAL(set4.getSegIx(1), 0);
 	BOOST_CHECK_EQUAL(set4.getSegByIx(1).getID(), 0);
+	BOOST_CHECK_EQUAL(set4.getSegIx(0), 1);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(MixedTime){
@@ -680,15 +730,24 @@ BOOST_AUTO_TEST_CASE(MixedTime){
 	
 	set5.putInChronoOrder();
 	BOOST_CHECK_EQUAL(set5.getNodeByIx(0).getID(), 3);
+	BOOST_CHECK_EQUAL(set5.getNodeIx(3), 0);
 	BOOST_CHECK_EQUAL(set5.getNodeByIx(1).getID(), 4);
+	BOOST_CHECK_EQUAL(set5.getNodeIx(4), 1);
 	BOOST_CHECK_EQUAL(set5.getNodeByIx(2).getID(), 1);
+	BOOST_CHECK_EQUAL(set5.getNodeIx(1), 2);
 	BOOST_CHECK_EQUAL(set5.getNodeByIx(3).getID(), 2);
+	BOOST_CHECK_EQUAL(set5.getNodeIx(2), 3);
 	BOOST_CHECK_EQUAL(set5.getNodeByIx(4).getID(), 0);
-	
+	BOOST_CHECK_EQUAL(set5.getNodeIx(0), 4);
+
 	BOOST_CHECK_EQUAL(set5.getSegByIx(0).getID(), 0);
+	BOOST_CHECK_EQUAL(set5.getSegIx(0), 0);
 	BOOST_CHECK_EQUAL(set5.getSegByIx(1).getID(), 2);
+	BOOST_CHECK_EQUAL(set5.getSegIx(2), 1);
 	BOOST_CHECK_EQUAL(set5.getSegByIx(2).getID(), 1);
+	BOOST_CHECK_EQUAL(set5.getSegIx(1), 2);
 	BOOST_CHECK_EQUAL(set5.getSegByIx(3).getID(), 3);
+	BOOST_CHECK_EQUAL(set5.getSegIx(3), 3);
 }//====================================================
 
 BOOST_AUTO_TEST_SUITE_END()
@@ -726,7 +785,20 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_ForForBegin){
 
 	BOOST_CHECK(pieceVecsAreEqual(chrono, chrono_ans));
 	BOOST_CHECK_EQUAL(forSet1.getSeg(segID).getTOF(), 1.3);
-	BOOST_CHECK_CLOSE(forSet1.getNodeByIx(3).getEpoch(), 4.6, 1e-4);
+	BOOST_CHECK_CLOSE(forSet1.getNode(0).getEpoch(), 0, 1e-4);
+	
+	for(unsigned int s = 0; s < forSet1.getNumSegs(); s++){
+		const Segment& seg = forSet1.getSegRefByIx_const(s);
+
+		double termEpoch = forSet1.getNode(seg.getTerminus()).getEpoch();
+		double origEpoch = forSet1.getNode(seg.getOrigin()).getEpoch();
+		BOOST_CHECK_SMALL(termEpoch - seg.getTOF() - origEpoch, 1e-8);
+
+		// Check to make sure the segment times were updated with the node epochs
+		BOOST_CHECK_SMALL(origEpoch - seg.getTimeByIx(0), 1e-8);
+		BOOST_CHECK_SMALL(termEpoch - seg.getTimeByIx(-1), 1e-8);
+	}
+
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_Append_ForForEnd){
@@ -754,7 +826,19 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_ForForEnd){
 
 	BOOST_CHECK(pieceVecsAreEqual(chrono, chrono_ans));
 	BOOST_CHECK_EQUAL(forSet1.getSeg(segID).getTOF(), 1.3);
-	BOOST_CHECK_CLOSE(forSet1.getNodeByIx(3).getEpoch(), 4.6, 1e-4);
+	BOOST_CHECK_CLOSE(forSet1.getNode(3).getEpoch(), 4.6, 1e-4);
+
+	for(unsigned int s = 0; s < forSet1.getNumSegs(); s++){
+		const Segment& seg = forSet1.getSegRefByIx_const(s);
+
+		double termEpoch = forSet1.getNode(seg.getTerminus()).getEpoch();
+		double origEpoch = forSet1.getNode(seg.getOrigin()).getEpoch();
+		BOOST_CHECK_SMALL(termEpoch - seg.getTOF() - origEpoch, 1e-8);
+
+		// Check to make sure the segment times were updated with the node epochs
+		BOOST_CHECK_SMALL(origEpoch - seg.getTimeByIx(0), 1e-8);
+		BOOST_CHECK_SMALL(termEpoch - seg.getTimeByIx(-1), 1e-8);
+	}
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_Append_ForForBegin_ZeroTOF){
@@ -780,7 +864,19 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_ForForBegin_ZeroTOF){
 
 	BOOST_CHECK(pieceVecsAreEqual(chrono, chrono_ans));
 	BOOST_CHECK_EQUAL(forSet1.getSeg(segID).getTOF(), 2.2);
-	BOOST_CHECK_CLOSE(forSet1.getNodeByIx(2).getEpoch(), 3.3, 1e-4);
+	BOOST_CHECK_CLOSE(forSet1.getNode(0).getEpoch(), 0, 1e-4);
+
+	for(unsigned int s = 0; s < forSet1.getNumSegs(); s++){
+		const Segment& seg = forSet1.getSegRefByIx_const(s);
+
+		double termEpoch = forSet1.getNode(seg.getTerminus()).getEpoch();
+		double origEpoch = forSet1.getNode(seg.getOrigin()).getEpoch();
+		BOOST_CHECK_SMALL(termEpoch - seg.getTOF() - origEpoch, 1e-8);
+
+		// Check to make sure the segment times were updated with the node epochs
+		BOOST_CHECK_SMALL(origEpoch - seg.getTimeByIx(0), 1e-8);
+		BOOST_CHECK_SMALL(termEpoch - seg.getTimeByIx(-1), 1e-8);
+	}
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_Append_ForForEnd_ZeroTOF){
@@ -807,7 +903,19 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_ForForEnd_ZeroTOF){
 
 	BOOST_CHECK(pieceVecsAreEqual(chrono, chrono_ans));
 	BOOST_CHECK_EQUAL(forSet1.getSeg(segID).getTOF(), 2.2);
-	BOOST_CHECK_CLOSE(forSet1.getNodeByIx(2).getEpoch(), 3.3, 1e-4);
+	BOOST_CHECK_CLOSE(forSet1.getNode(3).getEpoch(), 3.3, 1e-4);
+
+	for(unsigned int s = 0; s < forSet1.getNumSegs(); s++){
+		const Segment& seg = forSet1.getSegRefByIx_const(s);
+
+		double termEpoch = forSet1.getNode(seg.getTerminus()).getEpoch();
+		double origEpoch = forSet1.getNode(seg.getOrigin()).getEpoch();
+		BOOST_CHECK_SMALL(termEpoch - seg.getTOF() - origEpoch, 1e-8);
+
+		// Check to make sure the segment times were updated with the node epochs
+		BOOST_CHECK_SMALL(origEpoch - seg.getTimeByIx(0), 1e-8);
+		BOOST_CHECK_SMALL(termEpoch - seg.getTimeByIx(-1), 1e-8);
+	}
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegBegin){
@@ -836,7 +944,19 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegBegin){
 
 	BOOST_CHECK(pieceVecsAreEqual(chrono, chrono_ans));
 	BOOST_CHECK_EQUAL(revSet1.getSeg(segID).getTOF(), -1.3);
-	BOOST_CHECK_CLOSE(revSet1.getNodeByIx(3).getEpoch(), -4.6, 1e-4);
+	BOOST_CHECK_CLOSE(revSet1.getNode(3).getEpoch(), -4.6, 1e-4);
+
+	for(unsigned int s = 0; s < revSet1.getNumSegs(); s++){
+		const Segment& seg = revSet1.getSegRefByIx_const(s);
+
+		double termEpoch = revSet1.getNode(seg.getTerminus()).getEpoch();
+		double origEpoch = revSet1.getNode(seg.getOrigin()).getEpoch();
+		BOOST_CHECK_SMALL(termEpoch - seg.getTOF() - origEpoch, 1e-8);
+
+		// Check to make sure the segment times were updated with the node epochs
+		BOOST_CHECK_SMALL(origEpoch - seg.getTimeByIx(0), 1e-8);
+		BOOST_CHECK_SMALL(termEpoch - seg.getTimeByIx(-1), 1e-8);
+	}
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegEnd){
@@ -865,7 +985,19 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegEnd){
 
 	BOOST_CHECK(pieceVecsAreEqual(chrono, chrono_ans));
 	BOOST_CHECK_EQUAL(revSet1.getSeg(segID).getTOF(), -1.3);
-	BOOST_CHECK_CLOSE(revSet1.getNodeByIx(3).getEpoch(), -4.6, 1e-4);
+	BOOST_CHECK_CLOSE(revSet1.getNode(5).getEpoch(), 1.3, 1e-4);
+
+	for(unsigned int s = 0; s < revSet1.getNumSegs(); s++){
+		const Segment& seg = revSet1.getSegRefByIx_const(s);
+
+		double termEpoch = revSet1.getNode(seg.getTerminus()).getEpoch();
+		double origEpoch = revSet1.getNode(seg.getOrigin()).getEpoch();
+		BOOST_CHECK_SMALL(termEpoch - seg.getTOF() - origEpoch, 1e-8);
+
+		// Check to make sure the segment times were updated with the node epochs
+		BOOST_CHECK_SMALL(origEpoch - seg.getTimeByIx(0), 1e-8);
+		BOOST_CHECK_SMALL(termEpoch - seg.getTimeByIx(-1), 1e-8);
+	}
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegBegin_ZeroTOF){
@@ -892,7 +1024,19 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegBegin_ZeroTOF){
 
 	BOOST_CHECK(pieceVecsAreEqual(chrono, chrono_ans));
 	BOOST_CHECK_EQUAL(revSet1.getSeg(segID).getTOF(), -2.2);
-	BOOST_CHECK_CLOSE(revSet1.getNodeByIx(2).getEpoch(), -3.3, 1e-4);
+	BOOST_CHECK_CLOSE(revSet1.getNode(3).getEpoch(), -3.3, 1e-4);
+
+	for(unsigned int s = 0; s < revSet1.getNumSegs(); s++){
+		const Segment& seg = revSet1.getSegRefByIx_const(s);
+
+		double termEpoch = revSet1.getNode(seg.getTerminus()).getEpoch();
+		double origEpoch = revSet1.getNode(seg.getOrigin()).getEpoch();
+		BOOST_CHECK_SMALL(termEpoch - seg.getTOF() - origEpoch, 1e-8);
+
+		// Check to make sure the segment times were updated with the node epochs
+		BOOST_CHECK_SMALL(origEpoch - seg.getTimeByIx(0), 1e-8);
+		BOOST_CHECK_SMALL(termEpoch - seg.getTimeByIx(-1), 1e-8);
+	}
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegEnd_ZeroTOF){
@@ -919,7 +1063,19 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegEnd_ZeroTOF){
 
 	BOOST_CHECK(pieceVecsAreEqual(chrono, chrono_ans));
 	BOOST_CHECK_EQUAL(revSet1.getSeg(segID).getTOF(), -2.2);
-	BOOST_CHECK_CLOSE(revSet1.getNodeByIx(2).getEpoch(), -3.3, 1e-4);
+	BOOST_CHECK_CLOSE(revSet1.getNode(4).getEpoch(), 2.2, 1e-4);
+
+	for(unsigned int s = 0; s < revSet1.getNumSegs(); s++){
+		const Segment& seg = revSet1.getSegRefByIx_const(s);
+
+		double termEpoch = revSet1.getNode(seg.getTerminus()).getEpoch();
+		double origEpoch = revSet1.getNode(seg.getOrigin()).getEpoch();
+		BOOST_CHECK_SMALL(termEpoch - seg.getTOF() - origEpoch, 1e-8);
+
+		// Check to make sure the segment times were updated with the node epochs
+		BOOST_CHECK_SMALL(origEpoch - seg.getTimeByIx(0), 1e-8);
+		BOOST_CHECK_SMALL(termEpoch - seg.getTimeByIx(-1), 1e-8);
+	}
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_PosTOF){
@@ -950,7 +1106,19 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_PosTOF){
 
 	BOOST_CHECK(pieceVecsAreEqual(chrono, chrono_ans));
 	BOOST_CHECK_EQUAL(forSet1.getSeg(segID).getTOF(), 1.3);
-	BOOST_CHECK_CLOSE(forSet1.getNodeByIx(3).getEpoch(), 1.3, 1e-4);
+	BOOST_CHECK_CLOSE(forSet1.getNode(3).getEpoch(), -1.3, 1e-4);
+
+	for(unsigned int s = 0; s < forSet1.getNumSegs(); s++){
+		const Segment& seg = forSet1.getSegRefByIx_const(s);
+
+		double termEpoch = forSet1.getNode(seg.getTerminus()).getEpoch();
+		double origEpoch = forSet1.getNode(seg.getOrigin()).getEpoch();
+		BOOST_CHECK_SMALL(termEpoch - seg.getTOF() - origEpoch, 1e-8);
+
+		// Check to make sure the segment times were updated with the node epochs
+		BOOST_CHECK_SMALL(origEpoch - seg.getTimeByIx(0), 1e-8);
+		BOOST_CHECK_SMALL(termEpoch - seg.getTimeByIx(-1), 1e-8);
+	}
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_NegTOF){
@@ -981,6 +1149,18 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_NegTOF){
 
 	BOOST_CHECK(pieceVecsAreEqual(chrono, chrono_ans));
 	BOOST_CHECK_EQUAL(forSet1.getSeg(segID).getTOF(), -1.3);
+
+	for(unsigned int s = 0; s < forSet1.getNumSegs(); s++){
+		const Segment& seg = forSet1.getSegRefByIx_const(s);
+
+		double termEpoch = forSet1.getNode(seg.getTerminus()).getEpoch();
+		double origEpoch = forSet1.getNode(seg.getOrigin()).getEpoch();
+		BOOST_CHECK_SMALL(termEpoch - seg.getTOF() - origEpoch, 1e-8);
+
+		// Check to make sure the segment times were updated with the node epochs
+		BOOST_CHECK_SMALL(origEpoch - seg.getTimeByIx(0), 1e-8);
+		BOOST_CHECK_SMALL(termEpoch - seg.getTimeByIx(-1), 1e-8);
+	}
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_ZeroTOF){
@@ -1008,6 +1188,18 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_ZeroTOF){
 
 	BOOST_CHECK(pieceVecsAreEqual(chrono, chrono_ans));
 	BOOST_CHECK_EQUAL(forSet1.getSeg(segID).getTOF(), revSet1.getSegByIx(0).getTOF());
+
+	for(unsigned int s = 0; s < forSet1.getNumSegs(); s++){
+		const Segment& seg = forSet1.getSegRefByIx_const(s);
+
+		double termEpoch = forSet1.getNode(seg.getTerminus()).getEpoch();
+		double origEpoch = forSet1.getNode(seg.getOrigin()).getEpoch();
+		BOOST_CHECK_SMALL(termEpoch - seg.getTOF() - origEpoch, 1e-8);
+
+		// Check to make sure the segment times were updated with the node epochs
+		BOOST_CHECK_SMALL(origEpoch - seg.getTimeByIx(0), 1e-8);
+		BOOST_CHECK_SMALL(termEpoch - seg.getTimeByIx(-1), 1e-8);
+	}
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_ZeroTOF_Short){
@@ -1015,12 +1207,24 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_ZeroTOF_Short){
 	Arcset forSet1(&sys);
 	forSet1.addNode(Node(state1, 6, 0));
 	forSet1.addNode(Node(state2, 6, 1.1));
-	forSet1.addSeg(Segment(0, 1, 1.1));
+	Segment seg1(0, 1, 1.1);
+	std::vector<double> t1 {0, 1.1};
+	std::vector<double> q1(state1+0, state1+6);
+	q1.insert(q1.end(), state2+0, state2+6);
+	seg1.setTimeVector(t1);
+	seg1.setStateVector(q1);
+	forSet1.addSeg(seg1);
 
 	Arcset revSet1(&sys);
 	revSet1.addNode(Node(state1, 6, 0));
 	revSet1.addNode(Node(state2, 6, -1.1));
-	revSet1.addSeg(Segment(0, 1, -1.1));
+	Segment seg2(0, 1, -1.1);
+	std::vector<double> t2 {0, -1.1};
+	std::vector<double> q2(state1+0, state1+6);
+	q2.insert(q2.end(), state2+0, state2+6);
+	seg2.setTimeVector(t2);
+	seg2.setStateVector(q2);
+	revSet1.addSeg(seg2);
 
 	int segID = forSet1.appendSetAtNode(&revSet1, 0, 0, 0);
 
@@ -1036,6 +1240,18 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_ZeroTOF_Short){
 
 	BOOST_CHECK(pieceVecsAreEqual(chrono, chrono_ans));
 	BOOST_CHECK(forSet1.getSeg(segID).getTOF() == revSet1.getSegByIx(0).getTOF());
+
+	for(unsigned int s = 0; s < forSet1.getNumSegs(); s++){
+		const Segment& seg = forSet1.getSegRefByIx_const(s);
+
+		double termEpoch = forSet1.getNode(seg.getTerminus()).getEpoch();
+		double origEpoch = forSet1.getNode(seg.getOrigin()).getEpoch();
+		BOOST_CHECK_SMALL(termEpoch - seg.getTOF() - origEpoch, 1e-8);
+
+		// Check to make sure the segment times were updated with the node epochs
+		BOOST_CHECK_SMALL(origEpoch - seg.getTimeByIx(0), 1e-8);
+		BOOST_CHECK_SMALL(termEpoch - seg.getTimeByIx(-1), 1e-8);
+	}
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_AppendSet_Err_Parallel01){

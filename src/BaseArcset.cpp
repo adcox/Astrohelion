@@ -285,7 +285,9 @@ int BaseArcset::addSeg(Segment s){
 
 /**
  *  @brief Append an arcset object (i.e., a set of nodes and segments) to this one
- * 
+ *  @details The epochs associated with the nodes in this arcset are left 
+ *  unchanged and the epochs of the appended set are updated to be continuous
+ *  
  *  @param pArcsetIn a pointer to the arcset object that will be appended to 
  *  this object
  *  @param localNodeID the ID of the node in *this* arcset object that 
@@ -506,8 +508,10 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int localNodeID,
 
 	if(tof != 0){
 		// Put minimum amount of data in the linkSeg state and time vectors
+		// Times will be updated when updateEpoch() is called; the relative
+		// duration is all that is important
 		linkSegTimes.push_back(getEpoch(linkOrigin));
-		linkSegTimes.push_back(getEpoch(linkTerminus));
+		linkSegTimes.push_back(getEpoch(linkOrigin) + tof);
 
 		std::vector<double> q0 = getState(linkOrigin);
 		std::vector<double> qf = getState(linkTerminus);
@@ -562,8 +566,9 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int localNodeID,
 	// linkSeg.print();
 	int newSegID = addSeg(linkSeg);
 
-	// Update all epochs
-	updateEpochs(nodeIDMap[0], getEpoch(0));
+	// Update all epochs but keep the first node (which should begin to 
+	// this arcset) fixed
+	updateEpochs(nodes[0].getID(), nodes[0].getEpoch());
 
 	return newSegID;
 }//====================================================
@@ -590,7 +595,8 @@ void BaseArcset::clearAllConstraints(){
  *  @brief Concatenate two arcset objects
  *  @details The nodes, segments and constraints are copied from one arcset to another
  *  without creating or deleting any nodes or segments; i.e., the arcset object will
- *  include two independent "flows" without a segment to connect them
+ *  include two independent "flows" without a segment to connect them. To 
+ *  construct a continuous "flow", see appendSetAtNode()
  * 
  *  @param pSet pointer to an arcset object
  *  @return a map relating the nodeIDs in `pSet` to the new IDs of the same nodes
@@ -600,6 +606,7 @@ void BaseArcset::clearAllConstraints(){
  *  vector element.
  *  
  *  @throws Exception if the input arcset does not have the same system data object as this one
+ *  @see appendSetAtNode()
  */
 std::vector<int> BaseArcset::concatArcset(const BaseArcset *pSet){
 	if(pSet->pSysData != pSysData)
@@ -609,7 +616,7 @@ std::vector<int> BaseArcset::concatArcset(const BaseArcset *pSet){
 	// All new IDs are initialized to the default INVALID_ID value
 	std::vector<int> map_oldID_to_newID(pSet->getNextNodeID(), Linkable::INVALID_ID);
 
-	// Add all nodes from set to this object and keep track of new IDs
+	// Add all nodes from pSet to this object and keep track of new IDs
 	for(unsigned int n = 0; n < pSet->getNumNodes(); n++){
 		Node node = pSet->getNodeByIx(n);
 
@@ -618,7 +625,7 @@ std::vector<int> BaseArcset::concatArcset(const BaseArcset *pSet){
 		map_oldID_to_newID[node.getID()] = addNode(node);
 	}
 
-	// Add all segments from set to this object and update the link IDs
+	// Add all segments from pSet to this object and update the link IDs
 	// The act of adding the segment will update the links in the newly added nodes
 	for(unsigned int s = 0; s < pSet->getNumSegs(); s++){
 		Segment seg = pSet->getSegByIx(s);
@@ -982,7 +989,7 @@ std::vector<ArcPiece> BaseArcset::getChronoOrder() const{
 	// printf("* Beginning getChronoOrder()\n");
 	std::vector<ArcPiece> pieces;
 	if(nodes.size() == 0){
-		astrohelion::printErr("BaseArcset::getChronoOrder: No nodes... exiting\n");
+		printErr("BaseArcset::getChronoOrder: No nodes... exiting\n");
 		return pieces;
 	}
 
@@ -1835,7 +1842,7 @@ void BaseArcset::putInChronoOrder(bool force){
 	std::vector<ArcPiece> pieces = getChronoOrder();
 
 	if(pieces.size() != nodes.size() + segs.size()){
-		astrohelion::printErr("Pieces has %zu elements, but there are %zu nodes and %zu segs\n", pieces.size(), nodes.size(), segs.size());
+		printErr("Pieces has %zu elements, but there are %zu nodes and %zu segs\n", pieces.size(), nodes.size(), segs.size());
 		saveToMat("ChronoOrderErr.mat");
 		throw Exception("BaseArcset::putInChronoOrder: The sorted vector does not include all nodes and segments; aborting to avoid losing data\n");
 	}
@@ -2057,22 +2064,30 @@ void BaseArcset::setTol(double d){ tol = d; }
  *  @details By specifying the epoch of one node in the set, all other
  *  nodes are updated using the segment times-of-flight between them.
  * 
- *  @param nodeID the ID of a node
- *  @param epoch the epoch of the node with the specified ID.
+ *  @param nodeID the ID of a node to use as the base point
+ *  @param epoch the epoch of the node with the specified ID. If the epoch
+ *  currently stored in the node does not match this input value, the stored
+ *  value is updated to match the specified epoch.
  */
 void BaseArcset::updateEpochs(int nodeID, double epoch){
-	if(nodeIDMap.count(nodeID) == 0)
-		throw Exception("BaseArcset::updateEpochs: Invalide node ID");
+	if(nodeIDMap.count(nodeID) == 0){
+		char msg[64];
+		sprintf(msg, "BaseArcset::updateEpochs: ID %d does not match a node",
+			nodeID);
+		throw Exception(msg);
+	}
 
 	std::vector<ArcPiece> pieces = getChronoOrder();
 
 	// Update epoch of the specified node
 	nodes[nodeIDMap[nodeID]].setEpoch(epoch);
 
-	std::vector<ArcPiece>::iterator pieceIt = std::find(pieces.begin(), pieces.end(), ArcPiece(ArcPiece::Piece_tp::NODE, nodeID));
+	std::vector<ArcPiece>::iterator pieceIt = std::find(pieces.begin(), 
+		pieces.end(), ArcPiece(ArcPiece::Piece_tp::NODE, nodeID));
 
 	if(pieceIt == pieces.end()){
-		astrohelion::printErr("BaseArcset::updateEpochs: Could not find the node with the specified ID... INVESTIGATE THIS, ANDREW!\n");
+		printErr("BaseArcset::updateEpochs: Could not find the node with" 
+			" ID = %d; THIS SHOULD NOT HAPPEN\n", nodeID);
 		return;
 	}
 
@@ -2085,10 +2100,24 @@ void BaseArcset::updateEpochs(int nodeID, double epoch){
 		ellapsed = 0;
 		for(int i = ixInPieces + stepDir; i < static_cast<int>(pieces.size()) && i >= 0; i += stepDir){
 			if(pieces[i].type == ArcPiece::Piece_tp::SEG){
-				ellapsed += segs[segIDMap[pieces[i].id]].getTOF();
+				ellapsed += stepDir*std::abs(segs[segIDMap[pieces[i].id]].getTOF());
 			}else if(pieces[i].type == ArcPiece::Piece_tp::NODE){
 				nodes[nodeIDMap[pieces[i].id]].setEpoch(epoch+ellapsed);
 			}
+		}
+	}
+
+	// Update all segment time vectors
+	for(unsigned int s = 0; s < segs.size(); s++){
+		double dt = nodes[nodeIDMap[segs[s].getOrigin()]].getEpoch() -
+			segs[s].getTimeByIx(0);
+
+		if(std::abs(dt) > 1e-8){
+			std::vector<double> t = segs[s].getTimeVector();
+			for(unsigned int i = 0; i < t.size(); i++){
+				t[i] += dt;
+			}
+			segs[s].setTimeVector(t);
 		}
 	}
 }//====================================================

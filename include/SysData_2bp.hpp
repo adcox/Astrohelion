@@ -54,7 +54,7 @@ class SysData_2bp : public SysData{
 		SysData_2bp();
 		SysData_2bp(std::string);
 		SysData_2bp(const SysData_2bp&);
-		SysData_2bp(const char*);
+		void initFromFile(const char*);
 		virtual ~SysData_2bp();
 		//\}
 		

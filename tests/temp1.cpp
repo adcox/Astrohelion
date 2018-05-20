@@ -58,6 +58,7 @@ int main(int argc, char** argv){
 	}
 
 	chain.clearAllConstraints();
+	chain.putInChronoOrder();
 	chain.saveToMat("L4_chain.mat");
 
 	MultShootEngine shooter;

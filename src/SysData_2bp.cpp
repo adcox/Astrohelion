@@ -64,7 +64,7 @@ SysData_2bp::SysData_2bp(std::string P1){
  * 
  *  @param filepath path to the data file
  */
-SysData_2bp::SysData_2bp(const char *filepath){
+void SysData_2bp::initFromFile(const char *filepath){
 	// Load the matlab file
 	mat_t *matfp = Mat_Open(filepath, MAT_ACC_RDONLY);
 	if(nullptr == matfp){

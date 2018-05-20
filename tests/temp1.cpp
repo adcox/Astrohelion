@@ -53,7 +53,8 @@ int main(int argc, char** argv){
 	Arcset_cr3bp_lt chain = fullArcs[0];
 	for(unsigned int i = 1; i < fullArcs.size(); i++){
 		chain.appendSetAtNode(&(fullArcs[i]), chain.getNodeByIx(-1).getID(),
-			fullArcs[i].getNodeByIx(0).getID(), 1.5);
+			fullArcs[i].getNodeByIx(0).getID(), 1.5, 
+			fullArcs[i].getCtrlLawByIx(-1));
 	}
 
 	chain.clearAllConstraints();

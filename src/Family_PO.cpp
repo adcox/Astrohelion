@@ -551,7 +551,7 @@ std::vector<Arcset_periodic> Family_PO::getMatchingMember(double val,
 			try{
 				corrector.multShoot(&copyOrbit, &newOrbit);
 				matchMembers.push_back(newOrbit);
-			}catch(DivergeException &e){
+			}catch(const DivergeException &e){
 				printErr("  Unable to converge on a periodic solution "
 					"for candidate %d...\n", n);
 			}
@@ -651,7 +651,7 @@ void Family_PO::readFromMat(const char *filename,
 	loadMiscData(pMatFile);
 	try{
 		loadEigVecs(pMatFile);
-	}catch(Exception &e){
+	}catch(const Exception &e){
 		printWarn("Family_PO::readFromMat: Could not load eigenvectors from %s",
 			filename);
 	}

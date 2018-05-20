@@ -123,7 +123,7 @@ void checkSPPos(){
 			printf("  True Position      : [%.15f, %f, %f]\n", trueSPPos(0), trueSPPos(1), trueSPPos(2));
 			printf("  Calculated Position: [%.15f, %f, %f]\n", calcSPPos(0), calcSPPos(1), calcSPPos(2));
 		}
-	}catch(DivergeException &e){
+	}catch(const DivergeException &e){
 		cout << "Saddle Point Position Calc test: " << FAIL << " (Diverged)" << endl;
 	}
 }//==========================================

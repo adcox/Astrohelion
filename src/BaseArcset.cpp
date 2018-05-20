@@ -864,7 +864,7 @@ std::vector<double> BaseArcset::getStateDerivByIx(int ix){
 
 	try{
 		return nodes[ix].getExtraParamVec(PARAMKEY_STATE_DERIV);
-	}catch(Exception &e){
+	}catch(const Exception &e){
 		// Control laws are defined on segments, but state derivatives are stored on nodes...
 			// Get the control law associated with the first segment linked to the node (should definitely be one)
 			// CAUTION: If two segments link to a node with different control laws, this behavior may be undesirable.
@@ -2315,7 +2315,7 @@ matvar_t* BaseArcset::createVar_NodeStateDeriv(Save_tp saveTp, const char *pVarN
 		std::vector<double> deriv(stateSize, NAN);
 		try{
 			deriv = nodes[r].getExtraParamVec(PARAMKEY_STATE_DERIV);
-		}catch(Exception &e){
+		}catch(const Exception &e){
 			// printErr("Unable to get acceleration vector for node %u\n", r);
 		}
 
@@ -2357,7 +2357,7 @@ matvar_t* BaseArcset::createVar_NodeExtraParamVec(std::string varKey, size_t len
 
 				param[c*nodes.size() + r] = vec[c];
 			}
-		}catch(Exception &e){
+		}catch(const Exception &e){
 			// Save NAN (rather than un-allocated memory) if the node does not have the specified parameter
 			for(unsigned int c = 0; c < len; c++)
 				param[c*nodes.size() + r] = vec[c];
@@ -2387,7 +2387,7 @@ matvar_t* BaseArcset::createVar_NodeExtraParam(std::string varKey,
 	for(unsigned int r = 0; r < nodes.size(); r++){
 		try{
 			param[r] = nodes[r].getExtraParam(varKey);
-		}catch(Exception &e){
+		}catch(const Exception &e){
 			// Save NAN (rather than un-allocated memory) if the node does not have the specified parameter
 			param[r] = NAN;
 		}
@@ -2422,7 +2422,7 @@ matvar_t* BaseArcset::createVar_NodeCtrl(Save_tp saveTp, const char *pVarName) c
 		std::vector<double> ctrl;
 		try{
 			ctrl = nodes[n].getExtraParamVec(PARAMKEY_CTRL);
-		}catch(Exception &e){}
+		}catch(const Exception &e){}
 
 		dims[0] = ctrl.size();
 

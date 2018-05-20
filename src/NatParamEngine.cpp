@@ -322,9 +322,9 @@ void NatParamEngine::continueSymmetricPO_cr3bp(Family_PO *pFam, const Arcset_cr3
 			diverged = false;
 			halfPerCorrected = tempCorrected;
 			printf("Orbit %03d converged!\n", static_cast<int>(members.size()));
-		}catch(DivergeException &e){
+		}catch(const DivergeException &e){
 			diverged = true;
-		}catch(LinAlgException &e){
+		}catch(const LinAlgException &e){
 			printErr("There was a linear algebra error during family continuation...\n");
 			break;
 		}

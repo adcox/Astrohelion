@@ -508,7 +508,7 @@ void MultShootEngine::multShoot(const Arcset *pArcIn, Arcset *pArcOut,
 	}catch(const std::exception &e){
 		// Free allocated data
 		if(bDataOnStack){ delete pData; }
-		throw e;	// Throw the error up a level
+		throw;	// Throw the error up a level
 	}
 
 	// Free allocated data
@@ -523,7 +523,9 @@ void MultShootEngine::multShoot(const Arcset *pArcIn, Arcset *pArcOut,
  *  derivative types by the other implementation of multShoot()
  *  @return A corrected MultShootData object
  *  @see multShoot(Arcset*)
+ *  
  *  @throws DivergeException if the multiple shooting process does not converge
+ *  @throws LinAlgException if the update equation cannot be solved
  */
 void MultShootEngine::multShoot(MultShootData *pData){
 	pData->count = 0;
@@ -570,7 +572,7 @@ void MultShootEngine::multShoot(MultShootData *pData){
 			try{
 				solveUpdateEq(*pData, oldX, FX, newX);
 			}catch(const Exception &e){
-				throw e;	// Rethrow error
+				throw;	// Rethrow error
 			}
 
 			pData->X.clear();
@@ -595,7 +597,7 @@ void MultShootEngine::multShoot(MultShootData *pData){
 				pData->pArcOut->saveToMat(filename);
 				pData->pArcOut->reset();	// Must be empty for next createOutput() call
 			}catch(const std::exception &e){
-				throw e;
+				throw;
 			}
 		}
 
@@ -606,7 +608,7 @@ void MultShootEngine::multShoot(MultShootData *pData){
 				pData->pArcIn->getSysData()->getDynamicsModel()->\
 					multShoot_applyConstraint(*pData, pData->allCons[c], c);
 			}catch(const std::exception &e){
-				throw e;
+				throw;
 			}
 			printVerb(verbosity >= Verbosity_tp::DEBUG, 
 				"* Applying %s constraint\n", pData->allCons[c].getTypeStr());
@@ -676,7 +678,7 @@ void MultShootEngine::multShoot(MultShootData *pData){
 		}catch(const Exception &e){
 			printErr("MultShootEngine::multShoot: "
 				"Unable to create output arcset\n  Err: %s\n", e.what());
-			throw e;
+			throw;
 		}
 	}
 }//=====================================================
@@ -831,7 +833,10 @@ void MultShootEngine::propSegsFromFreeVars(MultShootData& it, SimEngine &sim,
  *	
  *	@todo This can be updated to use a least-squares solution
  */
-void MultShootEngine::solveUpdateEq(MultShootData& it, const Eigen::VectorXd& oldX, const Eigen::VectorXd& FX, Eigen::VectorXd& newX){
+void MultShootEngine::solveUpdateEq(MultShootData& it, 
+	const Eigen::VectorXd& oldX, const Eigen::VectorXd& FX, 
+	Eigen::VectorXd& newX){
+
 	if(it.totalCons == 1 && it.totalFree == 1){
 		// If Jacobian is 1x1, skip all that linear algebra and just solve the 
 		// equation. Update the design variable vector

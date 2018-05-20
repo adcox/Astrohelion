@@ -306,7 +306,7 @@ void DynamicsModel::multShoot_initDesignVec(MultShootData &it) const{
 				MSVarMap_Key key(MSVar_tp::CTRL, it.pArcIn->getNodeRefByIx_const(n).getID());
 				it.freeVarMap[key] = MSVarMap_Obj(key, -1, ctrlStates.size());
 			}
-		}catch(Exception &e){
+		}catch(const Exception &e){
 			// Extra parameter vector doesn't exist; no action necessary
 		}
 	}
@@ -432,7 +432,7 @@ void DynamicsModel::multShoot_getSimICs(const MultShootData &it, int s,
 			}else{
 				std::copy(it.X.begin()+ctrl_var.row0, it.X.begin()+ctrl_var.row0 + ctrl_var.nRows, ctrl0);
 			}
-		}catch(Exception &e){ /* No need to handle exception */ }
+		}catch(const Exception &e){ /* No need to handle exception */ }
 	}
 
 	switch(it.tofTp){
@@ -1805,7 +1805,7 @@ void DynamicsModel::multShoot_createOutput(const MultShootData& it) const{
                 std::vector<double> ctrl = std::vector<double>(it.X.begin()+ctrl_var.row0, it.X.begin() + ctrl_var.row0 + ctrl_var.nRows);
                 node.setExtraParamVec(PARAMKEY_CTRL, ctrl);
             }
-        }catch(Exception &e){ /* No need to report exception */ }
+        }catch(const Exception &e){ /* No need to report exception */ }
 
         // Add the node to the output nodeset and save the new ID
         newNodeIDs.push_back(it.pArcOut->addNode(node));

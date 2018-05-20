@@ -101,7 +101,7 @@ BOOST_DATA_TEST_CASE(test_continuity,
 
 	try{
 		corrector.multShoot(&halfLyapArcset, &correctedSet);
-	}catch(Exception &e){
+	}catch(const Exception &e){
 		printErr("Error (%s, %s): %s\n", 
 			ControlLaw_cr3bp_lt::typeToString(lawType).c_str(),
 			MSTOF_tp_cStr(tofType), e.what());
@@ -302,7 +302,7 @@ BOOST_DATA_TEST_CASE(test_continuity,
 
 	try{
 		corrector.multShoot(&halfLyapNodeset, &correctedSet);
-	}catch(Exception &e){
+	}catch(const Exception &e){
 		printErr("Error: %s\n", e.what());
 	}
 
@@ -436,7 +436,7 @@ BOOST_DATA_TEST_CASE(test_continuity,
 
 	try{
 		corrector.multShoot(&halfLyapNodeset, &correctedSet);
-	}catch(Exception &e){
+	}catch(const Exception &e){
 		printErr("Error: %s\n", e.what());
 	}
 
@@ -582,7 +582,7 @@ BOOST_DATA_TEST_CASE(test_continuity,
 
 	try{
 		corrector.multShoot(&halfLyapArcset, &correctedSet);
-	}catch(Exception &e){
+	}catch(const Exception &e){
 		printErr("Error (%s, %s): %s\n", 
 			ControlLaw_cr3bp_lt::typeToString(lawType).c_str(),
 			MSTOF_tp_cStr(tofType), e.what());
@@ -644,7 +644,7 @@ BOOST_DATA_TEST_CASE(test_fullContinuity,
 
 	try{
 		corrector.multShoot(&halfLyapArcset, &correctedSet);
-	}catch(Exception &e){
+	}catch(const Exception &e){
 		printErr("Error (%s, %s): %s\n", 
 			ControlLaw_cr3bp_lt::typeToString(lawType).c_str(),
 			MSTOF_tp_cStr(tofType), e.what());

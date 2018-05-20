@@ -266,9 +266,9 @@ void PseudoArcEngine::pac(const Arcset *pInitGuess, Arcset *pMember, Arcset *pTe
 				// Attempt to correct the new member; pTemp stores the corrected result
 				corrector.multShoot(pMember, pTemp, &familyItData);
 				converged = true;
-			}catch(DivergeException &de){
+			}catch(const DivergeException &de){
 				// Nothing to do here; continue down the code
-			}catch(LinAlgException &lae){
+			}catch(const LinAlgException &lae){
 				printErr("PseudoArcEngine::pac: There was a linear algebra error:\n%s\n", lae.what());
 				endPAC = true;
 				break;
@@ -294,11 +294,11 @@ void PseudoArcEngine::pac(const Arcset *pInitGuess, Arcset *pMember, Arcset *pTe
 				try{
 					corrector.multShoot(pMember, pTemp);
 					converged = true;
-				}catch(DivergeException &de2){
+				}catch(const DivergeException &de2){
 					// Could not converge with the line search... giving up  now
 					endPAC = true;
 					break;	// exit the while not converged loop
-				}catch(LinAlgException &lae){
+				}catch(const LinAlgException &lae){
 					printErr("PseudoArcEngine::pac: There was a linear algebra error...\n");
 					printErr("%s\n", lae.what());
 					endPAC = true;

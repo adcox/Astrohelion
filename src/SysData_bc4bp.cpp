@@ -86,7 +86,10 @@ SysData_bc4bp::SysData_bc4bp(const char *filepath){
 	// Load the matlab file
 	mat_t *matfp = Mat_Open(filepath, MAT_ACC_RDONLY);
 	if(nullptr == matfp){
-		throw Exception("SysData_bc4bp: Could not open data file");
+		char msg[128];
+		sprintf(msg, "SysData_bc4bp: Could not load data from %s", 
+			filepath);
+		throw Exception(msg);
 	}
 	readFromMat(matfp);
 	Mat_Close(matfp);

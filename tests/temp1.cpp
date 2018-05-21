@@ -59,6 +59,17 @@ int main(int argc, char** argv){
 
 	chain.clearAllConstraints();
 	chain.putInChronoOrder();
+
+	// Constrain the first and last states
+	std::vector<double> q0 = chain.getStateByIx(0);
+	std::vector<double> qf = chain.getStateByIx(-1);
+	
+	Constraint fix_q0(Constraint_tp::STATE, chain.getNodeRefByIx(0).getID(), q0);
+	Constraint fix_qf(Constraint_tp::STATE, chain.getNodeRefByIx(-1).getID(), qf);
+
+	chain.addConstraint(fix_q0);
+	chain.addConstraint(fix_qf);
+
 	chain.saveToMat("L4_chain.mat");
 
 	MultShootEngine shooter;

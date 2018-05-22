@@ -536,6 +536,11 @@ std::vector<Arcset_periodic> Family_PO::getMatchingMember(double val,
 					copyOrbit.clearArcConstraints();
 					break;
 			}
+			
+			// Add match con; add before others so that a pseudo-arclength 
+			// constraint will remain last if it exists
+			copyOrbit.addConstraint(matchCon);
+
 			// Re-add any constraints that do not conflict with matchCon
 			for(unsigned int i = 0; i < cons.size(); i++){
 				if(!cons[i].conflicts(matchCon)){
@@ -543,17 +548,16 @@ std::vector<Arcset_periodic> Family_PO::getMatchingMember(double val,
 				}
 			}
 
-			// Add match con
-			copyOrbit.addConstraint(matchCon);
-
 			// Do the corrections
 			Arcset_periodic newOrbit(pSysData);
 			try{
 				corrector.multShoot(&copyOrbit, &newOrbit);
 				matchMembers.push_back(newOrbit);
-			}catch(const DivergeException &e){
+			}catch(const Exception &e){
 				printErr("  Unable to converge on a periodic solution "
-					"for candidate %d...\n", n);
+					"for candidate %d... Returning the nearest family member"
+					" instead\n", n);
+				matchMembers.push_back(copyOrbit);
 			}
 		}
 	}

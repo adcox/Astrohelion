@@ -8,57 +8,41 @@
 using namespace astrohelion;
 using ltlaw = ControlLaw_cr3bp_lt;
 
-int main(){
+// Function declarations
+void freeMem(std::vector<ControlLaw*>&);
 
-	unsigned int law_gen, law_thrust, law_mass, law_options[6] = {0};
-	printf("Welcome to the low-thrust control law discombobulator\n"
-		"First, select the type of pointing strategy to use:\n"
-		"  [0] None\n"
-		"  [1] General pointing, fixed in rotating frame\n"
-		"  [2] Velocity pointing\n"
-		"  [3] Jacobi-preserving, 2D\n"
-		"  [4] General pointing, fixed in inertial frame\n"
-		"\nType the number of the pointing strategy: ");
-	std::cin >> law_gen;
+// Function definitions
+void freeMem(std::vector<ControlLaw*>& laws){
+	for(ControlLaw* pLaw : laws){
+		delete pLaw;
+		pLaw = nullptr;
+	}
+}//====================================================
 
-	if(law_gen == 0){
-		printf("Law ID = %d", 0);
-		return EXIT_SUCCESS;
+int main(int argc, char** argv){
+
+	char famFile[] = "../../data/families/cr3bp_earth-moon/L2_Halo.mat";
+
+	std::vector<ControlLaw*> loadedLaws {};
+	SysData_cr3bp sys(famFile);
+	Family_PO_cr3bp fam(&sys);
+
+	double T_syn = 29.5406; 	// days
+	double T = 2*T_syn/9 * 24 * 3600 / sys.getCharT();	// 9:2 synodic period, nondim
+
+	fam.readFromMat(famFile, loadedLaws);
+	std::vector<Arcset_periodic> matches = fam.getMemberByTOF(T);
+
+	if(!matches.empty()){
+		Arcset_cr3bp arc = static_cast<Arcset_cr3bp>(matches[0]);
+		arc.print();
+		Arcset_cr3bp fullArc(&sys);
+		reconstructArc(&arc, &fullArc);
+		fullArc.saveToMat("NRHO_9-2_Synodic.mat");
+	}else{
+		printWarn("Could not find a Halo at T = %.2f\n", T);
 	}
 
-	printf("\nNext, select the thrust parameterization:\n"
-		"  [0] Constant thrust\n"
-		"  [1] Variable thrust, bounded: f = 0.5 f_max (sin(g) + 1)\n"
-		"  [2] Variable thrust, unbounded: f = g^2\n"
-		"\nType the number of the thrust strategy: ");
-	std::cin >> law_thrust;
-
-	printf("\nNow select the mass parameterization:\n"
-		"  [0] Variable mass, constant specific impulse\n"
-		"  [1] Constant mass\n"
-		"\nType the number of the mass strategy:  ");
-	std::cin >> law_mass;
-
-	if(law_gen == 2){
-		printf("\nFinally, select the specific pointing:\n"
-			"  [0] Pro-velocity direction\n"
-			"  [1] Anti-velocity direction\n"
-			"\nType the number:  ");
-		std::cin >> law_options[0];
-	}else if(law_gen == 3){
-		printf("\nFinally, select the specific pointing:\n"
-			"  [0] Left\n"
-			"  [1] Right\n"
-			"\nType the number:  ");
-		std::cin >> law_options[0];
-	}
-
-	// Concatenate the pieces to get a law ID
-	unsigned int id = (law_gen << 11) | (law_thrust << 8) | (law_mass << 6);
-	for(unsigned int i = 0; i < 6; i++){
-		id |= (law_options[i] << (i-1));
-	}
-
-	printf("\nLaw ID = %d\n", id);
+	freeMem(loadedLaws);
 	return EXIT_SUCCESS;
-}
+}//====================================================

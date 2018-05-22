@@ -722,7 +722,8 @@ Node interpPointAtTime(const Arcset *traj, double t){
 
 void reconstructArc(const Arcset *pArcIn, Arcset *pArcOut){
     if(pArcIn == nullptr || pArcOut == nullptr)
-        throw Exception("Calculations:reconstructArc: pArcIn or pArcOut are nullptrs; cannot proceed");
+        throw Exception("Calculations:reconstructArc: pArcIn or pArcOut are "
+            " nullptrs; cannot proceed");
 
     const DynamicsModel *pModel = pArcIn->getSysData()->getDynamicsModel();
 

@@ -1,12 +1,4 @@
-#include "AllIncludes.hpp"
-
-#include <exception>
 #include <iostream>
-#include "matio.h"
-#include <vector>
-
-using namespace astrohelion;
-using ltlaw = ControlLaw_cr3bp_lt;
 
 int main(){
 
@@ -22,7 +14,7 @@ int main(){
 	std::cin >> law_gen;
 
 	if(law_gen == 0){
-		printf("Law ID = %d", 0);
+		printf("Law ID = %d\n", 0);
 		return EXIT_SUCCESS;
 	}
 

@@ -537,13 +537,15 @@ std::vector<Arcset_periodic> Family_PO::getMatchingMember(double val,
 					break;
 			}
 			
-			// Add match con; add before others so that a pseudo-arclength 
-			// constraint will remain last if it exists
+			// Add match con
 			copyOrbit.addConstraint(matchCon);
 
-			// Re-add any constraints that do not conflict with matchCon
+			// Re-add any constraints that do not conflict with matchCon and are
+			// not psuedo-arclength constraints
 			for(unsigned int i = 0; i < cons.size(); i++){
-				if(!cons[i].conflicts(matchCon)){
+				if(!cons[i].conflicts(matchCon) && 
+					cons[i].getType() != Constraint_tp::PSEUDOARC){
+					
 					copyOrbit.addConstraint(cons[i]);
 				}
 			}

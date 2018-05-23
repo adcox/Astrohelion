@@ -36,30 +36,30 @@ int main(int argc, char** argv){
 	if(!matches.empty()){
 		Arcset_cr3bp arc = static_cast<Arcset_cr3bp>(matches[0]);
 
-		arc.clearArcConstraints();	// get rid of the pseudo-arclength constraint
+		// arc.clearArcConstraints();	// get rid of the pseudo-arclength constraint
 
-		Constraint tofCon(Constraint_tp::TOF_TOTAL, 0, std::vector<double> {T});
-		arc.addConstraint(tofCon);
+		// Constraint tofCon(Constraint_tp::TOF_TOTAL, 0, std::vector<double> {T});
+		// arc.addConstraint(tofCon);
 
-		int id0 = arc.getNodeRefByIx(0).getID();
-		std::vector<double> periodicData {NAN, NAN, id0, NAN, id0, NAN};
-		Constraint periodicCon(Constraint_tp::MATCH_CUST, 
-			arc.getNodeRefByIx(-1).getID(), periodicData);
-		// arc.addConstraint(periodicCon);
+		// int id0 = arc.getNodeRefByIx(0).getID();
+		// std::vector<double> periodicData {NAN, NAN, id0, NAN, id0, NAN};
+		// Constraint periodicCon(Constraint_tp::MATCH_CUST, 
+		// 	arc.getNodeRefByIx(-1).getID(), periodicData);
+		// // arc.addConstraint(periodicCon);
 
-		arc.print();
+		// arc.print();
 
-		Arcset_cr3bp correctArc(&sys);
-		MultShootEngine shooter;
-		shooter.setVerbosity(Verbosity_tp::ALL_MSG);
-		shooter.setTOFType(MSTOF_tp::VAR_EQUALARC);
-		shooter.multShoot(&arc, &correctArc);
+		// Arcset_cr3bp correctArc(&sys);
+		// MultShootEngine shooter;
+		// shooter.setVerbosity(Verbosity_tp::ALL_MSG);
+		// shooter.setTOFType(MSTOF_tp::VAR_EQUALARC);
+		// shooter.multShoot(&arc, &correctArc);
 
-		correctArc.saveToMat("NRHO_9-2_Synodic.mat");
+		// correctArc.saveToMat("NRHO_9-2_Synodic.mat");
 
-		// Arcset_cr3bp fullArc(&sys);
-		// reconstructArc(&arc, &fullArc);
-		// fullArc.saveToMat("NRHO_9-2_Synodic.mat");
+		Arcset_cr3bp fullArc(&sys);
+		reconstructArc(&arc, &fullArc);
+		fullArc.saveToMat("NRHO_9-2_Synodic.mat");
 	}else{
 		printWarn("Could not find a Halo at T = %.2f\n", T);
 	}

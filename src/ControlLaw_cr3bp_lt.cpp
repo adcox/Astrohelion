@@ -972,27 +972,33 @@ std::string ControlLaw_cr3bp_lt::typeToString(unsigned int id){
 }//====================================================
 
 /**
- *  @brief Convert dimensional thrust to nondimensional thrust in the specified system
+ *  @brief Convert dimensional thrust to nondimensional thrust in the specified 
+ *  system
  * 
  *  @param F dimensional thrust in Newtons
  *  @param pSys pointer to the CR3BP-LT system object
  * 
  *  @return nondimensional thrust
  */
-double ControlLaw_cr3bp_lt::thrust_dim2nondim(double F, SysData_cr3bp_lt *pSys){
+double ControlLaw_cr3bp_lt::thrust_dim2nondim(double F, 
+	const SysData_cr3bp_lt *pSys){
+
 	return F*pSys->getCharT()*pSys->getCharT() / 
 		(1000*pSys->getCharL()*pSys->getRefMass());
 }//====================================================
 
 /**
- *  @brief Convert nondimensional thrust to dimensional thrust in the specified system
+ *  @brief Convert nondimensional thrust to dimensional thrust in the specified 
+ *  system
  * 
  *  @param f nondimensional thrust value in the specified system
  *  @param pSys pointer to the CR3BP-LT system object
  * 
  *  @return dimensional thrust, in Newtons
  */
-double ControlLaw_cr3bp_lt::thrust_nondim2dim(double f, SysData_cr3bp_lt *pSys){
+double ControlLaw_cr3bp_lt::thrust_nondim2dim(double f, 
+	const SysData_cr3bp_lt *pSys){
+	
 	return f*1000*pSys->getCharL()*pSys->getRefMass() / 
 		(pSys->getCharT()*pSys->getCharT());
 }//====================================================

@@ -200,8 +200,8 @@ public:
 	 */
 	static std::string typeToString(unsigned int);
 	static void convertLaws(Arcset_cr3bp_lt*, ControlLaw_cr3bp_lt*);
-	static double thrust_dim2nondim(double, SysData_cr3bp_lt*);
-	static double thrust_nondim2dim(double, SysData_cr3bp_lt*);
+	static double thrust_dim2nondim(double, const SysData_cr3bp_lt*);
+	static double thrust_nondim2dim(double, const SysData_cr3bp_lt*);
 	static void pointingVecToAngles(Eigen::Vector3d, double*, double*);
 	void print() const;
 	//\}

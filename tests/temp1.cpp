@@ -30,7 +30,8 @@ int main(int argc, char** argv){
 	fam.readFromMat(fullpath, loadedLaws);
 
 	// Get orbits associated with these discrete angles
-	std::vector<double> alpha_vals {4*PI/12, 5*PI/12, 6*PI/12, 7*PI/12, 8*PI/12};
+	std::vector<double> alpha_vals {4*PI/12, 5*PI/12, 6*PI/12, 7*PI/12, 8*PI/12,
+		9*PI/12, 10*PI/12, 11*PI/12,  11.9*PI/12};
 	std::vector<Arcset_cr3bp_lt> fullArcs {};
 
 	for(double alpha : alpha_vals){
@@ -38,9 +39,9 @@ int main(int argc, char** argv){
 
 		if(!matches.empty()){
 			fullArcs.push_back(static_cast<Arcset_cr3bp_lt>(matches[0]));
-			char fn[64];
-			sprintf(fn, "L4_f7.0e-02_Hlt-1.552_a%06.2f.mat", alpha*180/PI);
-			matches[0].saveToMat(fn);
+			// char fn[64];
+			// sprintf(fn, "L4_f7.0e-02_Hlt-1.552_a%06.2f.mat", alpha*180/PI);
+			// matches[0].saveToMat(fn);
 		}else{
 			printErr("Could not load family member with alpha = %.2f deg\n",
 				alpha*180/PI);
@@ -72,9 +73,20 @@ int main(int argc, char** argv){
 
 	chain.saveToMat("L4_chain.mat");
 
+	// Adjust the control law to use variable mass
+	unsigned int lawID = ltlaw::GENERAL | ltlaw::CSI_VAR_M | ltlaw::CONST_F;
+	ltlaw *pLaw = static_cast<ltlaw *>(chain.getCtrlLawByIx(0));
+	std::vector<double> params = pLaw->getParams();
+	params.push_back(1500);		// Isp
+	// *pLaw = ltlaw(lawID, params);
+
 	MultShootEngine shooter;
 	shooter.setMaxIts(200);
+	// shooter.setDoLineSearch(true);
+	// shooter.setTOFType(MSTOF_tp::VAR_FIXSIGN);
 
+	// Converge with fixed mass
+	printf("Converging with fixed mass\n");
 	Arcset_cr3bp_lt converged(&sys);
 	try{
 		shooter.multShoot(&chain, &converged);
@@ -83,9 +95,20 @@ int main(int argc, char** argv){
 		printErr("Multiple shooting diverged\n");
 		freeMem(loadedLaws);
 		return EXIT_SUCCESS;
-	}catch(const Exception &e){
+	}catch(const std::exception &e){
 		freeMem(loadedLaws);
 		throw;
+	}
+
+	// Converge again with variable mass
+	printf("Converging with variable mass\n");
+	Arcset_cr3bp_lt conv_varMass(&sys);
+	*pLaw = ltlaw(lawID, params);
+	shooter.setTOFType(MSTOF_tp::VAR_FIXSIGN);
+	shooter.setDoLineSearch(true);
+	try{
+		shooter.multShoot(&converged, &conv_varMass);
+		conv_varMass.saveToMat("L4_chain_converged_varMass.mat");
 	}catch(const std::exception &e){
 		freeMem(loadedLaws);
 		throw;

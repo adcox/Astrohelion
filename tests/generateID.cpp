@@ -48,7 +48,7 @@ int main(){
 	// Concatenate the pieces to get a law ID
 	unsigned int id = (law_gen << 11) | (law_thrust << 8) | (law_mass << 6);
 	for(unsigned int i = 0; i < 6; i++){
-		id |= (law_options[i] << (i-1));
+		id |= (law_options[i] << (5-i));
 	}
 
 	printf("\nLaw ID = %d\n", id);

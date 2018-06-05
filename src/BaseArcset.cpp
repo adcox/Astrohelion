@@ -1169,12 +1169,13 @@ std::vector<double> BaseArcset::getCoord(unsigned int ix) const{
 }//====================================================
 
 /**
- *  @brief Retrieve the control law ID for a segment at the specified index
+ *  @brief Retrieve a pointer to the control law for a segment at the specified 
+ *  index
  * 
  *  @param ix Index of the segment within the storage vector. If ix < 0, it 
  *  will count backwards from the end of the storage vector.
  *  s
- *  @return control law ID for the specified segment
+ *  @return control law pointer for the specified segment
  *  @throws Exception if ix is out of bounds.
  */
 ControlLaw* BaseArcset::getCtrlLawByIx(int ix){
@@ -1191,12 +1192,13 @@ ControlLaw* BaseArcset::getCtrlLawByIx(int ix){
 }//====================================================
 
 /**
- *  @brief Retrieve the control law ID for a segment at the specified index
+ *  @brief Retrieve a constant pointer to the control law for a segment at the
+ *  specified index
  * 
  *  @param ix Index of the segment within the storage vector. If ix < 0, it 
  *  will count backwards from the end of the storage vector.
  *  s
- *  @return control law ID for the specified segment
+ *  @return constant control law pointer for the specified segment
  *  @throws Exception if ix is out of bounds.
  */
 const ControlLaw* BaseArcset::getCtrlLawByIx_const(int ix) const{

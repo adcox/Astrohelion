@@ -186,7 +186,9 @@ void saveDoubleToFile(mat_t *matfp, const char *varName, double data){
  * @param rows number of rows in the matrix
  * @param cols number of columns in the matrix
  */
-void saveMatrixToFile(const char* filename, const char* varName, std::vector<double> data, size_t rows, size_t cols){
+void saveMatrixToFile(const char* filename, const char* varName, 
+    const std::vector<double> &data, size_t rows, size_t cols){
+
     mat_t *matfp = Mat_CreateVer(filename, nullptr, MAT_FT_DEFAULT);
     saveMatrixToFile(matfp, varName, data, rows, cols);
     Mat_Close(matfp);
@@ -205,9 +207,12 @@ void saveMatrixToFile(const char* filename, const char* varName, std::vector<dou
  *  @throws Exception if `data` does not have enough elements
  *  to construct a matrix with the specified number of rows and columns
  */
-void saveMatrixToFile(mat_t *matfp, const char *varName, std::vector<double> data, size_t rows, size_t cols){
+void saveMatrixToFile(mat_t *matfp, const char *varName, 
+    const std::vector<double> &data, size_t rows, size_t cols){
+
     if(data.size() < rows*cols)
-        throw Exception("Utilities::saveMatrixToFile: Input data has fewer elements than specified by the rows and cols arguments");
+        throw Exception("Utilities::saveMatrixToFile: Input data has fewer "
+            "elements than specified by the rows and cols arguments");
 
     if(nullptr != matfp){
         size_t dims[2] = {rows, cols};
@@ -219,7 +224,8 @@ void saveMatrixToFile(mat_t *matfp, const char *varName, std::vector<double> dat
             }
         }
 
-        matvar_t *matvar = Mat_VarCreate(varName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(data_trans[0]), MAT_F_DONT_COPY_DATA);
+        matvar_t *matvar = Mat_VarCreate(varName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2,
+            dims, &(data_trans[0]), MAT_F_DONT_COPY_DATA);
         saveVar(matfp, matvar, varName, MAT_COMPRESSION_NONE);
     }else{
         printErr("Utilities::saveMatrixToFile: Error creating mat file\n");

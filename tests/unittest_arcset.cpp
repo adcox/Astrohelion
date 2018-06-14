@@ -41,17 +41,43 @@ BOOST_AUTO_TEST_CASE(Concat_CR3BP){
 
 	set1.addNode(Node(state1, 6, 0));
 	set1.addNode(Node(state2, 6, 1.1));
-	set1.addSeg(Segment(0, 1, 1.1));
+	Segment seg1(0, 1, 1.1);
+	std::vector<double> t1 {0, 1.1};
+	std::vector<double> q1(state1+0, state1+6);
+	q1.insert(q1.end(), state2+0, state2+6);
+	seg1.setTimeVector(t1);
+	seg1.setStateVector(q1);
+	set1.addSeg(seg1);
 
 	set2.addNode(Node(state3, 6, 0));
 	set2.addNode(Node(state4, 6, 2.2));
-	set2.addSeg(Segment(0, 1, 2.2));
+	Segment seg2(0, 1, 2.2);
+	std::vector<double> t2 {0, 2.2};
+	std::vector<double> q2(state3+0, state3+6);
+	q2.insert(q2.end(), state4+0, state4+6);
+	seg2.setTimeVector(t2);
+	seg2.setStateVector(q2);
+	set2.addSeg(seg2);
 
 	set3.addNode(Node(state4, 6, 3.3));
 	set3.addNode(Node(state3, 6, 4.4));
 	set3.addNode(Node(state2, 6, 5.5));
-	set3.addSeg(Segment(0, 1, 1.1));
-	set3.addSeg(Segment(1, 2, 1.1));
+	
+	Segment seg3(0, 1, 1.1);
+	std::vector<double> t3 {3.3, 4.4};
+	std::vector<double> q3(state4+0, state4+6);
+	q3.insert(q3.end(), state3+0, state3+6);
+	seg3.setTimeVector(t3);
+	seg3.setStateVector(q3);
+	set3.addSeg(seg3);
+
+	Segment seg4(1, 2, 1.1);
+	std::vector<double> t4 {4.4, 5.5};
+	std::vector<double> q4(state3+0, state3+6);
+	q4.insert(q4.end(), state2+0, state2+6);
+	seg4.setTimeVector(t4);
+	seg4.setStateVector(q4);
+	set3.addSeg(seg4);
 
 	set4.addNode(Node(state4, 6, 0));
 

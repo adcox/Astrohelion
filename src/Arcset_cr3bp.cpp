@@ -110,7 +110,7 @@ double Arcset_cr3bp::getJacobi(int id){
 
 	try{
 		return nodes[nodeIDMap[id]].getExtraParam(PARAMKEY_JACOBI);
-	}catch(Exception &e){
+	}catch(const Exception &e){
 		std::vector<double> state = nodes[nodeIDMap[id]].getState();
 		double C = DynamicsModel_cr3bp::getJacobi(&(state.front()), static_cast<const SysData_cr3bp *>(pSysData)->getMu());
 		nodes[nodeIDMap[id]].setExtraParam(PARAMKEY_JACOBI, C);
@@ -133,7 +133,7 @@ double Arcset_cr3bp::getJacobi_const(int id) const{
 
 	try{
 		return nodes[nodeIDMap.at(id)].getExtraParam(PARAMKEY_JACOBI);
-	}catch(Exception &e){
+	}catch(const Exception &e){
 		std::vector<double> state = nodes[nodeIDMap.at(id)].getState();
 		return DynamicsModel_cr3bp::getJacobi(&(state.front()), static_cast<const SysData_cr3bp *>(pSysData)->getMu());
 	}
@@ -164,7 +164,7 @@ double Arcset_cr3bp::getJacobiByIx(int ix){
 	 */
 	try{
 		return nodes[ix].getExtraParam(PARAMKEY_JACOBI);
-	}catch(Exception &e){
+	}catch(const Exception &e){
 		std::vector<double> state = nodes[ix].getState();
 		double C = DynamicsModel_cr3bp::getJacobi(&(state.front()), static_cast<const SysData_cr3bp *>(pSysData)->getMu());
 		nodes[ix].setExtraParam(PARAMKEY_JACOBI, C);
@@ -197,7 +197,7 @@ double Arcset_cr3bp::getJacobiByIx_const(int ix) const{
 	 */
 	try{
 		return nodes[ix].getExtraParam(PARAMKEY_JACOBI);
-	}catch(Exception &e){
+	}catch(const Exception &e){
 		std::vector<double> state = nodes[ix].getState();
 		return DynamicsModel_cr3bp::getJacobi(&(state.front()), static_cast<const SysData_cr3bp *>(pSysData)->getMu());
 	}

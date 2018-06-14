@@ -722,7 +722,8 @@ Node interpPointAtTime(const Arcset *traj, double t){
 
 void reconstructArc(const Arcset *pArcIn, Arcset *pArcOut){
     if(pArcIn == nullptr || pArcOut == nullptr)
-        throw Exception("Calculations:reconstructArc: pArcIn or pArcOut are nullptrs; cannot proceed");
+        throw Exception("Calculations:reconstructArc: pArcIn or pArcOut are "
+            " nullptrs; cannot proceed");
 
     const DynamicsModel *pModel = pArcIn->getSysData()->getDynamicsModel();
 
@@ -1187,7 +1188,7 @@ Arcset_periodic cr3bp_correctHalfPerSymPO(const Arcset_cr3bp *halfPerGuess, Arcs
         corrector.multShoot(halfPerGuess, halfPerCorrected, pItData);
         // halfPerCorrected.print();
         // halfPerCorrected.saveToMat("data/temp_halfPerCorrected.mat");
-    }catch(DivergeException &e){
+    }catch(const DivergeException &e){
         // Try again using a line search
         corrector.setDoLineSearch(true);
         corrector.setMaxIts(250);
@@ -1201,7 +1202,7 @@ Arcset_periodic cr3bp_correctHalfPerSymPO(const Arcset_cr3bp *halfPerGuess, Arcs
             corrector.multShoot(halfPerGuess, halfPerCorrected);
             
             // halfPerCorrected->print();
-        }catch(DivergeException &ee){
+        }catch(const DivergeException &ee){
             if(createCorrectedArcset){
                 delete halfPerCorrected;
                 halfPerCorrected = nullptr;

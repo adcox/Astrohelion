@@ -187,11 +187,14 @@ conicTest: $(OBJECTS)
 convertLT: $(OBJECTS)
 	$(COMP) -I $(INC) $(INC_SYS) $^  convertLTFiles.cpp $(LDFLAGS) -o $(BIN)/$@	
 
+eigenTest: 
+	$(COMP) -I $(INC) $(INC_SYS) test_eigen.cpp $(LDFLAGS) -o $(BIN)/$@
+
 famGen: $(OBJECTS)
 	$(COMP) -I $(INC) $(INC_SYS) $^ test_famGeneration.cpp $(LDFLAGS) -o $(BIN)/$@
 
-eigenTest: 
-	$(COMP) -I $(INC) $(INC_SYS) test_eigen.cpp $(LDFLAGS) -o $(BIN)/$@
+generateID:
+	$(COMP) -I$(INC) $(INC_SYS) $^ generateID.cpp -o $(BIN)/$@	
 
 lowThrustTest: $(OBJECTS)
 	$(COMP) -I $(INC) $(INC_SYS) $^ test_cr3bp_lowThrust.cpp $(LDFLAGS) -o $(BIN)/$@
@@ -212,7 +215,7 @@ sysSwitchTest: $(OBJECTS)
 	$(COMP) -I $(INC) $(INC_SYS) $^ test_sysSwitch.cpp $(LDFLAGS) -o $(BIN)/$@	
 
 temp: $(OBJECTS)
-	$(COMP) -I $(INC) $(INC_SYS) $^ temp_astroTest.cpp $(LDFLAGS) -o $(BIN)/$@	
+	$(COMP) -I $(INC) $(INC_SYS) $^ temp1.cpp $(LDFLAGS) -o $(BIN)/$@	
 
 temp2: $(OBJECTS)
 	$(COMP) -I $(INC) $(INC_SYS) $^ temp2.cpp $(LDFLAGS) -o $(BIN)/$@

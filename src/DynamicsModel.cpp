@@ -306,7 +306,7 @@ void DynamicsModel::multShoot_initDesignVec(MultShootData &it) const{
 				MSVarMap_Key key(MSVar_tp::CTRL, it.pArcIn->getNodeRefByIx_const(n).getID());
 				it.freeVarMap[key] = MSVarMap_Obj(key, -1, ctrlStates.size());
 			}
-		}catch(Exception &e){
+		}catch(const Exception &e){
 			// Extra parameter vector doesn't exist; no action necessary
 		}
 	}
@@ -432,7 +432,7 @@ void DynamicsModel::multShoot_getSimICs(const MultShootData &it, int s,
 			}else{
 				std::copy(it.X.begin()+ctrl_var.row0, it.X.begin()+ctrl_var.row0 + ctrl_var.nRows, ctrl0);
 			}
-		}catch(Exception &e){ /* No need to handle exception */ }
+		}catch(const Exception &e){ /* No need to handle exception */ }
 	}
 
 	switch(it.tofTp){
@@ -1805,7 +1805,7 @@ void DynamicsModel::multShoot_createOutput(const MultShootData& it) const{
                 std::vector<double> ctrl = std::vector<double>(it.X.begin()+ctrl_var.row0, it.X.begin() + ctrl_var.row0 + ctrl_var.nRows);
                 node.setExtraParamVec(PARAMKEY_CTRL, ctrl);
             }
-        }catch(Exception &e){ /* No need to report exception */ }
+        }catch(const Exception &e){ /* No need to report exception */ }
 
         // Add the node to the output nodeset and save the new ID
         newNodeIDs.push_back(it.pArcOut->addNode(node));
@@ -1922,5 +1922,166 @@ void DynamicsModel::multShoot_createOutput(const MultShootData& it) const{
     }
 }//======================================================
 
+/**
+ * @brief Check the analytically-computed partial derivatives in the A matrix 
+ * by comparing with a central-differencing method
+ * 
+ * @param q Core and control state vector; must have enough elements to specify
+ * all core and control states with the core size from the DynamicsModel and
+ * the control size from the control law in the EOM_ParamStruct
+ * @param t time at which to evaluate the equations of motion
+ * @param pertSize size of the perturbation to use in central differencing
+ * @param params structure containing information for the equations of motion,
+ * including the system data and control law
+ * @param verb Verbosity, defaults to Verbosity_tp::SOME_MSG
+ * @param writeToFile Whether or not to save the computing A matrices to file;
+ * they are saved to the current directory with filenames following the pattern
+ * "FiniteDiff_A*.csv"
+ * 
+ * @return true if the numeric and analytic A matrices match to within a 
+ * "reasonable" tolerance
+ */
+bool DynamicsModel::finiteDiff_checkAMat(double *q, double t, double pertSize, 
+	EOM_ParamStruct *params, Verbosity_tp verb, bool writeToFile) const{
+
+	if(params == nullptr){
+		throw Exception("DynamicsModel::finiteDiff_checkAMat: params is null");
+	}
+
+	unsigned int ctrl_dim = 0;
+	if(params->pCtrlLaw){
+		ctrl_dim = params->pCtrlLaw->getNumStates();
+	}
+
+	unsigned int q_dim = coreDim + ctrl_dim;
+	unsigned int vecLen = q_dim*(q_dim+1) + extraDim;
+	std::vector<double> q0(vecLen, 0);
+	
+	// Assign arbitrary state values to state and control; extra variables left 
+	// as zeros
+	for(unsigned int i = 0; i < q_dim; i++)
+		q0[i] = q[i];
+
+	// Assign STM = Identity
+	for(unsigned int i = q_dim; i < q_dim*(q_dim+1); i += q_dim+1)
+		q0[i] = 1;
+
+	MatrixXRd A_analytic(q_dim, q_dim), A_numeric(q_dim, q_dim);
+
+	// Get the A matrix analytically
+	std::vector<double> dq(vecLen, 0), qp(vecLen, 0), qdot(vecLen, 0);
+	
+	eom_fcn eoms = getFullEOM_fcn();
+
+	eoms(t, &(q0[0]), &(dq[0]), params);
+	A_analytic = Eigen::Map<MatrixXRd>(&(dq[q_dim]), q_dim, q_dim);
+
+	for(unsigned int i = 0; i < q_dim; i++){
+		qdot.assign(vecLen, 0);
+
+		// Perturb the state vector in forward direction
+		qp = q0;
+		qp[i] += pertSize;
+
+		// Compute the state derivative
+		eoms(t, &(qp[0]), &(qdot[0]), params);
+		Eigen::VectorXd Af = Eigen::Map<Eigen::VectorXd>(&(qdot[0]), q_dim, 1);
+
+		// Perturb the state vector in the backward direction
+		qp = q0;
+		qdot.assign(vecLen, 0);
+		qp[i] -= pertSize;
+		
+		// Compute state derivatives
+		eoms(t, &(qp[0]), &(qdot[0]), params);
+		Eigen::VectorXd Ab = Eigen::Map<Eigen::VectorXd>(&(qdot[0]), q_dim, 1);
+
+		A_numeric.col(i) = (Af - Ab)/(2*pertSize);
+	}
+
+	MatrixXRd diff = A_analytic - A_numeric;
+	diff = diff.cwiseAbs();	// Get coefficient-wise aboslute value
+
+	// Relative differences (divide by magnitude of each value)
+	MatrixXRd relDiff = MatrixXRd::Zero(diff.rows(), diff.cols());	
+
+    // Divide each element by the magnitude of the DF element to get a relative 
+    // difference magnitude
+    for(int r = 0; r < diff.rows(); r++){
+        for(int c = 0; c < diff.cols(); c++){
+            // If one of the elements is zero, let the difference just be the 
+            // difference; no division
+            if(std::abs(A_analytic(r,c)) > 1e-13 && std::abs(A_numeric(r,c)) > 1e-13)
+                relDiff(r,c) = diff(r,c)/std::abs(A_numeric(r,c));
+        }
+    }
+
+	// Compute the largest coefficient in each row and column
+    std::vector<unsigned int> rowMaxIndex(diff.rows(), 0), colMaxIndex(diff.cols(), 0);
+    Eigen::VectorXd rowMax(diff.rows(), 1);
+    Eigen::VectorXd colMax(diff.cols(), 1);
+    for(unsigned int r = 0; r < diff.rows(); r++){
+    	rowMax(r) = diff.row(r).maxCoeff(&rowMaxIndex[r]);
+    }
+	for(unsigned int c = 0; c < diff.cols(); c++){
+		colMax(c) = diff.col(c).maxCoeff(&colMaxIndex[c]);
+	}
+
+	unsigned int rowMaxMaxIx = 0, colMaxMaxIx = 0;
+    double rowMaxMax = rowMax.maxCoeff(&rowMaxMaxIx);
+    double colMaxMax = colMax.maxCoeff(&colMaxMaxIx);
+    int errScalar = 100000;
+
+    bool goodA = true;
+
+    if(rowMaxMax < errScalar*pertSize && colMaxMax < errScalar*colMaxMax){
+        if(verb >= Verbosity_tp::SOME_MSG)
+        printVerbColor(verb >= Verbosity_tp::SOME_MSG, BOLDGREEN,
+        	"No significant errors! (Abs diff is small)\n");
+
+        goodA = goodA && true;
+    }else{
+
+    	if(rowMaxMax >= errScalar*pertSize){
+    		// row error is too big
+    		if(relDiff(rowMaxMaxIx, rowMaxIndex[rowMaxMaxIx]) < errScalar*pertSize){
+    			// The relative difference is small enough
+    			printVerbColor(verb >= Verbosity_tp::SOME_MSG, BOLDGREEN,
+    				"No significant errors! (Abs diff is large, rel diff is small)\n");
+    			goodA = goodA && true;
+    		}else{
+    			printColor(BOLDRED, "Significant errors (Abs diff and Rel diff)\n");
+    			goodA = goodA && false;
+    		}
+    	}else{
+    		// Column error is too big
+    		if(relDiff(colMaxIndex[colMaxMaxIx], colMaxMaxIx) < errScalar*pertSize){
+    			printVerbColor(verb >= Verbosity_tp::SOME_MSG, BOLDGREEN,
+    				"No significant errors! (Abs diff is large, rel diff is small)\n");
+    			goodA = goodA && true;
+    		}else{
+    			printColor(BOLDRED, "Significant errors (Abs diff and Rel diff)\n");
+    			goodA = goodA && false;
+    		}
+    	}
+    }
+
+	if(verb >= Verbosity_tp::ALL_MSG){
+		printColor(BLUE, "Analytic:\n");
+		std::cout << A_analytic << std::endl;
+		printColor(BLUE, "Numeric:\n");
+		std::cout << A_numeric << std::endl;
+		printColor(BLUE, "Difference:\n");
+		std::cout << diff << std::endl;
+	}
+
+	if(writeToFile){
+        toCSV(A_numeric, "FiniteDiff_Aest.csv");
+        toCSV(A_analytic, "FiniteDiff_A.csv"); 
+        toCSV(diff, "FiniteDiff_ADiff.csv");
+    }
+
+    return goodA;
+}//======================================================
 
 }// END of Astrohelion namespace

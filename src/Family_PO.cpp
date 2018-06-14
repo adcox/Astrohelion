@@ -536,24 +536,30 @@ std::vector<Arcset_periodic> Family_PO::getMatchingMember(double val,
 					copyOrbit.clearArcConstraints();
 					break;
 			}
-			// Re-add any constraints that do not conflict with matchCon
+			
+			// Add match con
+			copyOrbit.addConstraint(matchCon);
+
+			// Re-add any constraints that do not conflict with matchCon and are
+			// not psuedo-arclength constraints
 			for(unsigned int i = 0; i < cons.size(); i++){
-				if(!cons[i].conflicts(matchCon)){
+				if(!cons[i].conflicts(matchCon) && 
+					cons[i].getType() != Constraint_tp::PSEUDOARC){
+					
 					copyOrbit.addConstraint(cons[i]);
 				}
 			}
-
-			// Add match con
-			copyOrbit.addConstraint(matchCon);
 
 			// Do the corrections
 			Arcset_periodic newOrbit(pSysData);
 			try{
 				corrector.multShoot(&copyOrbit, &newOrbit);
 				matchMembers.push_back(newOrbit);
-			}catch(DivergeException &e){
+			}catch(const Exception &e){
 				printErr("  Unable to converge on a periodic solution "
-					"for candidate %d...\n", n);
+					"for candidate %d... Returning the nearest family member"
+					" instead\n", n);
+				matchMembers.push_back(copyOrbit);
 			}
 		}
 	}
@@ -651,7 +657,7 @@ void Family_PO::readFromMat(const char *filename,
 	loadMiscData(pMatFile);
 	try{
 		loadEigVecs(pMatFile);
-	}catch(Exception &e){
+	}catch(const Exception &e){
 		printWarn("Family_PO::readFromMat: Could not load eigenvectors from %s",
 			filename);
 	}

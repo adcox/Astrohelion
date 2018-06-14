@@ -31,7 +31,7 @@ int main(void){
 	// sim.setSimpleInt(true);
 	try{
 		sim.runSim(ic_lt, 5*tof, &lowThrustTraj, &control);
-	}catch(DivergeException &e){}
+	}catch(const DivergeException &e){}
 
 	lowThrustTraj.saveToMat("data/circleOrb_lowThrust.mat");
 }

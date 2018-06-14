@@ -183,7 +183,8 @@ public:
 	void addConstraint(Constraint);
 	int addNode(Node);
 	int addSeg(Segment);
-	int appendSetAtNode(const BaseArcset*, int, int, double);
+	int appendSetAtNode(const BaseArcset*, int, int, double, 
+		ControlLaw *pNewSegLaw = nullptr);
 	void clearArcConstraints();
 	void clearAllConstraints();
 	std::vector<int> concatArcset(const BaseArcset*);

@@ -522,7 +522,7 @@ BOOST_AUTO_TEST_CASE(DataPreserved){
 
 	try{
 		sim.runSim(ic, 6*PI*400, &traj);
-	}catch(Exception &e){}
+	}catch(const Exception &e){}
 
 	// But some data should still be written to traj
 	BOOST_CHECK_GT(traj.getNumNodes(), 1);
@@ -544,7 +544,7 @@ BOOST_AUTO_TEST_CASE(DataPreserved_fixedStep){
 
 	try{
 		sim.runSim(ic, 6*PI*400, &traj);
-	}catch(Exception &e){}
+	}catch(const Exception &e){}
 
 	// But some data should still be written to traj
 	BOOST_CHECK_GT(traj.getNumNodes(), 1);

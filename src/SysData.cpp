@@ -131,7 +131,7 @@ int SysData::getNumPrimaries() const { return primaries.size(); }
 std::string SysData::getPrimary(int n) const{ 
 	try{
 		return primaries.at(n);
-	}catch(std::out_of_range &err){
+	}catch(const std::out_of_range &err){
 		astrohelion::printErr("Could not find primary at index %d; out of range\n", n);
 		return "nullptr";
 	}
@@ -201,7 +201,7 @@ void SysData::saveToMat(const char *filepath) const{
 	 */
 	mat_t *matfp = Mat_CreateVer(filepath, nullptr, MAT_FT_DEFAULT);
 	if(nullptr == matfp){
-		astrohelion::printErr("SysData::saveToMat: Error creating MAT file\n");
+		printErr("SysData::saveToMat: Error creating MAT file, %s\n", filepath);
 	}else{
 		// save things
 		saveToMat(matfp);

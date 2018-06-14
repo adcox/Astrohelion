@@ -529,10 +529,10 @@ void Arcset::saveToMat(const char* filename, Save_tp saveTp) const{
 			saveCmds_toFile(matfp, saveTp);
 		}catch(const Exception &E){
 			Mat_Close(matfp);
-			throw E;
+			throw;
 		}catch(const std::exception &e){
 			Mat_Close(matfp);
-			throw e;
+			throw;
 		}
 	}
 
@@ -593,7 +593,7 @@ void Arcset::saveCmds_toFile(mat_t* pMatFile, Save_tp saveTp) const{
 
 		saveTimestampToFile(pMatFile);
 	}catch(const std::exception &e){
-		throw &e;
+		throw;
 	}
 }//====================================================
 
@@ -673,9 +673,9 @@ void Arcset::readFromMat(const char *filepath, std::vector<ControlLaw*> &refLaws
 	}else{
 		try{
 			readCmds_fromFile(matfp, refLaws);
-		}catch(std::exception &e){
+		}catch(const std::exception &e){
 			Mat_Close(matfp);
-			throw e;
+			throw;
 		}
 	}
 
@@ -730,7 +730,7 @@ void Arcset::readCmds_fromFile(mat_t *pMatFile,
 				throw Exception("Arcset::readCmds_fromFile: "
 					"Could not read link table");
 			}
-		}catch(Exception &e){
+		}catch(const Exception &e){
 			// Try the old initialization scheme
 			initNodesSegsFromMat(pMatFile);
 		}
@@ -767,7 +767,7 @@ void Arcset::readCmds_fromFile(mat_t *pMatFile,
 		matvar_t *pCons = Mat_VarRead(pMatFile, VARNAME_CONSTRAINTS);
 		if(readVar_Constraints(pCons, saveTp)){ Mat_VarFree(pCons); }
 
-	}catch(Exception &e){
+	}catch(const Exception &e){
 		throw Exception("Arcset:readCmds_fromFile:"
 			" Deprecated file structure; fix commented-out code to read");
 		// // if file was saved using older style, try slightly different read commands

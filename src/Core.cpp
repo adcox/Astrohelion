@@ -89,10 +89,10 @@ void Core_Settings::load(const std::string &filename){
 	try{
 		// Load XML file and put its contents in the property tree; if file isn't found, exception is thrown
 		read_xml(filename, pt);
-	}catch(std::exception &e){
+	}catch(const std::exception &e){
 		std::cout << "Error: Could not load the settings file:\n";
 		std::cout << e.what() << std::endl;
-		throw e;
+		throw;
 	}
 
 	try{
@@ -100,10 +100,10 @@ void Core_Settings::load(const std::string &filename){
 		spice_data_filepath = pt.get<std::string>("astrohelion.spice.data_filepath");
 		spice_time_kernel = pt.get<std::string>("astrohelion.spice.time_kernel");
 		spice_spk_kernel = pt.get<std::string>("astrohelion.spice.spk_kernel");
-	}catch(std::exception &e){
+	}catch(const std::exception &e){
 		std::cout << "Error: Could not load setting values from settings file\n";
 		std::cout << e.what() << std::endl;
-		throw e;
+		throw;
 	}
 }//==================================================
 
@@ -123,10 +123,10 @@ void Core_Settings::save(const std::string &filename){
 	try{
 		// Write property tree to XML file
 		write_xml(filename, pt);
-	}catch(std::exception &e){
+	}catch(const std::exception &e){
 		std::cout << "Error saving core settings:" << std::endl;
 		std::cout << e.what() << std::endl;
-		throw e;
+		throw;
 	}
 }//==================================================
 
@@ -208,13 +208,13 @@ void Core_Initializer::runInit(){
 	try{
 		settings.load(userSettingsFilepath);
 		// std::cout << "Loaded user settings\n";
-	}catch(std::exception &e){
+	}catch(const std::exception &e){
 		// Wasn't able to load user settings, so try loading default settings
 		std::cout << "Unable to load user settings, attempting to load default_settings\n";
 		try{
 			settings.load(defaultSettingsFilepath);
 			std::cout << "Loaded default settings; creating user settings file at:\n\t" << userSettingsFilepath << std::endl;
-		}catch(std::exception &ee){
+		}catch(const std::exception &ee){
 			// Wasn't able to load default user settings either...
 			std::cout << "Unable to load default settings\n";
 			std::cout << "Creating default settings file at " << defaultSettingsFilepath << std::endl;
@@ -248,7 +248,7 @@ void Core_Initializer::runInit(){
 	    furnsh_c(deKernel);
 	    checkAndReThrowSpiceErr("Core_Initializer::runInit furnsh_c error");
 
-	}catch(std::exception &e){}
+	}catch(const std::exception &e){}
 
 	// ************************************************************************
    	// 			GSL Initialization
@@ -278,9 +278,9 @@ void Core_Initializer::runInit(){
 	try{
 		// Load XML file and put its contents in the property tree; if file isn't found, exception is thrown
 		read_xml(bodyDataFilepath, dataTree);
-	}catch(std::exception &e){
+	}catch(const std::exception &e){
 		std::cout << "Could not read the body data file" << std::endl;
-		throw e;
+		throw;
 	}
 
 	BOOST_FOREACH(ptree::value_type &v, dataTree.get_child("body_data")){
@@ -289,37 +289,37 @@ void Core_Initializer::runInit(){
 
 		try{
 			bd.name = bodyTree.get<std::string>("name");
-		}catch(std::exception &e){
+		}catch(const std::exception &e){
 			std::cout << "Error reading body data: name:\n" << e.what() << std::endl;
 		}
 
 		try{
 			bd.id = bodyTree.get<int>("id");
-		}catch(std::exception &e){
+		}catch(const std::exception &e){
 			std::cout << "Error reading " << bd.name << " body data: id:\n" << e.what() << std::endl;
 		}
 
 		try{
 			bd.parent = bodyTree.get<std::string>("parent");
-		}catch(std::exception &e){
+		}catch(const std::exception &e){
 			std::cout << "Error reading " << bd.name << " body data: parent:\n" << e.what() << std::endl;
 		}
 
 		try{
 			bd.gravParam = bodyTree.get<double>("gm");
-		}catch(std::exception &e){
+		}catch(const std::exception &e){
 			std::cout << "Error reading " << bd.name << " body data: gm:\n" << e.what() << std::endl;
 		}
 
 		try{
 			bd.bodyRad = bodyTree.get<double>("radius");
-		}catch(std::exception &e){
+		}catch(const std::exception &e){
 			std::cout << "Error reading " << bd.name << " body data: radius:\n" << e.what() << std::endl;
 		}
 
 		try{
 			bd.orbitRad = bodyTree.get<double>("circ_r");
-		}catch(std::exception &e){
+		}catch(const std::exception &e){
 
 			// Report the error unless the body is the sun, which never has a "circ_r" property
 			if(!boost::iequals(bd.name, "sun"))
@@ -355,7 +355,7 @@ Core_Initializer::~Core_Initializer(){
 			// Check for errors and report them, but catch the thrown exception
 			try{
 				checkAndReThrowSpiceErr("Core_Initializer::~Core_Initializer unload_c error");
-			}catch(Exception &e){}
+			}catch(const Exception &e){}
 		}
 	}
 }//================================================

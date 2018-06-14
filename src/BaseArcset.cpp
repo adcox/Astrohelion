@@ -285,15 +285,22 @@ int BaseArcset::addSeg(Segment s){
 
 /**
  *  @brief Append an arcset object (i.e., a set of nodes and segments) to this one
- * 
- *  @param pArcsetIn a pointer to the arcset object that will be appended to this object
- *  @param localNodeID the ID of the node in *this* arcset object that `pArcsetIn` will be linked to
+ *  @details The epochs associated with the nodes in this arcset are left 
+ *  unchanged and the epochs of the appended set are updated to be continuous
+ *  
+ *  @param pArcsetIn a pointer to the arcset object that will be appended to 
+ *  this object
+ *  @param localNodeID the ID of the node in *this* arcset object that 
+ *  `pArcsetIn` will be linked to
  *  @param appendNodeID the ID of the node in `pArcsetIn` to link from
- *  @param tof time-of-flight between appendNodeID to localNodeID; when this value is nonzero, an artificial
- *  segment is constructed two link the two arcsets. If `tof` is zero, then one of the nodes is deleted.
- *  If the node at `localNodeID` is an origin node, then the node at `appendNodeID` is deleted. If
- *  the local node is not an origin, then it is deleted instead. The segment left without a terminus is then 
- *  connected to the remaining node.
+ *  @param tof time-of-flight between appendNodeID to localNodeID; when this 
+ *  value is nonzero, an artificial segment is constructed two link the two 
+ *  arcsets. If `tof` is zero, then one of the nodes is deleted. If the node at 
+ *  `localNodeID` is an origin node, then the node at `appendNodeID` is deleted. 
+ *  If the local node is not an origin, then it is deleted instead. The segment 
+ *  left without a terminus is then connected to the remaining node.
+ *  @param pNewSegLaw pointer to a control law that is applied to the artificial
+ *  segment created if `tof` is not zero.
  *  
  *  @return the ID of a new segment that links the old and new arcset objects
  *	@throws Exception if the two arcset objects have different system data objects
@@ -301,49 +308,66 @@ int BaseArcset::addSeg(Segment s){
  *  @throws Exception if one or both of the identifies nodes does not have
  *  a free link slot
  */
-int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int localNodeID, int appendNodeID, double tof){
+int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int localNodeID, 
+	int appendNodeID, double tof, ControlLaw *pNewSegLaw){
+
 	if(pArcsetIn->pSysData != pSysData)
-		throw Exception("BaseArcset::appendSetAtNode: Cannot concatenate two arcsets with different system data objects");
+		throw Exception("BaseArcset::appendSetAtNode: Cannot concatenate two"
+			" arcsets with different system data objects");
 
 	// First, check to make sure the specified nodes are valid
-	if(nodeIDMap.count(localNodeID) == 0)
-		throw Exception("BaseArcset::appendSetAtNode: localNodeID is out of bounds");
+	if(nodeIDMap.count(localNodeID) == 0){
+		char msg[128];
+		sprintf(msg, "BaseArcset::appendSetAtNode: localNodeID %d is out of bounds",
+			localNodeID);
+		throw Exception(msg);
+	}
 
 	// Create a copy so we don't affect the original
 	baseArcsetPtr pAppendArc = pArcsetIn->clone();
 
 	const Node &localNode = nodes[nodeIDMap[localNodeID]];
-	const Node &appendNode = pAppendArc->getNodeRef_const(appendNodeID);		// Will do its own index checks
+
+	// Will do its own index checks
+	const Node &appendNode = pAppendArc->getNodeRef_const(appendNodeID);
 
 	// Both nodes must have one "open port"
-	if(!localNode.isLinkedTo(Linkable::INVALID_ID) || !appendNode.isLinkedTo(Linkable::INVALID_ID))
-		throw Exception("BaseArcset::appendSetAtNode: specified nodes are not both open to a new link");
+	if(!localNode.isLinkedTo(Linkable::INVALID_ID) || 
+		!appendNode.isLinkedTo(Linkable::INVALID_ID)){
+
+		throw Exception("BaseArcset::appendSetAtNode: "
+			"specified nodes are not both open to a new link");
+	}
 
 	// Determine if localNode is the origin or terminus of a segment
-	// printf("linkToNode has links [%d, %d]\n", localNode.getLink(0), localNode.getLink(1));
-	// printf("Choosing segment (ID %d)\n", localNode.getLink(0) == Linkable::INVALID_ID ? localNode.getLink(1) : localNode.getLink(0));
-	Segment localSeg = getSeg(localNode.getLink(0) == Linkable::INVALID_ID ? localNode.getLink(1) : localNode.getLink(0));
+	Segment localSeg = getSeg(localNode.getLink(0) == Linkable::INVALID_ID ?\
+		localNode.getLink(1) : localNode.getLink(0));
 	bool bLocalNodeIsOrigin = localSeg.getOrigin() == localNode.getID();
-	Segment appendSeg = pAppendArc->getSeg(appendNode.getLink(0) == Linkable::INVALID_ID ? appendNode.getLink(1) : appendNode.getLink(0));
+	Segment appendSeg = pAppendArc->getSeg(appendNode.getLink(0) ==\
+		Linkable::INVALID_ID ? appendNode.getLink(1) : appendNode.getLink(0));
 	bool bAppendNodeIsOrigin = appendSeg.getOrigin() == appendNode.getID();
 
-	if(!bLocalNodeIsOrigin && !bAppendNodeIsOrigin)
-		throw Exception("BaseArcset::appendSetAtNode: neither node is an origin; cannot create segment between them");
+	if(!bLocalNodeIsOrigin && !bAppendNodeIsOrigin){
+		throw Exception("BaseArcset::appendSetAtNode: neither node is an"
+			" origin; cannot create segment between them");
+	}
 
 	// Store STM between two data sets; if tof != 0, we don't know the path between
 	// the two, so linkSTM is initialized to the identity matrix. If tof = 0,
 	// then the path is known (and will be deleted) so we store the STM in linkSTM
-	int coreSize = pSysData->getDynamicsModel()->getCoreStateSize();
-	MatrixXRd linkSTM = MatrixXRd::Identity(coreSize, coreSize);
+	unsigned int coreSize = pSysData->getDynamicsModel()->getCoreStateSize();
+	unsigned int ctrlSize = pNewSegLaw ? pNewSegLaw->getNumStates() : 0;
+	MatrixXRd linkSTM = MatrixXRd::Identity(coreSize + ctrlSize, 
+		coreSize + ctrlSize);
 	std::vector<double> linkSegStates, linkSegTimes;
 	double linkTOF = tof;
-	ControlLaw *pLinkCtrlLaw = nullptr;
+	ControlLaw *pLinkCtrlLaw = pNewSegLaw;
 	unsigned int linkStateWidth = 0;
 
-	/* If TOF is zero, we need to connect the two arcsets. If localNode is an origin,
-	 * we keep it, delete appendNode and copy appendSeg. However, if localNode is a terminus,
-	 * then it makes more sense to keep appendNode (an origin), delete localNode, and copy
-	 * localSeg
+	/* If TOF is zero, we need to connect the two arcsets. If localNode is an 
+	 * origin, we keep it, delete appendNode and copy appendSeg. However, if 
+	 * localNode is a terminus, then it makes more sense to keep appendNode 
+	 * (an origin), delete localNode, and copy localSeg
 	 */
 	if(tof == 0){
 		if(bLocalNodeIsOrigin){
@@ -365,8 +389,10 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int localNodeID, in
 			pLinkCtrlLaw = appendSeg.getCtrlLaw();
 			linkStateWidth = appendSeg.getStateWidth();
 
-			// Get the ID of the other node attached to appendSeg before deleting appendSeg
-			int otherNodeID = bAppendNodeIsOrigin ? appendSeg.getTerminus() : appendSeg.getOrigin();
+			// Get the ID of the other node attached to appendSeg before 
+			// deleting appendSeg
+			int otherNodeID = bAppendNodeIsOrigin ?\
+				appendSeg.getTerminus() : appendSeg.getOrigin();
 
 			// Delete appendSeg and appendNode
 			pAppendArc->deleteSeg(appendSeg.getID());
@@ -377,14 +403,17 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int localNodeID, in
 			const Node &otherNode = pAppendArc->getNodeRef_const(otherNodeID);
 
 			// The seg to be appended is now the segment attached to otherNode
-			int otherSegID = otherNode.getLink(0) == Linkable::INVALID_ID ? otherNode.getLink(1) : otherNode.getLink(0);
+			int otherSegID = otherNode.getLink(0) == Linkable::INVALID_ID ?\
+				otherNode.getLink(1) : otherNode.getLink(0);
 
 			if(otherSegID == Linkable::INVALID_ID){
-				// No segments left, just a node.
-				// Leave appendSeg untouched; it is used later to determine the direction of time
-				// Make bAppendNodeIsOrigin = true if the TOF is negative, false if TOF is positive
-				// to avoid parallel structure problems
-				 
+				/*
+					No segments left, just a node.
+					Leave appendSeg untouched; it is used later to determine the 
+					direction of time Make bAppendNodeIsOrigin = true if the TOF 
+					is negative, false if TOF is positive to avoid parallel 
+					structure problems
+				 */
 				bAppendNodeIsOrigin = linkTOF < 0;
 			}else{
 				appendSeg = pAppendArc->getSeg(otherSegID);
@@ -393,13 +422,16 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int localNodeID, in
 		}else{	// appendNode is the origin, local node is terminus
 			/*	Cases:
 			 *	
-			 *				vv Local Node
-			 *	[]--Local-->[] . []--Append-->[]
-			 *	[]--Local-->[] . []>--Append--[]	(NOT ALLOWED; both localNode and appendNode are terminus nodes)
-			 *	[]--Local--<[] . []<--Append--[]	(NOT ALLOWED; both localNode and appendNode are terminus nodes)
-			 *					 ^^ Append Node
+			 *				   vv Local Node
+			 *	1) []--Local-->[] . []--Append-->[]
+			 *	2) []--Local-->[] . []>--Append--[]
+			 *	3) []--Local--<[] . []<--Append--[]
+			 *					    ^^ Append Node
 			 *	
-			 *	In this case, appendNode is an origin, so delete localNode
+			 *	Cases (2) and (3) are not allowed; both localNode and appendNode
+			 *	are terminus nodes.
+			 *	
+			 *	In this case (1), appendNode is an origin, so delete localNode
 			 *	and copy over localSeg
 			 */
 			linkTOF = localSeg.getTOF();
@@ -409,7 +441,7 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int localNodeID, in
 			pLinkCtrlLaw = localSeg.getCtrlLaw();
 			linkStateWidth = localSeg.getStateWidth();
 
-			// Get the ID of the other node attached to localSeg before deleting localSeg
+			// Get ID of other node attached to localSeg before deleting localSeg
 			int otherNodeID = localSeg.getOrigin();
 
 			// Delete localSeg and localNode
@@ -421,13 +453,16 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int localNodeID, in
 			const Node &otherNode = nodes[nodeIDMap[localNodeID]];
 
 			// The seg to be appended is now the segment attached to otherNode
-			int otherSegID = otherNode.getLink(0) == Linkable::INVALID_ID ? otherNode.getLink(1) : otherNode.getLink(0);
+			int otherSegID = otherNode.getLink(0) == Linkable::INVALID_ID ?\
+				otherNode.getLink(1) : otherNode.getLink(0);
 
 			if(otherSegID == Linkable::INVALID_ID){
-				// No segments left, just a node.
-				// Leave localSeg untouched; it is used later to determine the direction of time
-				// Make bLocalNodeIsOrigin = true if the TOF is negative, false if TOF is positive
-				 
+				/*
+					No segments left, just a node.
+					Leave localSeg untouched; it is used later to determine the 
+					direction of time. Make bLocalNodeIsOrigin = true if the TOF 
+					is negative, false if TOF is positive
+				 */
 				bLocalNodeIsOrigin = linkTOF < 0;
 			}else{
 				localSeg = segs[segIDMap[otherSegID]];
@@ -458,7 +493,8 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int localNodeID, in
 		// Both are origins; the only double-linkOrigin node posibility is one where
 		// each segment that originates from the node has a different time direction
 		
-		// localSeg and appendSeg have been updated to be the closest segments to the concatenation interface
+		// localSeg and appendSeg have been updated to be the closest segments 
+		// to the concatenation interface
 		if(localSeg.getTOF() < 0){
 			// If the closest segment on the local side is/was reverse time
 			linkOrigin = tof > 0 ? localNodeID : map_oldID_to_newID[appendNodeID];
@@ -472,24 +508,51 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int localNodeID, in
 
 	if(tof != 0){
 		// Put minimum amount of data in the linkSeg state and time vectors
+		// Times will be updated when updateEpoch() is called; the relative
+		// duration is all that is important
 		linkSegTimes.push_back(getEpoch(linkOrigin));
-		linkSegTimes.push_back(getEpoch(linkTerminus));
+		linkSegTimes.push_back(getEpoch(linkOrigin) + tof);
 
 		std::vector<double> q0 = getState(linkOrigin);
 		std::vector<double> qf = getState(linkTerminus);
+
+		// Initialize a control vector with zeros
+		std::vector<double> ctrl0(ctrlSize, 0);
+		try{
+			// Try assigning the control vector to the values employed at the
+			// linkOrigin node
+			ctrl0 = getNodeRef_const(linkOrigin).getExtraParamVec(PARAMKEY_CTRL);
+		}catch(const Exception &e){}
+
+		if(ctrl0.size() != ctrlSize){
+			char msg[128];
+			sprintf(msg, "BaseArcset::appendSetAtNode: Control size inconsistency"
+				" when creating artificial segment between arcsets: origin"
+				" node has ctrl with %u elements, but linkSeg control law"
+				" has %u elements", ctrl0.size(), ctrlSize);
+			throw Exception(msg);
+		}
+
+		// Add the control to the two state vectors
+		q0.insert(q0.end(), ctrl0.begin(), ctrl0.end());
+		qf.insert(qf.end(), ctrl0.begin(), ctrl0.end());
+
 		std::vector<double> extra(pSysData->getDynamicsModel()->getExtraStateSize(), 0);
 
-		// Append state, STM, and extra states for the linkOrigin and terimal nodes that the link segment connects to
-		// Do not add any control information; the default control law is set to nullptr
+		// Append state, STM, and extra states for the linkOrigin and terimal 
+		// nodes that the link segment connects to. Do not add any control 
+		// information; the default control law is set to nullptr
 		linkSegStates.insert(linkSegStates.end(), q0.begin(), q0.end());
-		linkSegStates.insert(linkSegStates.end(), linkSTM.data(), linkSTM.data() + coreSize*coreSize);
+		linkSegStates.insert(linkSegStates.end(), linkSTM.data(), 
+			linkSTM.data() + linkSTM.rows()*linkSTM.cols());
 		linkSegStates.insert(linkSegStates.end(), extra.begin(), extra.end());
 
 		linkSegStates.insert(linkSegStates.end(), qf.begin(), qf.end());
-		linkSegStates.insert(linkSegStates.end(), linkSTM.data(), linkSTM.data() + coreSize*coreSize);
+		linkSegStates.insert(linkSegStates.end(), linkSTM.data(), 
+			linkSTM.data() + linkSTM.rows()*linkSTM.cols());
 		linkSegStates.insert(linkSegStates.end(), extra.begin(), extra.end());
 
-		linkStateWidth = q0.size() + coreSize*coreSize + extra.size();
+		linkStateWidth = q0.size() + linkSTM.rows()*linkSTM.cols() + extra.size();
 	}
 	// print();
 	bInChronoOrder = false;
@@ -503,8 +566,9 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int localNodeID, in
 	// linkSeg.print();
 	int newSegID = addSeg(linkSeg);
 
-	// Update all epochs
-	updateEpochs(nodeIDMap[0], getEpoch(0));
+	// Update all epochs but keep the first node (which should begin to 
+	// this arcset) fixed
+	updateEpochs(nodes[0].getID(), nodes[0].getEpoch());
 
 	return newSegID;
 }//====================================================
@@ -531,7 +595,8 @@ void BaseArcset::clearAllConstraints(){
  *  @brief Concatenate two arcset objects
  *  @details The nodes, segments and constraints are copied from one arcset to another
  *  without creating or deleting any nodes or segments; i.e., the arcset object will
- *  include two independent "flows" without a segment to connect them
+ *  include two independent "flows" without a segment to connect them. To 
+ *  construct a continuous "flow", see appendSetAtNode()
  * 
  *  @param pSet pointer to an arcset object
  *  @return a map relating the nodeIDs in `pSet` to the new IDs of the same nodes
@@ -541,6 +606,7 @@ void BaseArcset::clearAllConstraints(){
  *  vector element.
  *  
  *  @throws Exception if the input arcset does not have the same system data object as this one
+ *  @see appendSetAtNode()
  */
 std::vector<int> BaseArcset::concatArcset(const BaseArcset *pSet){
 	if(pSet->pSysData != pSysData)
@@ -550,7 +616,7 @@ std::vector<int> BaseArcset::concatArcset(const BaseArcset *pSet){
 	// All new IDs are initialized to the default INVALID_ID value
 	std::vector<int> map_oldID_to_newID(pSet->getNextNodeID(), Linkable::INVALID_ID);
 
-	// Add all nodes from set to this object and keep track of new IDs
+	// Add all nodes from pSet to this object and keep track of new IDs
 	for(unsigned int n = 0; n < pSet->getNumNodes(); n++){
 		Node node = pSet->getNodeByIx(n);
 
@@ -559,7 +625,7 @@ std::vector<int> BaseArcset::concatArcset(const BaseArcset *pSet){
 		map_oldID_to_newID[node.getID()] = addNode(node);
 	}
 
-	// Add all segments from set to this object and update the link IDs
+	// Add all segments from pSet to this object and update the link IDs
 	// The act of adding the segment will update the links in the newly added nodes
 	for(unsigned int s = 0; s < pSet->getNumSegs(); s++){
 		Segment seg = pSet->getSegByIx(s);
@@ -864,7 +930,7 @@ std::vector<double> BaseArcset::getStateDerivByIx(int ix){
 
 	try{
 		return nodes[ix].getExtraParamVec(PARAMKEY_STATE_DERIV);
-	}catch(Exception &e){
+	}catch(const Exception &e){
 		// Control laws are defined on segments, but state derivatives are stored on nodes...
 			// Get the control law associated with the first segment linked to the node (should definitely be one)
 			// CAUTION: If two segments link to a node with different control laws, this behavior may be undesirable.
@@ -923,7 +989,7 @@ std::vector<ArcPiece> BaseArcset::getChronoOrder() const{
 	// printf("* Beginning getChronoOrder()\n");
 	std::vector<ArcPiece> pieces;
 	if(nodes.size() == 0){
-		astrohelion::printErr("BaseArcset::getChronoOrder: No nodes... exiting\n");
+		printErr("BaseArcset::getChronoOrder: No nodes... exiting\n");
 		return pieces;
 	}
 
@@ -1103,12 +1169,13 @@ std::vector<double> BaseArcset::getCoord(unsigned int ix) const{
 }//====================================================
 
 /**
- *  @brief Retrieve the control law ID for a segment at the specified index
+ *  @brief Retrieve a pointer to the control law for a segment at the specified 
+ *  index
  * 
  *  @param ix Index of the segment within the storage vector. If ix < 0, it 
  *  will count backwards from the end of the storage vector.
  *  s
- *  @return control law ID for the specified segment
+ *  @return control law pointer for the specified segment
  *  @throws Exception if ix is out of bounds.
  */
 ControlLaw* BaseArcset::getCtrlLawByIx(int ix){
@@ -1125,12 +1192,13 @@ ControlLaw* BaseArcset::getCtrlLawByIx(int ix){
 }//====================================================
 
 /**
- *  @brief Retrieve the control law ID for a segment at the specified index
+ *  @brief Retrieve a constant pointer to the control law for a segment at the
+ *  specified index
  * 
  *  @param ix Index of the segment within the storage vector. If ix < 0, it 
  *  will count backwards from the end of the storage vector.
  *  s
- *  @return control law ID for the specified segment
+ *  @return constant control law pointer for the specified segment
  *  @throws Exception if ix is out of bounds.
  */
 const ControlLaw* BaseArcset::getCtrlLawByIx_const(int ix) const{
@@ -1301,7 +1369,9 @@ Node BaseArcset::getNode(int id) const{
 	if(ix != Linkable::INVALID_ID && ix < static_cast<int>(nodes.size()) && ix >= 0){
 		return nodes[ix];
 	}else{
-		throw Exception("BaseArcset::getNode: Could not locate a node with the specified ID");
+		char msg[64];
+		sprintf(msg, "BaseArcset::getNode: ID %d not found", id);
+		throw Exception(msg);
 	}
 }//====================================================
 
@@ -1318,8 +1388,9 @@ Node BaseArcset::getNodeByIx(int ix) const{
 		ix += nodes.size();
 
 	if(ix < 0 || ix >= static_cast<int>(nodes.size())){
-		printErr("Attempted to access index %d\n", ix);
-		throw Exception("BaseArcset::getNodeByIx: Index out of bounds");
+		char msg[64];
+		sprintf(msg, "BaseArcset::getNodeByIx: Index %d out of bounds", ix);
+		throw Exception(msg);
 	}
 
 	return nodes[ix];
@@ -1342,7 +1413,9 @@ Node& BaseArcset::getNodeRef(int id){
 		bInChronoOrder = false;
 		return nodes[ix];
 	}else{
-		throw Exception("BaseArcset::getNodeRef: Could not locate a node with the specified ID");
+		char msg[64];
+		sprintf(msg, "BaseArcset::getNodeRef: ID %d not found", id);
+		throw Exception(msg);
 	}
 }//====================================================
 
@@ -1358,8 +1431,11 @@ const Node& BaseArcset::getNodeRefByIx_const(int ix) const{
 	while(ix < 0)
 		ix += nodes.size();
 
-	if(ix < 0 || ix >= static_cast<int>(nodes.size()))
-		throw Exception("BaseArcset::getNodeRefByIx: Index out of bounds");
+	if(ix < 0 || ix >= static_cast<int>(nodes.size())){
+		char msg[64];
+		sprintf(msg, "BaseArcset::getNodeRefByIx_const: Index %d out of bounds", ix);
+		throw Exception(msg);
+	}
 
 	return nodes[ix];
 }//=====================================================
@@ -1380,7 +1456,9 @@ const Node& BaseArcset::getNodeRef_const(int id) const{
 	if(ix != Linkable::INVALID_ID && ix < static_cast<int>(nodes.size()) && ix >= 0){
 		return nodes[ix];
 	}else{
-		throw Exception("BaseArcset::getNodeRef: Could not locate a node with the specified ID");
+		char msg[64];
+		sprintf(msg, "BaseArcset::getNodeRef_const: ID %d not found", id);
+		throw Exception(msg);
 	}
 }//====================================================
 
@@ -1396,8 +1474,11 @@ Node& BaseArcset::getNodeRefByIx(int ix){
 	while(ix < 0)
 		ix += nodes.size();
 
-	if(ix < 0 || ix >= static_cast<int>(nodes.size()))
-		throw Exception("BaseArcset::getNodeRefByIx: Index out of bounds");
+	if(ix < 0 || ix >= static_cast<int>(nodes.size())){
+		char msg[64];
+		sprintf(msg, "BaseArcset::getNodeRefByIx: Index %d out of bounds", ix);
+		throw Exception(msg);
+	}
 
 	bInChronoOrder = false;
 	return nodes[ix];
@@ -1411,8 +1492,11 @@ Node& BaseArcset::getNodeRefByIx(int ix){
  *  @throws Exception if `id` is out of bounds
  */
 int BaseArcset::getNodeIx(int id) const{
-	if(nodeIDMap.count(id) == 0)
-		throw Exception("BaseArcset::getNodeIx: Inavlid ID; out of bounds");
+	if(nodeIDMap.count(id) == 0){
+		char msg[64];
+		sprintf(msg, "BaseArcset::getNodeIx: ID %d not found", id);
+		throw Exception(msg);
+	}
 
 	return nodeIDMap.at(id);
 }//====================================================
@@ -1433,7 +1517,9 @@ Segment BaseArcset::getSeg(int id) const{
 	if(ix != Linkable::INVALID_ID && ix < static_cast<int>(segs.size()) && ix >= 0){
 		return segs[ix];
 	}else{
-		throw Exception("BaseArcset::getSeg: Could not locate a segment with the specified ID");
+		char msg[64];
+		sprintf(msg, "BaseArcset::getSeg: ID %d not found", id);
+		throw Exception(msg);
 	}
 }//====================================================
 
@@ -1449,8 +1535,11 @@ Segment BaseArcset::getSegByIx(int ix) const{
 	while(ix < 0)
 		ix += segs.size();
 
-	if(ix < 0 || ix >= static_cast<int>(segs.size()))
-		throw Exception("BaseArcset::getSegByIx: Index out of bounds");
+	if(ix < 0 || ix >= static_cast<int>(segs.size())){
+		char msg[64];
+		sprintf(msg, "BaseArcset::getSegByIx: Index %d out of bounds", ix);
+		throw Exception(msg);
+	}
 
 	return segs[ix];
 }//=====================================================
@@ -1472,7 +1561,9 @@ Segment& BaseArcset::getSegRef(int id){
 		bInChronoOrder = false;
 		return segs[ix];
 	}else{
-		throw Exception("BaseArcset::getSegRef: Could not locate a node with the specified ID");
+		char msg[64];
+		sprintf(msg, "BaseArcset::getSegRef: ID %d not found", id);
+		throw Exception(msg);
 	}
 }//====================================================
 
@@ -1488,8 +1579,11 @@ Segment& BaseArcset::getSegRefByIx(int ix){
 	while(ix < 0)
 		ix += segs.size();
 
-	if(ix < 0 || ix >= static_cast<int>(segs.size()))
-		throw Exception("BaseArcset::getSegRefByIx: Index out of bounds");
+	if(ix < 0 || ix >= static_cast<int>(segs.size())){
+		char msg[64];
+		sprintf(msg, "BaseArcset::getSegRefByIx: Index %d out of bounds", ix);
+		throw Exception(msg);
+	}
 
 	bInChronoOrder = false;
 	return segs[ix];
@@ -1511,7 +1605,9 @@ const Segment& BaseArcset::getSegRef_const(int id) const{
 	if(ix != Linkable::INVALID_ID && ix < static_cast<int>(segs.size()) && ix >= 0){
 		return segs[ix];
 	}else{
-		throw Exception("BaseArcset::getSegRef: Could not locate a node with the specified ID");
+		char msg[64];
+		sprintf(msg, "BaseArcset::getSegRef_const: ID %d not found", id);
+		throw Exception(msg);
 	}
 }//====================================================
 
@@ -1527,8 +1623,11 @@ const Segment& BaseArcset::getSegRefByIx_const(int ix) const{
 	while(ix < 0)
 		ix += segs.size();
 
-	if(ix < 0 || ix >= static_cast<int>(segs.size()))
-		throw Exception("BaseArcset::getSegRefByIx: Index out of bounds");
+	if(ix < 0 || ix >= static_cast<int>(segs.size())){
+		char msg[64];
+		sprintf(msg, "BaseArcset::getSegRefByIx_const: Index %d out of bounds", ix);
+		throw Exception(msg);
+	}
 
 	return segs[ix];
 }//=====================================================
@@ -1541,8 +1640,11 @@ const Segment& BaseArcset::getSegRefByIx_const(int ix) const{
  *  @throws Exception if `id` is out of bounds
  */
 int BaseArcset::getSegIx(int id) const{
-	if(segIDMap.count(id) == 0)
-		throw Exception("BaseArcset::getSegIx: Inavlid ID; out of bounds");
+	if(segIDMap.count(id) == 0){
+		char msg[64];
+		sprintf(msg, "BaseArcset::getSegIx: ID %d invalid", id);
+		throw Exception(msg);
+	}
 
 	return segIDMap.at(id);
 }//====================================================
@@ -1564,7 +1666,9 @@ std::vector<double> BaseArcset::getState(int id) const{
 	if(ix != Linkable::INVALID_ID && ix < static_cast<int>(nodes.size()) && ix >= 0){
 		return nodes[ix].getState();
 	}else{
-		throw Exception("BaseArcset::getState: Could not locate the node with the specified ID");
+		char msg[64];
+		sprintf(msg, "BaseArcset::getState: node ID %d not found", id);
+		throw Exception(msg);
 	}
 }//====================================================
 
@@ -1582,8 +1686,11 @@ std::vector<double> BaseArcset::getStateByIx(int ix) const{
 	while(ix < 0)
 		ix += nodes.size();
 
-	if(ix < 0 || ix >= static_cast<int>(nodes.size()))
-		throw Exception("BaseArcset::getStateByIx: node index out of bounds");
+	if(ix < 0 || ix >= static_cast<int>(nodes.size())){
+		char msg[64];
+		sprintf(msg, "BaseArcset::getStateByIx: Node index %d out of bounds", ix);
+		throw Exception(msg);
+	}
 
 	return nodes[ix].getState();
 }//====================================================
@@ -1605,7 +1712,9 @@ MatrixXRd BaseArcset::getSTM(int id) const{
 	if(ix != Linkable::INVALID_ID && ix < static_cast<int>(segs.size()) && ix >= 0){
 		return segs[ix].getSTM();
 	}else{
-		throw Exception("BaseArcset::getSTM: Could not locate the segment with the specified ID");
+		char msg[64];
+		sprintf(msg, "BaseArcset::getSTM: segment ID %d not found", id);
+		throw Exception(msg);
 	}
 }//====================================================
 
@@ -1622,9 +1731,9 @@ MatrixXRd BaseArcset::getSTMByIx(int ix) const{
 		ix += segs.size();
 
 	if(ix < 0 || ix >= static_cast<int>(segs.size())){
-		printErr("Attempted to reach STM with ix = %d (max = %zu)\n", ix, segs.size());
-		print();
-		throw Exception("BaseArcset::getSTMByIx: segment index out of bounds");
+		char msg[64];
+		sprintf(msg, "BaseArcset::getSTMByIx: Segment index %d out of bounds", ix);
+		throw Exception(msg);
 	}
 
 	return segs[ix].getSTM();
@@ -1653,7 +1762,9 @@ double BaseArcset::getTOF(int id) const{
 	if(ix != Linkable::INVALID_ID && ix < static_cast<int>(segs.size()) && ix >= 0){
 		return segs[ix].getTOF();
 	}else{
-		throw Exception("BaseArcset::getTOF: Could not locate the segment with the specified ID");
+		char msg[64];
+		sprintf(msg, "BaseArcset::getTOF: Segment ID %d not found", id);
+		throw Exception(msg);
 	}
 }//====================================================
 /**
@@ -1667,8 +1778,11 @@ double BaseArcset::getTOFByIx(int ix) const {
 	while(ix < 0)
 		ix += segs.size();
 
-	if(ix < 0 || ix >= static_cast<int>(segs.size()))
-		throw Exception("Arcset::getTOFByIx: invalid segment index");
+	if(ix < 0 || ix >= static_cast<int>(segs.size())){
+		char msg[64];
+		sprintf(msg, "BaseArcset::getTOFByIx: Segment index %d out of bounds", ix);
+		throw Exception(msg);
+	}
 
 	return segs[ix].getTOF();
 }//====================================================
@@ -1730,7 +1844,7 @@ void BaseArcset::putInChronoOrder(bool force){
 	std::vector<ArcPiece> pieces = getChronoOrder();
 
 	if(pieces.size() != nodes.size() + segs.size()){
-		astrohelion::printErr("Pieces has %zu elements, but there are %zu nodes and %zu segs\n", pieces.size(), nodes.size(), segs.size());
+		printErr("Pieces has %zu elements, but there are %zu nodes and %zu segs\n", pieces.size(), nodes.size(), segs.size());
 		saveToMat("ChronoOrderErr.mat");
 		throw Exception("BaseArcset::putInChronoOrder: The sorted vector does not include all nodes and segments; aborting to avoid losing data\n");
 	}
@@ -1952,22 +2066,30 @@ void BaseArcset::setTol(double d){ tol = d; }
  *  @details By specifying the epoch of one node in the set, all other
  *  nodes are updated using the segment times-of-flight between them.
  * 
- *  @param nodeID the ID of a node
- *  @param epoch the epoch of the node with the specified ID.
+ *  @param nodeID the ID of a node to use as the base point
+ *  @param epoch the epoch of the node with the specified ID. If the epoch
+ *  currently stored in the node does not match this input value, the stored
+ *  value is updated to match the specified epoch.
  */
 void BaseArcset::updateEpochs(int nodeID, double epoch){
-	if(nodeIDMap.count(nodeID) == 0)
-		throw Exception("BaseArcset::updateEpochs: Invalide node ID");
+	if(nodeIDMap.count(nodeID) == 0){
+		char msg[64];
+		sprintf(msg, "BaseArcset::updateEpochs: ID %d does not match a node",
+			nodeID);
+		throw Exception(msg);
+	}
 
 	std::vector<ArcPiece> pieces = getChronoOrder();
 
 	// Update epoch of the specified node
 	nodes[nodeIDMap[nodeID]].setEpoch(epoch);
 
-	std::vector<ArcPiece>::iterator pieceIt = std::find(pieces.begin(), pieces.end(), ArcPiece(ArcPiece::Piece_tp::NODE, nodeID));
+	std::vector<ArcPiece>::iterator pieceIt = std::find(pieces.begin(), 
+		pieces.end(), ArcPiece(ArcPiece::Piece_tp::NODE, nodeID));
 
 	if(pieceIt == pieces.end()){
-		astrohelion::printErr("BaseArcset::updateEpochs: Could not find the node with the specified ID... INVESTIGATE THIS, ANDREW!\n");
+		printErr("BaseArcset::updateEpochs: Could not find the node with" 
+			" ID = %d; THIS SHOULD NOT HAPPEN\n", nodeID);
 		return;
 	}
 
@@ -1980,10 +2102,24 @@ void BaseArcset::updateEpochs(int nodeID, double epoch){
 		ellapsed = 0;
 		for(int i = ixInPieces + stepDir; i < static_cast<int>(pieces.size()) && i >= 0; i += stepDir){
 			if(pieces[i].type == ArcPiece::Piece_tp::SEG){
-				ellapsed += segs[segIDMap[pieces[i].id]].getTOF();
+				ellapsed += stepDir*std::abs(segs[segIDMap[pieces[i].id]].getTOF());
 			}else if(pieces[i].type == ArcPiece::Piece_tp::NODE){
 				nodes[nodeIDMap[pieces[i].id]].setEpoch(epoch+ellapsed);
 			}
+		}
+	}
+
+	// Update all segment time vectors
+	for(unsigned int s = 0; s < segs.size(); s++){
+		double dt = nodes[nodeIDMap[segs[s].getOrigin()]].getEpoch() -
+			segs[s].getTimeByIx(0);
+
+		if(std::abs(dt) > 1e-8){
+			std::vector<double> t = segs[s].getTimeVector();
+			for(unsigned int i = 0; i < t.size(); i++){
+				t[i] += dt;
+			}
+			segs[s].setTimeVector(t);
 		}
 	}
 }//====================================================
@@ -2269,7 +2405,7 @@ matvar_t* BaseArcset::createVar_NodeStateDeriv(Save_tp saveTp, const char *pVarN
 		std::vector<double> deriv(stateSize, NAN);
 		try{
 			deriv = nodes[r].getExtraParamVec(PARAMKEY_STATE_DERIV);
-		}catch(Exception &e){
+		}catch(const Exception &e){
 			// printErr("Unable to get acceleration vector for node %u\n", r);
 		}
 
@@ -2311,7 +2447,7 @@ matvar_t* BaseArcset::createVar_NodeExtraParamVec(std::string varKey, size_t len
 
 				param[c*nodes.size() + r] = vec[c];
 			}
-		}catch(Exception &e){
+		}catch(const Exception &e){
 			// Save NAN (rather than un-allocated memory) if the node does not have the specified parameter
 			for(unsigned int c = 0; c < len; c++)
 				param[c*nodes.size() + r] = vec[c];
@@ -2341,7 +2477,7 @@ matvar_t* BaseArcset::createVar_NodeExtraParam(std::string varKey,
 	for(unsigned int r = 0; r < nodes.size(); r++){
 		try{
 			param[r] = nodes[r].getExtraParam(varKey);
-		}catch(Exception &e){
+		}catch(const Exception &e){
 			// Save NAN (rather than un-allocated memory) if the node does not have the specified parameter
 			param[r] = NAN;
 		}
@@ -2376,7 +2512,7 @@ matvar_t* BaseArcset::createVar_NodeCtrl(Save_tp saveTp, const char *pVarName) c
 		std::vector<double> ctrl;
 		try{
 			ctrl = nodes[n].getExtraParamVec(PARAMKEY_CTRL);
-		}catch(Exception &e){}
+		}catch(const Exception &e){}
 
 		dims[0] = ctrl.size();
 

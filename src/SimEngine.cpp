@@ -313,7 +313,7 @@ void SimEngine::runSim(const double *ic, double tof, Arcset *arcset,
     try{
         runSim(ic, 0, tof, arcset, pLaw);
     }catch(const Exception &e){
-        throw e;
+        throw;
     }
 }//=======================================================
 
@@ -348,7 +348,7 @@ void SimEngine::runSim(const std::vector<double> &ic, double tof,
     try{
         runSim(ic, 0, tof, arcset, pLaw);
     }catch(const Exception &e){
-        throw e;
+        throw;
     }
 }//=======================================================
 
@@ -398,7 +398,7 @@ void SimEngine::runSim(const std::vector<double> &ic, double t0, double tof,
     try{
         runSim(&(ic.front()), t0, tof, arcset, pLaw);
     }catch(const Exception &e){
-        throw e;
+        throw;
     }
 }//=======================================================
 
@@ -451,7 +451,7 @@ void SimEngine::runSim(const double* ic, double t0, double tof, Arcset *arcset,
     try{
         runSim(ic, &(ctrl0.front()), &(stm0.front()), t0, tof, arcset, pLaw);
     }catch(const Exception &e){
-        throw e;
+        throw;
     }
 }//=======================================================
 
@@ -515,7 +515,7 @@ void SimEngine::runSim(const std::vector<double> &ic,
         runSim(&(ic.front()), &(ctrl0.front()), &(stm0.front()), t0, tof, 
             arcset, pLaw);
     }catch(const Exception &e){
-        throw e;
+        throw;
     }
 }//=======================================================
 
@@ -587,7 +587,7 @@ void SimEngine::runSim(const std::vector<double> &ic,
         runSim(&(ic.front()), &(ctrl0.front()), stm0.data(), t0, tof, 
             arcset, pLaw);
     }catch(const Exception &e){
-        throw e;
+        throw;
     }
 }//=======================================================
 
@@ -639,7 +639,7 @@ void SimEngine::runSim(const double* ic, const double* ctrl0,
     try{
         runSim(ic, ctrl0, stm0, t_span, arcset, pLaw);
     }catch(const Exception &e){
-        throw e;
+        throw;
     }
 }//=======================================================
 
@@ -698,7 +698,7 @@ void SimEngine::runSim(const double *ic, const double *ctrl0,
     try{
         integrate(ic, ctrl0, stm0, &(t_span.front()), t_span.size(), arcset);
     }catch(const Exception &e){
-        throw e;
+        throw;
     }
 }//====================================================
 
@@ -731,7 +731,7 @@ void SimEngine::runSim_manyNodes(const std::vector<double> &ic, double tof,
     try{
         runSim_manyNodes(ic, 0, tof, numNodes, arcset, pLaw);
     }catch(const Exception &e){
-        throw e;
+        throw;
     }
 }//====================================================
 
@@ -761,7 +761,7 @@ void SimEngine::runSim_manyNodes(const double *ic, double tof, int numNodes,
     try{
         runSim_manyNodes(ic, 0, tof, numNodes, arcset, pLaw);
     }catch(const Exception &e){
-        throw e;
+        throw;
     }
 }//====================================================
 
@@ -808,7 +808,7 @@ void SimEngine::runSim_manyNodes(const std::vector<double> &ic, double t0,
     try{
         runSim_manyNodes(&(tempIC.front()), t0, tof, numNodes, arcset, pLaw);
     }catch(const Exception &e){
-        throw e;
+        throw;
     }
 }//====================================================
 
@@ -866,7 +866,7 @@ void SimEngine::runSim_manyNodes(const double *ic, double t0, double tof,
     try{
         runSim(ic, &(ctrl0.front()), &(stm0.front()), t_span, arcset, pLaw);
     }catch(const Exception &e){
-        throw e;
+        throw;
     }
 }//====================================================
 
@@ -942,7 +942,7 @@ void SimEngine::runSim_manyNodes(const std::vector<double> &ic,
         runSim(&(ic.front()), &(ctrl0.front()), &(stm0.front()), t_span, 
             arcset, pLaw);
     }catch(const Exception &e){
-        throw e;
+        throw;
     }
 }//====================================================
 
@@ -1613,11 +1613,11 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, int evtIx, Arcs
     // the full (42 or 48 element) final state
     try{
         corrector.multShoot(&eventArcset, &correctedSet);
-    }catch(DivergeException &e){
+    }catch(const DivergeException &e){
         if(verbosity >= Verbosity_tp::SOME_MSG)
             printErr("Unable to locate %s event; corrector diverged\n", events[evtIx].getTypeStr());
         return false;
-    }catch(LinAlgException &e){
+    }catch(const LinAlgException &e){
         if(verbosity >= Verbosity_tp::SOME_MSG)
             printErr("LinAlg Err while locating %s event; bug in corrector!\n", events[evtIx].getTypeStr());
         return false;

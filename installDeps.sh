@@ -1,19 +1,26 @@
 #!/bin/sh
 
-# Install dependencies for Astrohelion on a Linux 64-bit machine
-# All included files, libraries, and executables will be placed in
-# the directory specified by INSTALL_DIR
-
-# If you don't have permissions for this directory, run script with sudo
+# INSTALL_DIR is the directory where libraries, headers, and other resources are
+# installed. You should choose a directory you have rwx priveleges for.
 INSTALL_DIR="/opt/local"
 
-# Settings, body data live in this folder
+# CONFIG_DIR is a directory where Astrohelion configuration files are saved. By
+# default, the location is within the .config directory found in all Unix home 
+# directory.
 CONFIG_DIR="$HOME/.config/astrohelion"
 
-# SPICE data lives in this directory
+# SPICE_DIR specifies the directory for SPICE data files. By default, this is 
+# located in the same place as the configuration files. However, if you have 
+# another directory with SPICE files, feel free to change this variable; the 
+# settings need not be collocated with the SPICE files.
 SPICE_DIR="$HOME/.config/astrohelion/spice"
 SPK="de430.bsp"		# Planetary body ephemeris SPICE kernel
 TLS="naif0012.tls"	# Time (leap second) SPICE kernel
+
+
+# ##############################################################################
+# 	DO NOT EDIT BELOW THIS LINE
+# ##############################################################################
 
 # Figure out the OS
 OS="unknown"
@@ -24,6 +31,7 @@ elif [[ "$unamestr" == "Darwin" ]]; then
 	OS="darwin"
 fi
 
+# Create directory for dependencies (may be deleted after installation)
 mkdir -p deps
 cd deps
 
@@ -101,9 +109,11 @@ mv eigen/Eigen $INSTALL_DIR/include/Eigen
 mv eigen/unsupported $INSTALL_DIR/include/Eigen/unsupported
 rm 3.3.3.tar.gz
 
-## Configuration Files
+## Body data XML file
 echo "Copying body data to $CONFIG_DIR"
 cp misc/body_data.xml $CONFIG_DIR/body_data.xml
+
+## Write settings to XML file
 SETTINGS="$CONFIG_DIR/user_settings.xml"
 echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>" > $SETTINGS
 echo "<astrohelion>" >> $SETTINGS
@@ -114,5 +124,6 @@ echo "    <spk_kernel>$SPK</spk_kernel>" >> $SETTINGS
 echo "  </spice>" >> $SETTINGS
 echo "</astrohelion>" >> $SETTINGS
 
+## Copy the settings file to the defaults
 echo "Saving settings to $CONFIG_DIR"
 cp $SETTINGS $CONFIG_DIR/default_settings.xml

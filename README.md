@@ -34,3 +34,14 @@ I developed this software in the process of completing my master's degree, and t
 they are not as flexible and extensible as they could be. My goal is to remedy this situation; if you're a brave soul 
 that wants to try Astrohelion out, please don't be shy about submitting issues and communicating with me about any 
 questions you have.
+
+## Installation
+
+The following steps describe a general installation process.
+
+1. Open installDeps.sh and set the `INSTALL_DIR`, `CONFIG_DIR`, and `SPICE_DIR` variables to point to locations you have write access to.
+2. Additionally, set the `SPK` and `TLS` variables to the names of SPICE kernels you want to download to use for ephemeris data.
+3. Run the installation script, i.e., `sh installDeps.sh`. This will download, build, and install the libraries required to run Astrohelion
+4. Copy `makefile` out of the `build` directory into the main directory and adjust the `INSTALL_DIR` variable to point to the same directory as the `INSTALL_DIR` variable in `installDeps.sh`
+5. Compile the project source, i.e., run `make`
+6. Install the Astrohelion libriaries and headers, i.e., run `make install`

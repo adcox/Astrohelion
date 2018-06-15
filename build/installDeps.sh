@@ -110,6 +110,7 @@ mv eigen/unsupported $INSTALL_DIR/include/Eigen/unsupported
 rm 3.3.3.tar.gz
 
 ## Body data XML file
+mkdir -p $CONFIG_DIR
 echo "Copying body data to $CONFIG_DIR"
 cp misc/body_data.xml $CONFIG_DIR/body_data.xml
 

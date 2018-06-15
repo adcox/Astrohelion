@@ -39,9 +39,14 @@ questions you have.
 
 The following steps describe a general installation process.
 
+1. Copy the `installDeps.sh` script into the main directory from the `build` directory.
 1. Open installDeps.sh and set the `INSTALL_DIR`, `CONFIG_DIR`, and `SPICE_DIR` variables to point to locations you have write access to.
-2. Additionally, set the `SPK` and `TLS` variables to the names of SPICE kernels you want to download to use for ephemeris data.
-3. Run the installation script, i.e., `sh installDeps.sh`. This will download, build, and install the libraries required to run Astrohelion
-4. Copy `makefile` out of the `build` directory into the main directory and adjust the `INSTALL_DIR` variable to point to the same directory as the `INSTALL_DIR` variable in `installDeps.sh`
-5. Compile the project source, i.e., run `make`
-6. Install the Astrohelion libriaries and headers, i.e., run `make install`
+1. Additionally, set the `SPK` and `TLS` variables to the names of SPICE kernels you want to download to use for ephemeris data.
+1. Run the installation script, i.e., `sh installDeps.sh`. This will download, build, and install the libraries required to run Astrohelion
+1. Copy `makefile` out of the `build` directory into the main directory and adjust the `INSTALL_DIR` variable to point to the same directory as the `INSTALL_DIR` variable in `installDeps.sh`
+1. Compile the project source, i.e., run `make`
+1. Install the Astrohelion libriaries and headers, i.e., run `make install`
+
+## Documentation
+
+Astrohelion documentation is available at [http://adcox.gitlab.io/Astrohelion/](http://adcox.gitlab.io/Astrohelion/). To build the latest documentation (which is stored in `docs/html`), run the command `make docs`. Document generation requires the `doxygen` package.

@@ -150,7 +150,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_Resonant_RevTime){
 	nodeset.addConstraint(perpCross);
 	nodeset.addConstraint(perpCrossEnd);
 
-	nodeset.putInChronoOrder();
+	nodeset.sortChrono();
 	// nodeset.print();
 	// nodeset.printInChrono();
 
@@ -193,7 +193,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_Resonant_doubleSource){
 	nodeset.addConstraint(perpCross);
 	nodeset.addConstraint(perpCrossEnd);
 
-	nodeset.putInChronoOrder();
+	nodeset.sortChrono();
 	// nodeset.print();
 	// nodeset.printInChrono();
 
@@ -243,7 +243,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_Resonant_Irregular){
 	nodeset.deleteNode(11);
 	nodeset.deleteNode(12);
 
-	nodeset.putInChronoOrder();
+	nodeset.sortChrono();
 	// nodeset.print();
 	// nodeset.printInChrono();
 	// nodeset.printNodeIDMap();

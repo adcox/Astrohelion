@@ -325,7 +325,7 @@ void Arcset::setSTMs_cumulative(){
 	if(segs.size() == 0)
 		return;
 
-	putInChronoOrder();	// returns immediately if already in chrono order
+	sortChrono();	// returns immediately if already in chrono order
 	const unsigned int core_dim = pSysData->getDynamicsModel()->getCoreStateSize();
 
 	MatrixXRd stmTotal;

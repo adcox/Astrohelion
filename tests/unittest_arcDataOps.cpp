@@ -621,7 +621,7 @@ BOOST_AUTO_TEST_CASE(MixedTime_LinkedSegs2){
 
 BOOST_AUTO_TEST_SUITE_END()
 
-BOOST_AUTO_TEST_SUITE(Arcset_putInChronoOrder)
+BOOST_AUTO_TEST_SUITE(Arcset_sortChrono)
 
 BOOST_AUTO_TEST_CASE(ForwardTime){
 	Arcset set1(&sys);
@@ -631,7 +631,7 @@ BOOST_AUTO_TEST_CASE(ForwardTime){
 	set1.addSeg(Segment(0, 1, 1.1));
 	set1.addSeg(Segment(1, 2, 1.1));
 
-	set1.putInChronoOrder();
+	set1.sortChrono();
 	
 	// Node Order
 	BOOST_CHECK_EQUAL(set1.getNodeByIx(0).getID(), 0); 
@@ -656,7 +656,7 @@ BOOST_AUTO_TEST_CASE(ReverseTime){
 	set2.addSeg(Segment(0, 1, -1.1));
 	set2.addSeg(Segment(1, 2, -1.1));
 
-	set2.putInChronoOrder();
+	set2.sortChrono();
 	BOOST_CHECK_EQUAL(set2.getNodeByIx(0).getID(), 2);
 	BOOST_CHECK_EQUAL(set2.getNodeIx(2), 0);
 	BOOST_CHECK_EQUAL(set2.getNodeByIx(1).getID(), 1);
@@ -678,7 +678,7 @@ BOOST_AUTO_TEST_CASE(ShuffledForwardTime){
 	set3.addSeg(Segment(1, 0, 1.1));
 	set3.addSeg(Segment(0, 2, 1.1));
 	
-	set3.putInChronoOrder();
+	set3.sortChrono();
 	
 	BOOST_CHECK_EQUAL(set3.getNodeByIx(0).getID(), 1);
 	BOOST_CHECK_EQUAL(set3.getNodeIx(1), 0);
@@ -701,7 +701,7 @@ BOOST_AUTO_TEST_CASE(ShuffledReverseTime){
 	set4.addSeg(Segment(1, 0, -1.1));
 	set4.addSeg(Segment(0, 2, -1.1));
 	
-	set4.putInChronoOrder();
+	set4.sortChrono();
 	
 	BOOST_CHECK_EQUAL(set4.getNodeByIx(0).getID(), 2);
 	BOOST_CHECK_EQUAL(set4.getNodeIx(2), 0);
@@ -728,7 +728,7 @@ BOOST_AUTO_TEST_CASE(MixedTime){
 	set5.addSeg(Segment(1, 4, -1.1));
 	set5.addSeg(Segment(2, 0, 1.1));
 	
-	set5.putInChronoOrder();
+	set5.sortChrono();
 	BOOST_CHECK_EQUAL(set5.getNodeByIx(0).getID(), 3);
 	BOOST_CHECK_EQUAL(set5.getNodeIx(3), 0);
 	BOOST_CHECK_EQUAL(set5.getNodeByIx(1).getID(), 4);

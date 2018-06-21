@@ -85,6 +85,9 @@ std::string ControlLaw_cr3bp_lt::getTypeString() const{
 double ControlLaw_cr3bp_lt::get_dmdt(double t, const double *s,
 	const SysData *pSys) const{
 
+	if(lawType == NO_CTRL)
+		return 0;
+
 	switch(lawType & M_MASK){
 		case CSI_VAR_M:
 		{
@@ -142,6 +145,9 @@ double ControlLaw_cr3bp_lt::getThrustMag(double t, const double *s,
 	(void) t;
 	(void) pSys;
 
+	if(lawType == NO_CTRL)
+		return 0;
+	
 	unsigned int ix_param_shift = 0;
 	switch(lawType & BASE_MASK){
 		case GEN_INERT:

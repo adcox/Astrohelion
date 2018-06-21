@@ -59,7 +59,7 @@ int main(int argc, char** argv){
 	}
 
 	chain.clearAllConstraints();
-	chain.putInChronoOrder();
+	chain.sortChrono();
 
 	// Constrain the first and last states
 	std::vector<double> q0 = chain.getStateByIx(0);

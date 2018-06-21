@@ -120,7 +120,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_NodesAtEvents){
 	std::vector<Event> events {xMoonEvt, xzPlaneEvt};
 
 	set2.createNodesAtEvents(0, events);
-	set2.putInChronoOrder();
+	set2.sortChrono();
 	// set2.printInChrono();
 	// set2.saveToMat("data/emDRO_newNodes.mat");
 	// cout << "CR3BP createNodesAtEvents (saved to emDRO_newNodes.mat):" << endl;
@@ -152,7 +152,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_NodesAtEvent){
 
 	Event sem_xzPlaneEvt(Event_tp::XZ_PLANE, 0, false);
 	set3.createNodesAtEvent(0, sem_xzPlaneEvt);
-	set3.putInChronoOrder();
+	set3.sortChrono();
 	// set3.printInChrono();
 	// set3.saveToMat("semQHO_newNodes.mat");
 	// cout << "BC4BP createNodesAtEvent (saved to semQHO_newNodes.mat):" << endl;

@@ -59,7 +59,7 @@ Event::Event(){}
  *	primary and miss distance, use the customizable constructor.
  *
  *	@param t the event type
- *	@param dir direction (+/-/both) the event will trigger on. +1 indices (+)
+ *	@param dir direction (+/-/both) the event will trigger on. +1 indicates (+)
  *	direction, -1 (-) direction, and 0 both directions.
  *	@param willStop whether or not this event should stop the integration
  */
@@ -75,7 +75,7 @@ Event::Event(Event_tp t, int dir, bool willStop){
  *	create more specialized events.
  *
  *	@param t the event type
- *	@param dir direction (+/-/both) the event will trigger on. +1 indices (+)
+ *	@param dir direction (+/-/both) the event will trigger on. +1 indicates (+)
  *	direction, -1 (-) direction, and 0 both directions.
  *	@param willStop whether or not this event should stop the integration
  *	@param params a vector of doubles that give the constructor extra information. No
@@ -111,7 +111,7 @@ Event::~Event(){}
  *	primary and miss distance, use the customizable constructor.
  *
  *	@param t the event type
- *	@param dir direction (+/-/both) the event will trigger on. +1 indices (+)
+ *	@param dir direction (+/-/both) the event will trigger on. +1 indicates (+)
  *	direction, -1 (-) direction, and 0 both directions.
  *	@param willStop whether or not this event should stop the integration
  *	@throws Exception if this constructor is called for an event type that requires data
@@ -150,7 +150,7 @@ void Event::createEvent(Event_tp t, int dir, bool willStop){
  *	create more specialized events.
  *
  *	@param t the event type
- *	@param dir direction (+/-/both) the event will trigger on. +1 indices (+)
+ *	@param dir direction (+/-/both) the event will trigger on. +1 indicates (+)
  *	direction, -1 (-) direction, and 0 both directions.
  *	@param willStop whether or not this event should stop the integration
  *	@param params a vector of doubles that give the constructor extra information. No
@@ -162,6 +162,7 @@ void Event::createEvent(Event_tp t, int dir, bool willStop){
 void Event::createEvent(Event_tp t, int dir, bool willStop, std::vector<double> params){
 	initEvent(t, dir, willStop, params);
 }//====================================================
+
 /**
  *	@see Event(data, t, dir, willStop, params)
  */

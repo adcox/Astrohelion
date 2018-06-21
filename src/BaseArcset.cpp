@@ -101,10 +101,10 @@ void BaseArcset::sum(const BaseArcset *lhs, const BaseArcset *rhs, BaseArcset *r
 	baseArcsetPtr rhs_cpy = rhs->clone();
 
 	if(!lhs_cpy->isInChronoOrder())
-		lhs_cpy->putInChronoOrder();
+		lhs_cpy->sortChrono();
 
 	if(!rhs_cpy->isInChronoOrder())
-		rhs_cpy->putInChronoOrder();
+		rhs_cpy->sortChrono();
 
 	int lhs_lastNodeID = lhs_cpy->getNodeByIx(-1).getID();
 	int rhs_firstNodeID = rhs_cpy->getNodeByIx(0).getID();
@@ -1835,7 +1835,7 @@ bool BaseArcset::isInChronoOrder() const{ return bInChronoOrder; }
  *  node and segment vectors, the function is aborted as it is likely a node or 
  *  segment was skipped and we don't want to lose information.
  */
-void BaseArcset::putInChronoOrder(bool force){
+void BaseArcset::sortChrono(bool force){
 	if(bInChronoOrder && !force)
 		return;	// already sorted
 
@@ -1846,7 +1846,7 @@ void BaseArcset::putInChronoOrder(bool force){
 	if(pieces.size() != nodes.size() + segs.size()){
 		printErr("Pieces has %zu elements, but there are %zu nodes and %zu segs\n", pieces.size(), nodes.size(), segs.size());
 		saveToMat("ChronoOrderErr.mat");
-		throw Exception("BaseArcset::putInChronoOrder: The sorted vector does not include all nodes and segments; aborting to avoid losing data\n");
+		throw Exception("BaseArcset::sortChrono: The sorted vector does not include all nodes and segments; aborting to avoid losing data\n");
 	}
 
 	std::vector<Node> newNodes;

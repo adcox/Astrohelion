@@ -330,7 +330,8 @@ MatrixXRd readMatrixFromMat(const char *filename, const char *varName){
         }else{
             Mat_VarFree(matvar);
             Mat_Close(matfp);
-            throw Exception("Utilities::readMatrixFromFile: Incompatible data file: unsupported data type/class");
+            throw Exception("Utilities::readMatrixFromFile: Incompatible data "
+                "file: unsupported data type/class");
         }
     }
 }//==========================================================
@@ -348,7 +349,8 @@ double readDoubleFromMat(mat_t *matFile, const char* varName){
     matvar_t *matvar = Mat_VarRead(matFile, varName);
     if(matvar == nullptr){
         char msg[256];
-        sprintf(msg, "Utilities::readDoubleFromMat: Could not read %s from file", varName);
+        sprintf(msg, "Utilities::readDoubleFromMat: Could not read %s from %s",
+            varName, Mat_GetFilename(matFile));
         throw Exception(msg);
     }else{
         switch(matvar->data_type){

@@ -192,7 +192,7 @@ public:
 	void deleteNodeByIx(int);
 	void deleteSeg(int);
 	void deleteSegByIx(int);
-	void putInChronoOrder(bool force = false);
+	void sortChrono(bool force = false);
 	void updateEpochs(int, double);
 	//\}
 

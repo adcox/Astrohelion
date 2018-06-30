@@ -948,6 +948,9 @@ void ControlLaw_cr3bp_lt::init(){
  */
 std::string ControlLaw_cr3bp_lt::typeToString(unsigned int id){
 	std::string out = "";
+	if(id == ControlLaw::NO_CTRL)
+		return ControlLaw::typeToString(id);
+
 	switch(id & BASE_MASK){
 		case GENERAL: out.append("General Pointing (Rot), "); break;
 		case GEN_INERT: out.append("General Pointing (Inert), "); break;
@@ -960,7 +963,6 @@ std::string ControlLaw_cr3bp_lt::typeToString(unsigned int id){
 			out.append("2D Jacobi-Preserving ");
 			out.append((id & OP1_MASK) ? "(Right), " : "(Left), ");
 			break;
-		default: ControlLaw::typeToString(id);
 	}
 
 	switch(id & F_MASK){

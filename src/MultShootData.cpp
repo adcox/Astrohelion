@@ -371,13 +371,17 @@ MultShootData& MultShootData::operator =(const MultShootData &it){
  */
 MSVarMap_Obj MultShootData::getVarMap_obj(MSVar_tp type, int refID) const{
 	if(freeVarMap.count(MSVarMap_Key(type, refID)) == 0){
-		// printErr("Attempted to access MSVar_tp %s, refID %d\n", MSVarMap_Key::type2str(type), refID);
 		// printf("freeVarMap = {\n");
 		// for(auto& obj : freeVarMap){
 		// 	printf("  %s obj, ID = %d\n", MSVarMap_Key::type2str(obj.first.type), obj.first.id);
 		// }
 		// printf("}\n");
-		throw Exception("MultShootData::getVarMap_obj: Variable map object does not exist\n");
+		
+		char msg[128];
+		sprintf(msg, "MultShootData::getVarMap_obj: Attempted to access "
+			"MSVar_tp %s, refID %d\n"
+			"This object does not exist", MSVarMap_Key::type2str(type), refID);
+		throw Exception(msg);
 	}
 	return freeVarMap.at(MSVarMap_Key(type, refID));
 }//====================================================

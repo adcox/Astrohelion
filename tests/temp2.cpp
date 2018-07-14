@@ -25,25 +25,26 @@ int main(int argc, char** argv){
 	unsigned int lawID = ltlaw::GENERAL | ltlaw::CONST_F | ltlaw::CONST_M;
 	double f = 7e-2;
 
-	double alpha_stable = -60*PI/180;
+	double alpha_stable = -63*PI/180;
 	// double tof_stable = 17.6933;
 	// std::vector<double> q0_stable {	-0.035488, -0.265677, 0,
 	// 								2.057210, -0.418170, 0, 1.0};
-	double tof_stable = 15.9956;
-	std::vector<double> q0_stable {	-0.621271, -0.003300, 0, -0.095895, -0.683197, 0, 1.0};
+	// double tof_stable = 17.0326;
+	double tof_stable = 14.8835;
+	std::vector<double> q0_stable {0.4073, -0.8806, 0, 0.0018, 0.0004, 0, 1.0};
 
-	double alpha_unstable = 96*PI/180;
+	double alpha_unstable = -120*PI/180;
 	// double tof_unstable = 5.0333;
 	// std::vector<double> q0_unstable {0.835832, -0.012246, 0,
 	// 								-0.014001, 0.005538, 0, 1.0};
-	double tof_unstable = 3.3246;
-	std::vector<double> q0_unstable {0.833916, 0.019025, 0, -0.012808, 0.007409, 0, 1.0};
+	double tof_unstable = 7.0486;
+	std::vector<double> q0_unstable {1.1515, 0.0027, 0, -0.0091, 0.0058, 0, 1.0};
 
 	double tof_spo = 6.5817;
 	std::vector<double> q0_spo { 0.499343, -0.820068, 0.000000, 0.065382, 0.019300, 0, 1.0};
 
 	ControlLaw_cr3bp_lt noLaw(ControlLaw::NO_CTRL, std::vector<double> {}),
-		ltLaw(lawID, std::vector<double>{f});
+		thrustLaw(lawID, std::vector<double>{f});
 
 	SimEngine sim;
 
@@ -52,11 +53,18 @@ int main(int argc, char** argv){
 	sim.runSim_manyNodes(q0_spo, std::vector<double>{}, 0, tof_spo, 4, 
 		&spo, &noLaw);
 
-	sim.runSim_manyNodes(q0_stable, std::vector<double>{alpha_stable, 0}, 
-		0, std::floor(tof_stable), tof_stable, &stable, &ltLaw);
+	sim.runSim_manyNodes(q0_unstable, std::vector<double>{}, 
+		0, tof_unstable, std::floor(tof_unstable), &unstable, &noLaw);
 
-	sim.runSim_manyNodes(q0_unstable, std::vector<double>{alpha_unstable, 0}, 
-		0, std::floor(tof_unstable), tof_unstable, &unstable, &ltLaw);
+	sim.setRevTime(true);
+	sim.runSim(q0_stable, std::vector<double>{alpha_stable, 0}, 
+		0, tof_stable, &stable, &thrustLaw);
+	
+	q0_stable = stable.getStateByIx(-1);
+	stable.reset();
+	sim.setRevTime(false);
+	sim.runSim_manyNodes(q0_stable, std::vector<double>{alpha_stable, 0},
+		0, tof_stable, std::floor(tof_stable), &stable, &thrustLaw);
 
 	// Concatenate Arcs into a single arcset
 	unstable.appendSetAtNode(&stable, unstable.getNodeRefByIx(-1).getID(), 
@@ -69,12 +77,12 @@ int main(int argc, char** argv){
 	unstable.saveToMat("temp_transfer.mat");
 
 	// Create constraints on the initial position and energy
-	std::vector<double> initState {q0_unstable[0], q0_unstable[1], NAN,
-									NAN, NAN, NAN, NAN};
-	Constraint conInitPos(Constraint_tp::STATE, unstable.getNodeRefByIx(0).getID(),
+	std::vector<double> q4 = unstable.getStateByIx(4);
+	std::vector<double> initState {q4[0], q4[1], NAN, NAN, NAN, NAN, 1};
+	Constraint conInitPos(Constraint_tp::STATE, unstable.getNodeRefByIx(4).getID(),
 		initState);
-	Constraint conInitJacobi(Constraint_tp::JC, unstable.getNodeRefByIx(0).getID(),
-		std::vector<double> {unstable.getJacobiByIx(0)});
+	Constraint conInitJacobi(Constraint_tp::JC, unstable.getNodeRefByIx(4).getID(),
+		std::vector<double> {unstable.getJacobiByIx(4)});
 
 	// Constrain the nearly-final SPO state
 	std::vector<double> finalState = spo.getStateByIx(-1);
@@ -87,6 +95,9 @@ int main(int argc, char** argv){
 	unstable.addConstraint(conFinalState);
 
 	MultShootEngine shooter;
+	// shooter.setDoLineSearch(true);
+	// shooter.setMaxIts(50);
+	shooter.setIgnoreDiverge(true);
 	Arcset_cr3bp_lt converged(&ltSys);
 	try{
 		shooter.multShoot(&unstable, &converged);
@@ -97,20 +108,18 @@ int main(int argc, char** argv){
 
 	// Change law to variable mass
 	lawID = ltlaw::GENERAL | ltlaw::CONST_F | ltlaw::CSI_VAR_M;
-	ltLaw.setParams(std::vector<double> {f, 10000});
-	ltLaw.setType(lawID);
+	thrustLaw.setParams(std::vector<double> {f, 10000});
+	thrustLaw.setType(lawID);
 
 	// Add a constraint to fix the initial mass
-	Constraint conInitM(Constraint_tp::STATE, converged.getNodeRefByIx(0).getID(),
-		std::vector<double> {NAN, NAN, NAN, NAN, NAN, NAN, 1});
-	converged.addConstraint(conInitM);
+	// Constraint conInitM(Constraint_tp::STATE, converged.getNodeRefByIx(0).getID(),
+	// 	std::vector<double> {NAN, NAN, NAN, NAN, NAN, NAN, 1});
+	// converged.addConstraint(conInitM);
 
 	converged.print();
 	waitForUser();
 	
 	Arcset_cr3bp_lt converged2(&ltSys);
-	shooter.setDoLineSearch(true);
-	shooter.setMaxIts(200);
 	try{
 		shooter.multShoot(&converged, &converged2);
 	}catch(const Exception &e){

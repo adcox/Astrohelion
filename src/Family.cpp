@@ -158,13 +158,13 @@ void Family::setSortType(FamSort_tp tp){ sortType = tp; }
 std::vector<unsigned int> Family::findMatches(double value, 
 	std::vector<double> *data) const{
 
+	// Split the data into bins in case multiple matches are available
 	double numBins = data->size() > 500 ? 100 : (data->size()/5.0);
 	int binSize = std::floor((data->size())/numBins);
 
 	std::vector<unsigned int> matches;
-	double minDiff = 0;
-	double diff = 0;
-	unsigned int minDiffIx = 0;
+	double absMinDiff = 0, minDiff = 0, diff = 0;
+	unsigned int absMinDiffIx = 0, minDiffIx = 0;
 	for(unsigned int n = 0; n < data->size(); n++){
 		diff = std::abs(data->at(n) - value);
 
@@ -183,12 +183,25 @@ std::vector<unsigned int> Family::findMatches(double value,
 			}
 		}
 
+		if(n == 0)
+			absMinDiff = diff;
+		else if(diff < absMinDiff){
+			absMinDiff = diff;
+			absMinDiffIx = n;
+		}
+
 		// Search for intersections
 		if(n > 0 && (data->at(n) - value)*(data->at(n-1) - value) < 0){
 			matches.push_back(n-1);
 		}
 	}
 
+	// No intersections or nearly exact matches were located, so include the 
+	// closest orbit
+	if(matches.empty()){
+		matches.push_back(absMinDiffIx);
+	}
+	
 	return matches;
 }//=====================================================
 

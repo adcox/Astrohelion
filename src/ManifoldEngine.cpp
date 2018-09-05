@@ -228,11 +228,13 @@ std::vector<Arcset_cr3bp> ManifoldEngine::computeSetFromPeriodic(
     // Get a bunch of points to use as starting guesses for the manifolds
     if(numMans > pPerOrbit->getNumNodes()){
     	if(verbosity >= Verbosity_tp::SOME_MSG)
-        	astrohelion::printWarn("ManifoldEngine::computeEigVecValFromPeriodic: Requested too many manifolds... will return fewer\n");
+        	astrohelion::printWarn("ManifoldEngine::computeEigVecValFromPeriodic:"
+                " Requested too many manifolds... will return fewer\n");
         numMans = pPerOrbit->getNumNodes();
     }
 
-    double stepSize = (static_cast<double>(pPerOrbit->getNumSegs()))/(static_cast<double>(numMans));
+    double stepSize = (static_cast<double>(pPerOrbit->getNumSegs()))/\
+        (static_cast<double>(numMans));
     std::vector<int> pointIx(numMans, 0);
     for(unsigned int i = 0; i < numMans; i++){
         pointIx[i] = floor(i*stepSize+0.5);
@@ -247,10 +249,12 @@ std::vector<Arcset_cr3bp> ManifoldEngine::computeSetFromPeriodic(
     	// Get the state on the periodic orbit to step away from
 		std::vector<double> state = pPerOrbit->getStateByIx(pointIx[m]);
 
-    	MatrixXRd STM = pointIx[m] == 0 ? MatrixXRd::Identity(6,6) : pPerOrbit->getSTMByIx(pointIx[m] - 1);
+    	MatrixXRd STM = pointIx[m] == 0 ? MatrixXRd::Identity(6,6) :\ 
+            pPerOrbit->getSTMByIx(pointIx[m] - 1);
 
     	// Compute manifolds from this point and add them to the big list
-    	std::vector<Arcset_cr3bp> subset = manifoldsFromPOPoint(manifoldType, state, STM, eigVals, eigVecs, tof,
+    	std::vector<Arcset_cr3bp> subset = manifoldsFromPOPoint(manifoldType, 
+            state, STM, eigVals, eigVecs, tof,
     		static_cast<const SysData_cr3bp *>(pPerOrbit->getSysData()), stepType);
     	allManifolds.insert(allManifolds.end(), subset.begin(), subset.end());
     }// End of point on periodic orbit loop
@@ -314,20 +318,27 @@ std::vector<Arcset_cr3bp> ManifoldEngine::computeSingleFromPeriodic(
  * 
  *  @param manifoldType Describes the type of manifold(s) to be computed
  *  @param state The state on the periodic orbit to compute manifold arcs from
- *  @param STM State Transition Matrix from time t0 to time t1; t1 corresponds with <code>state</code>; Note that
- *  this is NOT the monodromy matrix (in general).
- *  @param eigVals Eigenvalues of the monodromy matrix, Phi(t0+T, t0), where T is the period of the periodic orbit
- *  @param eigVecs Eigenvectors of the monodromy matrix that correspond to the eigenvalues in <code>eigVals</code>
- *  @param tof Amount of time (nondimensional) for which to propagate the manifold arc; sign is unimportant. If
- *  tof is set to zero, none of the trajectories will be integrated; each will contain a single
- *  node with the initial condition.
+ *  @param STM State Transition Matrix from time t0 to time t1; t1 corresponds 
+ *  with <code>state</code>; Note that this is NOT the monodromy matrix (in general).
+ *  @param eigVals Eigenvalues of the monodromy matrix, Phi(t0+T, t0), where T 
+ *  is the period of the periodic orbit
+ *  @param eigVecs Eigenvectors of the monodromy matrix that correspond to the 
+ *  eigenvalues in <code>eigVals</code>
+ *  @param tof Amount of time (nondimensional) for which to propagate the 
+ *  manifold arc; sign is unimportant. If tof is set to zero, none of the 
+ *  trajectories will be integrated; each will contain a single node with the 
+ *  initial condition.
  *  @param pSys Pointer to a SysData object consistent with the periodic orbit
- *  @param stepType Describes how the step is taken away from <code>state</code> along the eigenvector
+ *  @param stepType Describes how the step is taken away from <code>state</code> 
+ *  along the eigenvector. By default, <code>stepType</code> is set to
+ *  <code>STEP_VEC_NORMFULL</code>
  *  
  *  @return The computed manifold arc(s)
  */
-std::vector<Arcset_cr3bp> ManifoldEngine::manifoldsFromPOPoint(Manifold_tp manifoldType, std::vector<double> state, MatrixXRd STM,
-	std::vector<cdouble> eigVals, MatrixXRd eigVecs, double tof, const SysData_cr3bp *pSys, Manifold_StepOff_tp stepType){
+std::vector<Arcset_cr3bp> ManifoldEngine::manifoldsFromPOPoint(Manifold_tp manifoldType, 
+    std::vector<double> state, MatrixXRd STM, std::vector<cdouble> eigVals, 
+    MatrixXRd eigVecs, double tof, const SysData_cr3bp *pSys, 
+    Manifold_StepOff_tp stepType){
 
 	assert(pSys->getDynamicsModel()->getCoreStateSize() == 6);
 
@@ -336,7 +347,7 @@ std::vector<Arcset_cr3bp> ManifoldEngine::manifoldsFromPOPoint(Manifold_tp manif
     sim.setVerbosity(static_cast<Verbosity_tp>(to_underlying(verbosity) - 1));
 	double mu = pSys->getMu();
 	Eigen::VectorXd q0 = Eigen::Map<Eigen::VectorXd>(&(state[0]), 6, 1);
-	double C = DynamicsModel_cr3bp::getJacobi(&(state.front()), mu);
+	double C = DynamicsModel_cr3bp::getJacobi(&(state[0]), mu);
 
 	// Loop through each stability type
 	for(unsigned int s = 0; s < eigVals.size(); s++){
@@ -391,7 +402,7 @@ std::vector<Arcset_cr3bp> ManifoldEngine::manifoldsFromPOPoint(Manifold_tp manif
 
 		    // Simulate for some time to generate a manifold arc
 	        Arcset_cr3bp traj(static_cast<const SysData_cr3bp *>(pSys));
-	        if(tof > 0){
+	        if(std::abs(tof) > 1e-6){
 	            sim.runSim(ic.data(), tof, &traj);
 	        }else{
 	            traj.addNode(Node(ic.data(), 6, 0));
@@ -516,23 +527,25 @@ std::vector<Arcset_cr3bp_lt> ManifoldEngine::manifoldsFromLTPOPoint(
 //-----------------------------------------------------
 
 /**
- *  @brief Compute the eigenvector/eigenvalue pair(s) that matches the desired manifold
- *  stability from a CR3BP periodic orbit
- *  @details If the stable/unstable subpsace has more than one set of manifolds, the
- *  algorithm selects the eigenvalue/eigenvector that is most unstable/stable.
+ *  @brief Compute the eigenvector/eigenvalue pair(s) that matches the desired 
+ *  manifold stability from a CR3BP periodic orbit
+ *  @details If the stable/unstable subpsace has more than one set of manifolds, 
+ *  the algorithm selects the eigenvalue/eigenvector that is most unstable/stable.
  * 
  *  @param manifoldType The type of manifold desired
- *  @param pPerOrbit pointer to a periodic CR3BP orbit. No checks are performed to ensure periodicity;
- *  If the trajectory is not periodic or nearly periodic, you may get unexpected results. It is assumed
- *  that the final STM in the orbit object represents the monodromy matrix.
- *  @param eigVals_final pointer to a vector of doubles; the computed eigenvalue(s) will be stored here
+ *  @param pPerOrbit pointer to a periodic CR3BP orbit. No checks are performed 
+ *  to ensure periodicity; If the trajectory is not periodic or nearly periodic, 
+ *  you may get unexpected results. It is assumed that the final STM in the orbit 
+ *  object represents the monodromy matrix.
+ *  @param eigVals_final pointer to a vector of doubles; the computed 
+ *  eigenvalue(s) will be stored here
  *  
  *  @return The eigenvector(s) (column) that best matches the criteria
  *  @throws Exception if the eigenvalue computation is unsuccessful
  *  @throws Excpetion if no stable or unstable eigenvalues are identified
  */
-MatrixXRd ManifoldEngine::eigVecValFromPeriodic(Manifold_tp manifoldType, const Arcset_cr3bp *pPerOrbit,
-	std::vector<cdouble> *eigVals_final){
+MatrixXRd ManifoldEngine::eigVecValFromPeriodic(Manifold_tp manifoldType, 
+    const Arcset_cr3bp *pPerOrbit, std::vector<cdouble> *eigVals_final){
 
     unsigned int coreDim = pPerOrbit->getSysData()->getDynamicsModel()->getCoreStateSize();
 	// assert(pPerOrbit->getSysData()->getDynamicsModel()->getCoreStateSize() == 6);
@@ -553,7 +566,8 @@ MatrixXRd ManifoldEngine::eigVecValFromPeriodic(Manifold_tp manifoldType, const 
 
     Eigen::EigenSolver<MatrixXRd> eigensolver(mono);
     if(eigensolver.info() != Eigen::Success)
-        throw Exception("ManifoldEngine::computeEigVecValFromPeriodic: Could not compute eigenvalues of monodromy matrix");
+        throw Exception("ManifoldEngine::computeEigVecValFromPeriodic:"
+            " Could not compute eigenvalues of monodromy matrix");
 
     Eigen::VectorXcd vals = eigensolver.eigenvalues();
     MatrixXRcd eigVecs = eigensolver.eigenvectors();
@@ -568,7 +582,8 @@ MatrixXRd ManifoldEngine::eigVecValFromPeriodic(Manifold_tp manifoldType, const 
         sortedEig.push_back(eigData[sortedIx[i]]);
     }
 
-    printVerb(verbosity >= Verbosity_tp::DEBUG, "  Manifold Type = %d\n", to_underlying(manifoldType));
+    printVerb(verbosity >= Verbosity_tp::DEBUG, "  Manifold Type = %d\n", 
+        to_underlying(manifoldType));
 
     // Figure out which eigenvalues are the stable and unstable ones,
     // only keep the ones that match the stability of the desired manifolds
@@ -586,39 +601,50 @@ MatrixXRd ManifoldEngine::eigVecValFromPeriodic(Manifold_tp manifoldType, const 
             	keepPair = std::abs(sortedEig[c]) > 1.0;
             }
             if(!keepPair && to_underlying(manifoldType) <= 0){
-            	// Only run this check if the previous one didn't return true (overlap for manifoldType = 0)
+            	// Only run this check if the previous one didn't return true 
+                // (overlap for manifoldType = 0)
             	// Keep the pair if they are stable
             	keepPair = std::abs(sortedEig[c]) < 1.0;
             }
         }else{
-        	printVerb(verbosity >= Verbosity_tp::DEBUG, "  Eigenvalue %s is on the unit circle\n", complexToStr(sortedEig[c]).c_str());
+        	printVerb(verbosity >= Verbosity_tp::DEBUG, 
+                "  Eigenvalue %s is on the unit circle\n", 
+                complexToStr(sortedEig[c]).c_str());
         }
 
         if(keepPair){
-        	printVerb(verbosity >= Verbosity_tp::DEBUG, "  Keeping eigenvalue %s\n", complexToStr(sortedEig[c]).c_str());
+        	printVerb(verbosity >= Verbosity_tp::DEBUG, 
+                "  Keeping eigenvalue %s\n", complexToStr(sortedEig[c]).c_str());
         	nonCenterVals.push_back(sortedEig[c]);
             unsigned int vecIx = sortedIx[c];
             nonCenterVecs.insert(nonCenterVecs.end(),
                 eigVecs.data()+vecIx*6, eigVecs.data()+(vecIx+1)*6); 
         }else{
-        	printVerb(verbosity >= Verbosity_tp::DEBUG, "  Discarding eigenvalue %s\n", complexToStr(sortedEig[c]).c_str());
+        	printVerb(verbosity >= Verbosity_tp::DEBUG, 
+                "  Discarding eigenvalue %s\n", complexToStr(sortedEig[c]).c_str());
         }
     }
 
     if(nonCenterVals.size() == 0){
     	if(verbosity >= Verbosity_tp::SOME_MSG)
-        	printWarn("ManifoldEngine::computeEigVecValFromPeriodic: No stable/unstable eigenvalues were found\n");
-        throw Exception("ManifoldEngine::computeEigVecValFromPeriodic: No stable/unstable eigenvalues were found\n");
+        	printWarn("ManifoldEngine::computeEigVecValFromPeriodic: "
+                "No stable/unstable eigenvalues were found\n");
+        throw Exception("ManifoldEngine::computeEigVecValFromPeriodic: "
+            "No stable/unstable eigenvalues were found\n");
     }
 
     if(nonCenterVals.size() == sortedEig.size()){
         if(verbosity >= Verbosity_tp::SOME_MSG)
-            printWarn("ManifoldEngine::computeEigVecValFromPeriodic: No center eigenvalues were found\nCheck to make sure the input orbit is truely periodic and the STMs represent the\nsequential evolution rather than parallel\n");
+            printWarn("ManifoldEngine::computeEigVecValFromPeriodic: "
+                "No center eigenvalues were found\nCheck to make sure the input"
+                " orbit is truely periodic and the STMs represent the\nsequential"
+                " evolution rather than parallel\n");
     }
 
     // Only keep the real parts of the eigenvectors
     std::vector<double> realVecs = astrohelion::real(nonCenterVecs);
-    MatrixXRd eigVecs_final = Eigen::Map<MatrixXRd>(&(realVecs[0]), nonCenterVecs.size()/6, 6);
+    MatrixXRd eigVecs_final = Eigen::Map<MatrixXRd>(&(realVecs[0]), 
+        nonCenterVecs.size()/6, 6);
     eigVecs_final.transposeInPlace();   // Transpose so eigenvectors are columns
 
     // Determine how many eigenvectors we're expected to return
@@ -628,12 +654,15 @@ MatrixXRd ManifoldEngine::eigVecValFromPeriodic(Manifold_tp manifoldType, const 
 		default: numVecs = 1; break;	// Only stable or unstable
 	}
 
-	printVerb(verbosity >= Verbosity_tp::DEBUG, "  Will return %u vectors/values\n", numVecs);
+	printVerb(verbosity >= Verbosity_tp::DEBUG, 
+        "  Will return %u vectors/values\n", numVecs);
 
 	// Trim the eigenvector and eigenvalue objects to keep ones with the largest stability index
     if(nonCenterVals.size() > numVecs){
     	if(verbosity >= Verbosity_tp::SOME_MSG)
-        	astrohelion::printWarn("ManifoldEngine::computeEigVecValFromPeriodic: Stable/Unstable subspace is larger than 2D. Only pair with the largest stability index will be returned\n");
+        	astrohelion::printWarn("ManifoldEngine::computeEigVecValFromPeriodic:"
+                " Stable/Unstable subspace is larger than 2D. Only pair with the"
+                " largest stability index will be returned\n");
 
         // Find the most unstable eigenvalue (largest magnitude)
     	auto it_U = max_element(nonCenterVals.begin(), nonCenterVals.end(), compareCDouble);
@@ -678,7 +707,8 @@ MatrixXRd ManifoldEngine::eigVecValFromPeriodic(Manifold_tp manifoldType, const 
     // Write data to outputs
     if(eigVals_final){
     	eigVals_final->clear();
-    	eigVals_final->insert(eigVals_final->end(), nonCenterVals.begin(), nonCenterVals.end());
+    	eigVals_final->insert(eigVals_final->end(), nonCenterVals.begin(), 
+            nonCenterVals.end());
     }
     return eigVecs_final;
 }//====================================================

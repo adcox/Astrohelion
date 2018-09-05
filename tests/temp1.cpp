@@ -1,3 +1,20 @@
+/**
+ * @file natpo_manifolds_atHnat.cpp
+ * This script computes stable and unstable manifolds of a natural periodic
+ * orbit at a specified natural Hamiltonian value
+ * 
+ * Usage:
+ * 
+ * 	natpo_manifolds_atHnat <fam_file> <Hnat> <numMan> <tof> 
+ * 		Compute the manifolds of an orbit from the family specified by fam_file
+ * 		with natural Hamiltonian equal to Hnat. To specify the 
+ * 		number of manifolds, append a positive integer as numMan and a positive 
+ * 		double as tof
+ * 	
+ * 
+ * @author Andrew Cox
+ * @version Sep 5, 2018
+ */
 #include "AllIncludes.hpp"
 
 #include <exception>
@@ -6,113 +23,128 @@
 #include <vector>
 
 using namespace astrohelion;
-using ltlaw = astrohelion::ControlLaw_cr3bp_lt;
 
+double stepDist = 50;	// kilometers
+
+// Function declarations
+void freeMem(std::vector<ControlLaw*>&);
+
+// Function definitions
 void freeMem(std::vector<ControlLaw*>& laws){
-	for(auto p : laws){
-		delete p;
-		p = nullptr;
+	for(ControlLaw* pLaw : laws){
+		delete pLaw;
+		pLaw = nullptr;
 	}
 }//====================================================
 
+
 int main(int argc, char** argv){
-	
-	char filepath[] = "../../data/families/cr3bp-lt_earth-moon";
-	char filename[] = "L4_Lyap_f7.0e-02_Hlt-1.552_law2112.mat";
+	// Input 1: famFile
+	// Input 2: natural-thrust Hamiltonian
+	// Input 3: numMan
+	// Input 4: tof (nondim)
 
-	char fullpath[256];
-	sprintf(fullpath, "%s/%s", filepath, filename);
+	if(argc < 3){
+		printErr("Too few arguments. See script documentation.\n");
+		return EXIT_SUCCESS;
+	}
 
-	SysData_cr3bp_lt sys(fullpath);
-	Family_PO_cr3bp_lt fam(&sys);
+	const char* famFile = argv[1];
+	double Hnat = std::atof(argv[2]);
+	int numMan = 50;
+	int tof = 4*PI;
+
+	if(argc > 3)
+		numMan = std::atoi(argv[3]);
+
+	if(argc > 4)
+		tof = std::atof(argv[4]);
+
+	// Error handling
+
+	if(tof < 0){
+		printErr("tof = %f is invalid; must be positive\n");
+		return EXIT_SUCCESS;
+	}
+
+	SysData_cr3bp natSys(famFile);
+	Family_PO_cr3bp fam(&natSys);
 
 	std::vector<ControlLaw*> loadedLaws {};
-	fam.readFromMat(fullpath, loadedLaws);
+	fam.readFromMat(famFile, loadedLaws);
 
-	// Get orbits associated with these discrete angles
-	std::vector<double> alpha_vals {4*PI/12, 5*PI/12, 6*PI/12, 7*PI/12, 8*PI/12,
-		9*PI/12, 10*PI/12, 11*PI/12,  11.9*PI/12};
-	std::vector<Arcset_cr3bp_lt> fullArcs {};
-
-	for(double alpha : alpha_vals){
-		std::vector<Arcset_periodic> matches = fam.getMemberBy2DThrustAngle(alpha);
-
-		if(!matches.empty()){
-			fullArcs.push_back(static_cast<Arcset_cr3bp_lt>(matches[0]));
-			// char fn[64];
-			// sprintf(fn, "L4_f7.0e-02_Hlt-1.552_a%06.2f.mat", alpha*180/PI);
-			// matches[0].saveToMat(fn);
-		}else{
-			printErr("Could not load family member with alpha = %.2f deg\n",
-				alpha*180/PI);
-			freeMem(loadedLaws);
-			return EXIT_SUCCESS;
-		}
-	}
-
-	// Try multiple shooting without any adjustments
-	Arcset_cr3bp_lt chain = fullArcs[0];
-	for(unsigned int i = 1; i < fullArcs.size(); i++){
-		chain.appendSetAtNode(&(fullArcs[i]), chain.getNodeByIx(-1).getID(),
-			fullArcs[i].getNodeByIx(0).getID(), 1.5, 
-			fullArcs[i].getCtrlLawByIx(-1));
-	}
-
-	chain.clearAllConstraints();
-	chain.sortChrono();
-
-	// Constrain the first and last states
-	std::vector<double> q0 = chain.getStateByIx(0);
-	std::vector<double> qf = chain.getStateByIx(-1);
-	
-	Constraint fix_q0(Constraint_tp::STATE, chain.getNodeRefByIx(0).getID(), q0);
-	Constraint fix_qf(Constraint_tp::STATE, chain.getNodeRefByIx(-1).getID(), qf);
-
-	chain.addConstraint(fix_q0);
-	chain.addConstraint(fix_qf);
-
-	chain.saveToMat("L4_chain.mat");
-
-	// Adjust the control law to use variable mass
-	unsigned int lawID = ltlaw::GENERAL | ltlaw::CSI_VAR_M | ltlaw::CONST_F;
-	ltlaw *pLaw = static_cast<ltlaw *>(chain.getCtrlLawByIx(0));
-	std::vector<double> params = pLaw->getParams();
-	params.push_back(1500);		// Isp
-	// *pLaw = ltlaw(lawID, params);
-
-	MultShootEngine shooter;
-	shooter.setMaxIts(200);
-	// shooter.setDoLineSearch(true);
-	// shooter.setTOFType(MSTOF_tp::VAR_FIXSIGN);
-
-	// Converge with fixed mass
-	printf("Converging with fixed mass\n");
-	Arcset_cr3bp_lt converged(&sys);
-	try{
-		shooter.multShoot(&chain, &converged);
-		converged.saveToMat("L4_chain_converged.mat");
-	}catch(const DivergeException &e){
-		printErr("Multiple shooting diverged\n");
+	std::vector<Arcset_periodic> matches = fam.getMemberByJacobi(-2*Hnat);
+	if(matches.empty()){
+		printErr("Could not find an orbit with Hnat = %f\n", Hnat);
 		freeMem(loadedLaws);
 		return EXIT_SUCCESS;
-	}catch(const std::exception &e){
+	}
+	Arcset_cr3bp famArc = static_cast<Arcset_cr3bp>(matches[0]);
+
+	char outFile[128];
+	sprintf(outFile, "orb_H%.4f.mat", Hnat);
+	famArc.saveToMat(outFile, Save_tp::SAVE_CURVE);
+
+	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
+	Arcset_cr3bp singleSegArc(&natSys);
+
+	sim.runSim_manyNodes(famArc.getStateByIx(0), famArc.getTotalTOF(), 
+		numMan, &singleSegArc);
+	// singleSegArc.setSTMs_sequence();
+	singleSegArc.setSTMs_cumulative();
+
+	// Compute the manifolds
+	ManifoldEngine man;
+	man.setStepOffDist(stepDist);
+	man.setVerbosity(Verbosity_tp::NO_MSG);
+	std::vector<Arcset_cr3bp> arcs_u, arcs_s;
+	try{
+		arcs_u = man.computeSetFromPeriodic(Manifold_tp::MAN_U, &singleSegArc,
+			numMan, 0.1);
+		arcs_s = man.computeSetFromPeriodic(Manifold_tp::MAN_S, &singleSegArc, 
+			numMan, 0.1);
+	}catch(const Exception &e){
 		freeMem(loadedLaws);
-		throw;
+		printErr("%s\n", e.what());
+		return EXIT_SUCCESS;
 	}
 
-	// Converge again with variable mass
-	printf("Converging with variable mass\n");
-	Arcset_cr3bp_lt conv_varMass(&sys);
-	*pLaw = ltlaw(lawID, params);
-	shooter.setTOFType(MSTOF_tp::VAR_FIXSIGN);
-	shooter.setDoLineSearch(true);
-	try{
-		shooter.multShoot(&converged, &conv_varMass);
-		conv_varMass.saveToMat("L4_chain_converged_varMass.mat");
-	}catch(const std::exception &e){
-		freeMem(loadedLaws);
-		throw;
+	// Construct two families of orbits: one for the unstable manifolds, another
+	// for the stable manifolds
+	Family_PO_cr3bp manifolds_u(&natSys), manifolds_s(&natSys);
+
+	// Propagate the unstable manifold ICs in forward time
+	// assert(arcs_u.size() == arcs_s.size());
+	// for(unsigned int m = 0; m < arcs_u.size(); m++){
+	// 	manifolds_u.addMember(arcs_u[m]);
+	// 	manifolds_s.addMember(arcs_s[m]);
+	// }
+
+	// Propagate the unstable manifold ICs in forward time
+	Arcset_cr3bp temp(&natSys);
+	for(unsigned int m = 0; m < arcs_u.size(); m++){
+		printf("Unstable Manifold %03u\n", m);
+		temp.reset();
+		sim.runSim(arcs_u[m].getStateByIx(0), tof, &temp);
+
+		manifolds_u.addMember(temp);
 	}
+
+	// Propagate the stable manifold ICs in reverse time
+	sim.setRevTime(true);
+	for(unsigned int m = 0; m < arcs_s.size(); m++){
+		printf("Stable Manifold %03u\n", m);
+		temp.reset();
+		sim.runSim(arcs_s[m].getStateByIx(0), tof, &temp);
+
+		manifolds_s.addMember(temp);
+	}
+
+	sprintf(outFile, "orb_H%.4f_unstableManifolds.mat", Hnat);
+	manifolds_u.saveToMat(outFile, Save_tp::SAVE_CURVE);
+	sprintf(outFile, "orb_H%.4f_stableManifolds.mat", Hnat);
+	manifolds_s.saveToMat(outFile, Save_tp::SAVE_CURVE);
 
 	freeMem(loadedLaws);
 	return EXIT_SUCCESS;

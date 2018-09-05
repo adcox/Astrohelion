@@ -107,6 +107,7 @@ class Family_PO : public Family{
 		 */
 		std::vector<Arcset_periodic> getMatchingMember(double, std::vector<double>*, Constraint) const;
 		void getCoord(unsigned int, std::vector<double>*) const;
+		void replaceMirrorCond(Arcset_periodic*) const;
 		//\}
 
 		/**

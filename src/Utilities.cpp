@@ -412,8 +412,11 @@ std::string readStringFromMat(mat_t *matFile, const char* varName, matio_types a
 
     std::string result = "";
     matvar_t *matvar = Mat_VarRead(matFile, varName);
+    char msg[256];
     if(matvar == nullptr){
-        throw Exception("Utilities::readStringFromMat: Could not read variable from file");
+        sprintf(msg, "Utilities::readStringFromMat: Could not read variable %s from file",
+            varName);
+        throw Exception(msg);
     }else{
         if(matvar->class_type == aClass && matvar->data_type == aType){
             char *data = static_cast<char *>(matvar->data);
@@ -421,10 +424,14 @@ std::string readStringFromMat(mat_t *matFile, const char* varName, matio_types a
             if(data != nullptr){
                 result = std::string(data, matvar->dims[1]);
             }else{
-                throw Exception("Utilities::readStringFromMat: No data");
+                sprintf(msg, "Utilities::readStringFromMat: No data in variable %s",
+                    varName);
+                throw Exception(msg);
             }
         }else{
-            throw Exception("Utilities::readStringFromMat: Incompatible data file: unsupported data type/class");
+            sprintf(msg, "Utilities::readStringFromMat: Incompatible data file:"
+                " unsupported data/type class for variable %s", varName);
+            throw Exception(msg);
         }
     }
 

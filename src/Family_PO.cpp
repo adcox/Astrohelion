@@ -509,11 +509,19 @@ std::vector<Arcset_periodic> Family_PO::getMatchingMember(double val,
 			matchMembers.push_back(members[idx]);
 			printf("  Candidate %d is close enough; no corrections required\n", n);
 		}else{	// If not, employ corrections
-			printf("  Correcting candidate %d...\n", idx);
+			printf("  Correcting candidate %d, index = %d...\n", n, idx);
 
 			MultShootEngine corrector;
 			corrector.setTol(1e-11);
 			Arcset_periodic copyOrbit = members[idx];
+
+			// Careful with energy constraints; may conflict with necessary 
+			// mirror condition constraints, so replace the mirror conditions
+			if(matchCon.getType() == Constraint_tp::JC || 
+				matchCon.getType() == Constraint_tp::HLT){
+
+				replaceMirrorCond(&copyOrbit);
+			}
 
 			// Delete any constraints that might directly conflict with matchCon
 			// There may still be indirect conflicts... ammend as necessary if 
@@ -547,6 +555,11 @@ std::vector<Arcset_periodic> Family_PO::getMatchingMember(double val,
 					cons[i].getType() != Constraint_tp::PSEUDOARC){
 					
 					copyOrbit.addConstraint(cons[i]);
+				}else{
+					printf("  > Removed %s constraint on %s %d because it "
+						"conflicts with the %s match constraint\n", 
+						cons[i].getTypeStr(), cons[i].getAppTypeStr(cons[i].getAppType()),
+						cons[i].getID(), matchCon.getTypeStr());
 				}
 			}
 
@@ -622,6 +635,90 @@ void Family_PO::reverseOrder(){
 		}
 	}
 }//====================================================
+
+/**
+ * @brief Replace mirror condition constraints with an alternative, but 
+ * equivalent, set
+ * @details When an orbit is selected for its energy, a conflict is often found
+ * between the energy constraint and a mirror condition constraint on the first 
+ * node. To ensure that periodic orbits maintain periodicity when recorrected at
+ * the new energy, this function is leveraged to reformulate the constraints.
+ * 
+ * Note that any extra state constraints, i.e., a fixed intercept at the mirror,
+ * are not preserved; only the periodicity constraint aspect of the multiple
+ * mirror condition constraints are reproduced.
+ * 
+ * @param pArc pointer to an arcset that will be reconfigured for periodicity
+ * without multiple mirror condition constraints
+ */
+void Family_PO::replaceMirrorCond(Arcset_periodic *pArc) const{
+	printf("  * Attempting to replace mirror condition constraints\n");
+	pArc->sortChrono();
+
+	std::vector<unsigned int> mirrorCons {};
+	std::vector<Constraint> allCons = pArc->getAllConstraints();
+
+	// Step 1: Identify the constraints that are mirror conditions, i.e., 
+	// the constraints that fix y and vx to zero
+	for(unsigned int c = 0; c < allCons.size(); c++){
+		if(allCons[c].getType() == Constraint_tp::STATE){
+			const std::vector<double>& data = allCons[c].getDataRef_const();
+			if(data.size() < 4)
+				continue;
+
+			// Check for y = 0 and vx = 0
+			if(std::abs(data[1]) < 1e-9 && std::abs(data[3]) < 1e-9){
+				mirrorCons.push_back(c);
+			}
+		}
+	}
+
+	// Step 2: Create new constraints to enforce periodicity by matching nodes
+	// while also preserving the mirror geometry
+	if(mirrorCons.size() == 2){
+
+		// We want to keep one mirror condition constraint to preserve the geometry
+		std::vector<double> mirrorData = allCons[mirrorCons[0]].getData();
+		for(unsigned int d = 0; d < mirrorData.size(); d++){
+			// Set all nonzero elements to NAN
+			if(!std::isnan(mirrorData[d]) && std::abs(mirrorData[d]) > 1e-9){
+				mirrorData[d] = NAN;
+			}
+		}
+
+		// We also want to create a state match constraint to enforce periodicity
+		// Will be applied to node at ix = 0, so match to node at ix = end
+		int ID0 = pArc->getNodeRefByIx(0).getID();
+		int IDf = pArc->getNodeRefByIx(-1).getID();
+		std::vector<double> stateMatchData(mirrorData.size(), NAN);
+		stateMatchData[0] = IDf;	// x should be the same
+		stateMatchData[1] = IDf;	// y should be the same
+		stateMatchData[4] = IDf;	// ydot should be the same
+
+		// Also constraint z or vz if one of them is nonzero
+		std::vector<double> q0 = pArc->getStateByIx(0);
+		if(std::abs(q0[2]) > 1e-9){
+			stateMatchData[2] = IDf;
+		}else if(std::abs(q0[5]) > 1e-9){
+			stateMatchData[5] = IDf;
+		}
+
+		// Clear the constraints from pArc, and add the new ones
+		pArc->clearAllConstraints();
+		pArc->addConstraint(Constraint(Constraint_tp::STATE, IDf, mirrorData));
+		pArc->addConstraint(Constraint(Constraint_tp::MATCH_CUST, ID0, stateMatchData));
+
+		// Add all but the mirror constraints back
+		for(unsigned int c = 0; c < allCons.size(); c++){
+			if(c != mirrorCons[0] && c != mirrorCons[1]){
+				pArc->addConstraint(allCons[c]);
+			}
+		}
+	}else{
+		printf("  * There are %zu mirror condition constraints; can only proceed if there are 2\n",
+			mirrorCons.size());
+	}
+}
 
 //-----------------------------------------------------------------------------
 //      File I/O

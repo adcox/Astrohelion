@@ -122,26 +122,6 @@ int main(int argc, char** argv){
 		manifolds_s.addMember(arcs_s[m]);
 	}
 
-	// Propagate the unstable manifold ICs in forward time
-	// Arcset_cr3bp temp(&natSys);
-	// for(unsigned int m = 0; m < arcs_u.size(); m++){
-	// 	printf("Unstable Manifold %03u\n", m);
-	// 	temp.reset();
-	// 	sim.runSim(arcs_u[m].getStateByIx(0), tof, &temp);
-
-	// 	manifolds_u.addMember(temp);
-	// }
-
-	// // Propagate the stable manifold ICs in reverse time
-	// sim.setRevTime(true);
-	// for(unsigned int m = 0; m < arcs_s.size(); m++){
-	// 	printf("Stable Manifold %03u\n", m);
-	// 	temp.reset();
-	// 	sim.runSim(arcs_s[m].getStateByIx(0), tof, &temp);
-
-	// 	manifolds_s.addMember(temp);
-	// }
-
 	sprintf(outFile, "orb_H%.4f_unstableManifolds.mat", Hnat);
 	manifolds_u.saveToMat(outFile, Save_tp::SAVE_CURVE);
 	sprintf(outFile, "orb_H%.4f_stableManifolds.mat", Hnat);

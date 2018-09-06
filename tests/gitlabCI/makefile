@@ -66,6 +66,7 @@ run:
 	./arcData.bin
 	./bc4bpDef.bin
 	#./cr3bpFam.bin		# Requires family data...
+	#./ltFam.bin 		# Requires family data...
 	#./lambertArc.bin	# Fails right now
 	./linMotion.bin
 	./manifoldEngine.bin
@@ -93,6 +94,9 @@ bc4bpDef: $(OBJECTS)
 
 cr3bpFam: $(OBJECTS)
 	$(COMP) -I $(INC) $(INC_EXT) $^  ../unittest_cr3bpFamily.cpp $(LDFLAGS) -o $@.bin	
+
+ltFam: $(OBJECTS)
+	$(COMP) -I $(INC) $(INC_EXT) $^  ../unittest_cr3bp-lt_family.cpp $(LDFLAGS) -o $@.bin	
 
 event: $(OBJECTS)
 	$(COMP) -I $(INC) $(INC_EXT) $^  ../unittest_event.cpp $(LDFLAGS) -o $@.bin

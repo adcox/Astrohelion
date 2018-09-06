@@ -249,7 +249,7 @@ std::vector<Arcset_cr3bp> ManifoldEngine::computeSetFromPeriodic(
     	// Get the state on the periodic orbit to step away from
 		std::vector<double> state = pPerOrbit->getStateByIx(pointIx[m]);
 
-    	MatrixXRd STM = pointIx[m] == 0 ? MatrixXRd::Identity(6,6) :\ 
+    	MatrixXRd STM = pointIx[m] == 0 ? MatrixXRd::Identity(6,6) :\
             pPerOrbit->getSTMByIx(pointIx[m] - 1);
 
     	// Compute manifolds from this point and add them to the big list
@@ -363,8 +363,8 @@ std::vector<Arcset_cr3bp> ManifoldEngine::manifoldsFromPOPoint(Manifold_tp manif
 
     	// Scale the vector and make sure it is pointing in the +x direction
         Eigen::VectorXd baseDirection = newVec/mag;
-        // if(astrohelion::sign(newVec(0)) != 0)
-    	   // baseDirection *= astrohelion::sign(newVec(0));
+        if(astrohelion::sign(baseDirection(0)) < 0)
+    	   baseDirection *= -1;
 
     	// Determine which directions the user has specified with manifoldType
     	std::vector<int> dirs;
@@ -378,12 +378,11 @@ std::vector<Arcset_cr3bp> ManifoldEngine::manifoldsFromPOPoint(Manifold_tp manif
     		if(std::abs(to_underlying(manifoldType)) == 3){ dirs.push_back(-1); }
     	}
 
+        Arcset_cr3bp traj(static_cast<const SysData_cr3bp *>(pSys));
     	for(unsigned int di = 0; di < dirs.size(); di++){
     		// Flip to (+) or (-) direction according to manifoldType
-    		Eigen::VectorXd direction = dirs[di]*baseDirection;
-
     		// Step away from the point on the arc in the direction of the eigenvector
-    		Eigen::VectorXd ic = q0 + stepOffDist/pSys->getCharL() * direction;
+    		Eigen::VectorXd ic = q0 + stepOffDist/pSys->getCharL() * dirs[di]*baseDirection;
 
     		// Scale the velocity part of ic to match Jacobi if that setting is enabled
 	        if(stepType == Manifold_StepOff_tp::STEP_MATCH_JC){
@@ -401,7 +400,7 @@ std::vector<Arcset_cr3bp> ManifoldEngine::manifoldsFromPOPoint(Manifold_tp manif
 		    }
 
 		    // Simulate for some time to generate a manifold arc
-	        Arcset_cr3bp traj(static_cast<const SysData_cr3bp *>(pSys));
+	        traj.reset();
 	        if(std::abs(tof) > 1e-6){
 	            sim.runSim(ic.data(), tof, &traj);
 	        }else{
@@ -710,6 +709,7 @@ MatrixXRd ManifoldEngine::eigVecValFromPeriodic(Manifold_tp manifoldType,
     	eigVals_final->insert(eigVals_final->end(), nonCenterVals.begin(), 
             nonCenterVals.end());
     }
+
     return eigVecs_final;
 }//====================================================
 

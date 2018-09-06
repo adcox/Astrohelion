@@ -200,12 +200,15 @@ std::vector<Event> DynamicsModel::sim_makeDefaultEvents(const SysData *pSys) con
  *  @param y pointer to full state data array
  *  @param t current integration time
  *  @param arcset pointer to trajectory in which the data is stored
- *  @param params pointer to a structure that contains parameters used in the integration
+ *  @param params pointer to a structure that contains parameters used in the 
+ *  integration
  *  @param tp Event type that occured at the Node
  *  
  *  @return ID of the node once it is added to the Trajectory
  */
-int DynamicsModel::sim_addNode(Node &node, const double *y, double t, Arcset* arcset, EOM_ParamStruct *params, Event_tp tp) const{
+int DynamicsModel::sim_addNode(Node &node, const double *y, double t, 
+	Arcset* arcset, EOM_ParamStruct *params, Event_tp tp) const{
+
 	(void) y;
 	(void) t;
 	
@@ -215,7 +218,8 @@ int DynamicsModel::sim_addNode(Node &node, const double *y, double t, Arcset* ar
 	if(params->pCtrlLaw){
 		unsigned int ctrl_dim = params->pCtrlLaw->getNumStates();
 		if(ctrl_dim > 0){
-			node.setExtraParamVec(PARAMKEY_CTRL, std::vector<double>(y + coreDim, y + coreDim + ctrl_dim));
+			node.setExtraParamVec(PARAMKEY_CTRL, std::vector<double>(y + coreDim, 
+				y + coreDim + ctrl_dim));
 		}
 	}
 

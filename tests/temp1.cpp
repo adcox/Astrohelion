@@ -93,6 +93,7 @@ int main(int argc, char** argv){
 		numMan, &singleSegArc);
 	// singleSegArc.setSTMs_sequence();
 	singleSegArc.setSTMs_cumulative();
+	singleSegArc.saveToMat("singleSegArc.mat");
 
 	// Compute the manifolds
 	ManifoldEngine man;
@@ -101,9 +102,9 @@ int main(int argc, char** argv){
 	std::vector<Arcset_cr3bp> arcs_u, arcs_s;
 	try{
 		arcs_u = man.computeSetFromPeriodic(Manifold_tp::MAN_U, &singleSegArc,
-			numMan, 0.1);
+			numMan, tof);
 		arcs_s = man.computeSetFromPeriodic(Manifold_tp::MAN_S, &singleSegArc, 
-			numMan, 0.1);
+			numMan, tof);
 	}catch(const Exception &e){
 		freeMem(loadedLaws);
 		printErr("%s\n", e.what());
@@ -115,31 +116,31 @@ int main(int argc, char** argv){
 	Family_PO_cr3bp manifolds_u(&natSys), manifolds_s(&natSys);
 
 	// Propagate the unstable manifold ICs in forward time
-	// assert(arcs_u.size() == arcs_s.size());
-	// for(unsigned int m = 0; m < arcs_u.size(); m++){
-	// 	manifolds_u.addMember(arcs_u[m]);
-	// 	manifolds_s.addMember(arcs_s[m]);
-	// }
+	assert(arcs_u.size() == arcs_s.size());
+	for(unsigned int m = 0; m < arcs_u.size(); m++){
+		manifolds_u.addMember(arcs_u[m]);
+		manifolds_s.addMember(arcs_s[m]);
+	}
 
 	// Propagate the unstable manifold ICs in forward time
-	Arcset_cr3bp temp(&natSys);
-	for(unsigned int m = 0; m < arcs_u.size(); m++){
-		printf("Unstable Manifold %03u\n", m);
-		temp.reset();
-		sim.runSim(arcs_u[m].getStateByIx(0), tof, &temp);
+	// Arcset_cr3bp temp(&natSys);
+	// for(unsigned int m = 0; m < arcs_u.size(); m++){
+	// 	printf("Unstable Manifold %03u\n", m);
+	// 	temp.reset();
+	// 	sim.runSim(arcs_u[m].getStateByIx(0), tof, &temp);
 
-		manifolds_u.addMember(temp);
-	}
+	// 	manifolds_u.addMember(temp);
+	// }
 
-	// Propagate the stable manifold ICs in reverse time
-	sim.setRevTime(true);
-	for(unsigned int m = 0; m < arcs_s.size(); m++){
-		printf("Stable Manifold %03u\n", m);
-		temp.reset();
-		sim.runSim(arcs_s[m].getStateByIx(0), tof, &temp);
+	// // Propagate the stable manifold ICs in reverse time
+	// sim.setRevTime(true);
+	// for(unsigned int m = 0; m < arcs_s.size(); m++){
+	// 	printf("Stable Manifold %03u\n", m);
+	// 	temp.reset();
+	// 	sim.runSim(arcs_s[m].getStateByIx(0), tof, &temp);
 
-		manifolds_s.addMember(temp);
-	}
+	// 	manifolds_s.addMember(temp);
+	// }
 
 	sprintf(outFile, "orb_H%.4f_unstableManifolds.mat", Hnat);
 	manifolds_u.saveToMat(outFile, Save_tp::SAVE_CURVE);

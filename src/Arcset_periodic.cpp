@@ -94,10 +94,13 @@ void Arcset_periodic::getEigData(std::vector<cdouble> *pVals, MatrixXRcd *pVecs)
 			}
 		}
 	}
-	if(maxval < 1e-10)
+	if(std::abs(maxval) < 1e-10){
 		printWarn("Arcset_periodic::getEigData: Monodromy matrix appears to "
 			"be all zeros;\n\tthe arcset probably needs to be reconstructed "
 			"from a minimal frame representation\n");
+
+		std::cout << mono << std::endl;
+	}
 
 	std::vector<cdouble> vals {};
 	vals = getBalancedEigData(mono, pVecs);

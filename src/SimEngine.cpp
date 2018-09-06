@@ -1035,7 +1035,7 @@ void SimEngine::integrate(const double *ic, const double *ctrl0,
     const unsigned int extra_dim = model->getExtraStateSize();
     
     // Size of the state-transition matrix
-    const unsigned int stm_dim = pow(core_dim + ctrl_dim, 2);           
+    const unsigned int stm_dim = (core_dim + ctrl_dim)*(core_dim + ctrl_dim);           
     
     // Number of states used for this propagation
     const unsigned int ic_dim = core_dim + ctrl_dim + 
@@ -1064,7 +1064,7 @@ void SimEngine::integrate(const double *ic, const double *ctrl0,
     }        
 
     // array of states that is passed to the integrator
-    double *y = &(fullIC.front());
+    double *y = &(fullIC[0]);
 
     // Choose EOM function based on system type and simplicity
     printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  using %s integration\n", 
@@ -1256,6 +1256,10 @@ void SimEngine::integrate(const double *ic, const double *ctrl0,
             propStepCount++;
         }
     }else{
+        // Identity matrix to reinitialize STM for each segment
+        std::vector<double> I {};
+        createIdentity(I, core_dim + ctrl_dim);
+
         // Integrate each segment between the input times
         for (unsigned int j = 0; j < t_dim - 1; j++){
             // define start and end times; t_int will be updated by integrator
@@ -1267,23 +1271,36 @@ void SimEngine::integrate(const double *ic, const double *ctrl0,
             if(j > 0){
                 // Create a node at every time in the t[] array
                 Node nodeI(y, core_dim, t_int);
-                Segment &lastSeg = arcset->getSegRefByIx(-1);     // Get reference (not reassignable)
+                Segment &lastSeg = arcset->getSegRefByIx(-1); // Get reference (not reassignable)
 
-                int nodeID_i = model->sim_addNode(nodeI, y, t_int, arcset, eomParams, Event_tp::SIM_TOF);
+                int nodeID_i = model->sim_addNode(nodeI, y, t_int, arcset, 
+                    eomParams, Event_tp::SIM_TOF);
                 arcset->getNodeRef(nodeID_i).addLink(lastSeg.getID());
 
-                lastSeg.setTerminus(nodeID_i);  // Update the previous segment to terminate at the new node
+                // Update the previous segment to terminate at the new node
+                lastSeg.setTerminus(nodeID_i);  
                 lastSeg.updateTOF();
-                lastSeg.setSTM(y+core_dim+ctrl_dim, stm_dim);
+                lastSeg.setSTM(y + core_dim + ctrl_dim, stm_dim);
 
-                // Create a new segment for the next time interval - origin is correct, terminus is undetermined, tof is approximate
+                if(!bSimpleIntegration){
+                    // Update state to reset STM elements to Identity; each 
+                    // segment should store its independent, "sequential", STM
+                    std::copy(&(I[0]), &(I[0]) + stm_dim, 
+                        y + core_dim + ctrl_dim);
+                }
+
+                // Create a new segment for the next time interval - origin is 
+                // correct, terminus is undetermined, tof is approximate
                 Segment newSeg(nodeID_i, Linkable::INVALID_ID, tf - t_int);
                 newSeg.appendState(y, ic_dim);
                 newSeg.setStateWidth(ic_dim);
-                lastSeg.appendState(extraStates);   // Save dummy values for extra states that are not propagated
+
+                // Save dummy values for extra states that are not propagated
+                lastSeg.appendState(extraStates);
                 newSeg.appendTime(t_int);
                 model->sim_addSeg(newSeg, y, t_int, arcset, eomParams);
             }
+
             while(sgn*t_int < sgn*tf && !killSim){
                 // printf("Integrating at t = %6.4f\n", t_int);
                 if(bVarStepSize){
@@ -1301,12 +1318,13 @@ void SimEngine::integrate(const double *ic, const double *ctrl0,
                     Segment &lastSeg = arcset->getSegRefByIx(-1);     // Get another reference (not reassignable)
 
                     // Add the node with info that there was a simulation error here
-                    int idf = model->sim_addNode(nodeF, y, t_int, arcset, eomParams, Event_tp::SIM_ERR);
+                    int idf = model->sim_addNode(nodeF, y, t_int, arcset, 
+                        eomParams, Event_tp::SIM_ERR);
                     arcset->getNodeRef(idf).addLink(lastSeg.getID());
 
-                    lastSeg.setTerminus(idf);                       // Update the terminus to the final node
-                    lastSeg.appendState(y, ic_dim);                 // Save the final state and time to the segment
-                    lastSeg.appendState(extraStates);               // Save dummy values for extra states that are not propagated
+                    lastSeg.setTerminus(idf);           // Update the terminus to the final node
+                    lastSeg.appendState(y, ic_dim);     // Save the final state and time to the segment
+                    lastSeg.appendState(extraStates);   // Save dummy values for extra states that are not propagated
                     lastSeg.appendTime(t_int);
                     lastSeg.updateTOF();
                     lastSeg.setSTM(y+core_dim+ctrl_dim, stm_dim);
@@ -1317,14 +1335,18 @@ void SimEngine::integrate(const double *ic, const double *ctrl0,
                 killSim = locateEvents(y, t_int, arcset, propStepCount);
 
                 // Stop the simulation if the maximum computation time has passed
-                killSim = killSim || (maxCompTime > 0 && difftime(time(nullptr), startTimestamp) > maxCompTime);
+                killSim = killSim || (maxCompTime > 0 && difftime(time(nullptr), 
+                    startTimestamp) > maxCompTime);
 
                 propStepCount++;
 
                 // Save the most recent time and state to the segment
-                Segment &lastSeg = arcset->getSegRefByIx(-1);   // Get another reference (not reassignable)
+                // Get another reference (not reassignable)
+                Segment &lastSeg = arcset->getSegRefByIx(-1);
                 lastSeg.appendState(y, ic_dim);
-                lastSeg.appendState(extraStates);               // Save dummy values for extra states that are not propagated
+                
+                // Save dummy values for extra states that are not propagated
+                lastSeg.appendState(extraStates);
                 lastSeg.appendTime(t_int);
             }
 

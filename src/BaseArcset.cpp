@@ -1696,13 +1696,13 @@ std::vector<double> BaseArcset::getStateByIx(int ix) const{
 }//====================================================
 
 /**
- *  @brief Retrieve the STM associated with a segment
- *  with the specified ID
+ *  @brief Retrieve the STM associated with a segment with the specified ID
  * 
  *  @param id the ID of a segment
  *  @return the STM
  *  @throws Exception if `id` is out of bounds
- *  @throws Exception if the segment with the specified ID is not located in the segIDMap
+ *  @throws Exception if the segment with the specified ID is not located in the 
+ *  segIDMap
  */
 MatrixXRd BaseArcset::getSTM(int id) const{
 	if(segIDMap.count(id) == 0)
@@ -1719,7 +1719,7 @@ MatrixXRd BaseArcset::getSTM(int id) const{
 }//====================================================
 
 /**
- *	@brief Retrieve an STM on the arc
+ *	@brief Retrieve an STM associated with a segment with the specified index
  *	@param ix the segment index. If it is negative, the index will count backwards
  *	from the end of the `segs` storage array
  *	

@@ -283,7 +283,25 @@ void Constraint::setData(const double *dat, int len){
 bool Constraint::conflicts(const Constraint &con) const{
 	if(appType == con.getAppType()){
 		if(type == con.getType()){
-			return true;
+			switch(type){
+				case Constraint_tp::STATE:
+				case Constraint_tp::CTRL:
+				case Constraint_tp::ENDSEG_STATE:
+				{
+					//Only a conflict if they try to constrain the same value(s)
+					std::vector<double> data2 = con.getData();
+					unsigned int len = std::min(data.size(), data2.size());
+					for(unsigned int i = 0; i < len; i++){
+						if(!std::isnan(data[i]) && !std::isnan(data2[i])){
+							return true;
+						}
+					}
+					return false;
+				}
+				default:
+					// All other constraints cannot be duplicated
+					return true;
+			}
 		}else{
 			switch(type){
 				case Constraint_tp::JC:

@@ -59,8 +59,8 @@ LinMotionEngine_cr3bp_lt::LinMotionEngine_cr3bp_lt() : LinMotionEngine(){}
  * 
  *  @param eqPt 3D position vector of the equilibrium solution. This may be 
  *  obtained from DynamicsModel_cr3bp_lt::getEquilibPt
- *  @param f square root of thrust magnitude (nondimensional) that corresponds 
- *  to the equilibrium solution
+ *  @param f thrust magnitude (nondimensional) that corresponds to the 
+ *  equilibrium solution
  *  @param alpha thrust pointing angle (in plane, radians) that corresponds to 
  *  the equilibrium solution
  *  @param x0 Initial variational state (nondimensional, relative to eqPt)
@@ -129,9 +129,8 @@ void LinMotionEngine_cr3bp_lt::getLinear(double eqPt[3], double f, double alpha,
 	}
 
 	// Create the control law object that describes the constant thrust vector 
-	// with a very high Isp
-	std::vector<double> params {f, 10000};
-	*pLaw = ControlLaw_cr3bp_lt(ControlLaw_cr3bp_lt::CONST_F_GENERAL, params);
+	std::vector<double> params {f};
+	*pLaw = ControlLaw_cr3bp_lt(ControlLaw_cr3bp_lt::CONST_MF_GENERAL, params);
 	EOM_ParamStruct eomParams(pSys, pLaw);
 
 	// Get state size

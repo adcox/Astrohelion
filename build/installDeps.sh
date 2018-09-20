@@ -42,9 +42,9 @@ cd boost*
 echo "Installing BOOST"
 ./bootstrap.sh --prefix=$INSTALL_DIR
 if [[ "$OS" == "darwin" ]]; then
-	./b2 toolset=gcc-6 -d0 install --with-filesystem --with-system --with-test
+	./b2 toolset=gcc-6 -d0 install --with-test
 else
-	./b2 -d0 install --with-filesystem --with-system --with-test
+	./b2 -d0 install --with-test
 fi
 cd ..
 rm boost*.tar.gz

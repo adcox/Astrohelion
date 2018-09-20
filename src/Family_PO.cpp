@@ -515,13 +515,9 @@ std::vector<Arcset_periodic> Family_PO::getMatchingMember(double val,
 			corrector.setTol(1e-11);
 			Arcset_periodic copyOrbit = members[idx];
 
-			// Careful with energy constraints; may conflict with necessary 
-			// mirror condition constraints, so replace the mirror conditions
-			if(matchCon.getType() == Constraint_tp::JC || 
-				matchCon.getType() == Constraint_tp::HLT){
-
-				replaceMirrorCond(&copyOrbit);
-			}
+			// Replace mirror conditions; it's incredibly difficult to work 
+			// around them...
+			replaceMirrorCond(&copyOrbit);
 
 			// Delete any constraints that might directly conflict with matchCon
 			// There may still be indirect conflicts... ammend as necessary if 

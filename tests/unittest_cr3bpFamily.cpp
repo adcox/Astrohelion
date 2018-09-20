@@ -32,9 +32,8 @@ BOOST_AUTO_TEST_CASE(FAMILY_OPERATIONS){
 	printf("Checing Match State: X\n");
 	double matchX = 0.9;
 	std::vector<Arcset_periodic> matches = fam.getMemberByState(matchX, 0);
-	// printf("  Found %zu Potential members\n", matches.size());
 	for(unsigned int i = 0; i < matches.size(); i++){
-		// printf("   %03u: x = %f ", i, matches[i].getIC()[0]);
+		// printf("   %03u: x = %f ", i, matches[i].getStateByIx(0)[0]);
 		// std::cout << (std::abs(matches[i].getIC()[0] - matchX) < 1e-9 ? PASS : FAIL) << std::endl;
 		BOOST_CHECK_SMALL(matches[i].getStateByIx(0)[0] - matchX, 1e-9);
 	}

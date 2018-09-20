@@ -292,7 +292,6 @@ BOOST_DATA_TEST_CASE(test_continuity,
 
 	MultShootEngine corrector;
 	corrector.setVerbosity(Verbosity_tp::NO_MSG);
-	// corrector.setVerbosity(Verbosity_tp::NO_MSG);
 	corrector.setTOFType(tofType);
 	corrector.setTol(1e-11);
 

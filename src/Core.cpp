@@ -12,7 +12,6 @@
 #include <iostream>
 
 #include <boost/algorithm/string/predicate.hpp>
-#include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
@@ -21,6 +20,8 @@
 #include <cspice/SpiceZdf.h>	// typedefs for SPICE objects, like SpiceDouble
 #include <gsl/gsl_errno.h>		// custom error handling for GSL
 #include <pwd.h>				// Get user ID and other system information
+#include <sys/types.h>			// Used to check if a directory exists
+#include <sys/stat.h>			// Same as types.h
 #include <thread>				// Hardware thread detection
 
 #ifdef _OPENMP
@@ -31,7 +32,7 @@
 #include "Exceptions.hpp"
 #include "Utilities.hpp"
 
-namespace fs = boost::filesystem;	// shortened for readability
+// namespace fs = boost::filesystem;	// shortened for readability
 
 namespace astrohelion{
 /** 
@@ -186,15 +187,34 @@ void Core_Initializer::runInit(){
 			break;
 	}
 
-	// Check to see if the directory exists; if it doesn't, create it.
-	fs::path p = fs::system_complete(settingsFilepath);	// system_complete interprets any ~ or ../
-	if(!fs::exists(p)){
-		// Create the directory
+	// Check to see if the directory exists; if it doesn't, create it
+	struct stat info;
+	bool exists = true;
+	if(stat(settingsFilepath, &info) != 0){
+		// Cannot access that path
+		exists = false;
+	}else if(!(info.st_mode & S_IFDIR)){
+		// Not a directory
+		exists = false;
+	}
+	if(!exists){
 		std::cout << "Settings directory does not exist; creating it now...\n";
 		std::cout << " mkdir " << settingsFilepath << std::endl;
-		fs::create_directories(settingsFilepath);
-	}
 
+		// Create the directory
+		mode_t nMode = 0733; 	// UNIX style permissions
+		int nError = 0;
+		#ifdef _WIN32
+			nError = _mkdir(settingsFilepath);
+		#else
+			nError =  mkdir(settingsFilepath, nMode);
+		#endif
+
+		if(nError != 0){
+			std::cout << "Could not create " << settingsFilepath << std::endl;
+		}
+	}
+	
 	// Construct full paths to the settings files
 	sprintf(defaultSettingsFilepath, "%s%s", settingsFilepath, defaultSettingsFile);
 	sprintf(userSettingsFilepath, "%s%s", settingsFilepath, userSettingsFile);

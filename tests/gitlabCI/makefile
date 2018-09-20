@@ -29,7 +29,7 @@ COMP := $(CXX) $(CFLAGS)
 
 # Library names and locations
 LDFLAGS += -L../../deps/installed/lib
-LIBS = gsl gslcblas matio cspice boost_filesystem boost_system boost_unit_test_framework boost_test_exec_monitor
+LIBS = gsl gslcblas matio cspice boost_unit_test_framework boost_test_exec_monitor
 LDFLAGS += $(foreach lib, $(LIBS),-l$(lib))
 
 # Get JUST the filenames, no filepaths, of the source files

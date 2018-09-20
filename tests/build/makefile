@@ -45,7 +45,7 @@ CFLAGS += -ggdb -Wall -Wextra -Weffc++ -Wdisabled-optimization -Wold-style-cast 
 COMP := $(CXX) $(CFLAGS)
 
 ## Library names and locations
-LIBS = gsl gslcblas matio cspice boost_filesystem boost_system boost_unit_test_framework boost_test_exec_monitor
+LIBS = gsl gslcblas matio cspice boost_unit_test_framework boost_test_exec_monitor
 LDFLAGS += $(foreach lib, $(LIBS),-l$(lib))
 LDFLAGS += -L$(LIB)
 
@@ -80,9 +80,9 @@ directories:
 	$(MKDIR_P) $(OBJ)
 	$(MKDIR_P) $(BIN)/unit
 
-unit: arcData arcset bc4bpDef calc cr3bpFam ltFam lambertArc linMotion\
- 	manifoldEngine multShootCons_bc4bp multShootCons_cr3bp\
- 	multShootCons_cr3bp_lt multShootEngine simEngine utilities event
+unit: arcData arcset bc4bpDef calc cr3bpFam lambertArc linMotion manifoldEngine\
+	multShootCons_bc4bp multShootCons_cr3bp multShootCons_cr3bp_lt multShootEngine\
+	simEngine utilities event
 
 run:
 	$(BIN)/unit/arcData
@@ -128,6 +128,9 @@ calc: $(OBJECTS)
 cr3bpFam: $(OBJECTS)
 	$(COMP) -I $(INC) $(INC_SYS) $^  unittest_cr3bpFamily.cpp $(LDFLAGS) -o $(BIN)/unit/$@	
 
+ltFam: $(OBJECTS)
+	$(COMP) -I $(INC) $(INC_SYS) $^  unittest_cr3bp-lt_family.cpp $(LDFLAGS) -o $(BIN)/unit/$@
+
 event: $(OBJECTS)
 	$(COMP) -I $(INC) $(INC_SYS) $^  unittest_event.cpp $(LDFLAGS) -o $(BIN)/unit/$@	
 
@@ -136,9 +139,6 @@ lambertArc: $(OBJECTS)
 
 linMotion: $(OBJECTS)
 	$(COMP) -I $(INC) $(INC_SYS) $^  unittest_linMotion.cpp $(LDFLAGS) -o $(BIN)/unit/$@	
-
-ltFam: $(OBJECTS)
-	$(COMP) -I $(INC) $(INC_SYS) $^  unittest_cr3bp-lt_family.cpp $(LDFLAGS) -o $(BIN)/unit/$@	
 
 manifoldEngine: $(OBJECTS)
 	$(COMP) -I $(INC) $(INC_SYS) $^  unittest_manifold.cpp $(LDFLAGS) -o $(BIN)/unit/$@	
@@ -184,17 +184,11 @@ calcTest: $(OBJECTS)
 conicTest: $(OBJECTS)
 	$(COMP) -I $(INC) $(INC_SYS) $^ test_2bp.cpp $(LDFLAGS) -o $(BIN)/$@
 
-convertLT: $(OBJECTS)
-	$(COMP) -I $(INC) $(INC_SYS) $^  convertLTFiles.cpp $(LDFLAGS) -o $(BIN)/$@	
-
-eigenTest: 
-	$(COMP) -I $(INC) $(INC_SYS) test_eigen.cpp $(LDFLAGS) -o $(BIN)/$@
-
 famGen: $(OBJECTS)
 	$(COMP) -I $(INC) $(INC_SYS) $^ test_famGeneration.cpp $(LDFLAGS) -o $(BIN)/$@
 
-generateID:
-	$(COMP) -I$(INC) $(INC_SYS) $^ generateID.cpp -o $(BIN)/$@	
+eigenTest: 
+	$(COMP) -I $(INC) $(INC_SYS) test_eigen.cpp $(LDFLAGS) -o $(BIN)/$@
 
 lowThrustTest: $(OBJECTS)
 	$(COMP) -I $(INC) $(INC_SYS) $^ test_cr3bp_lowThrust.cpp $(LDFLAGS) -o $(BIN)/$@
@@ -214,11 +208,11 @@ sortEigTest: $(OBJECTS)
 sysSwitchTest: $(OBJECTS)
 	$(COMP) -I $(INC) $(INC_SYS) $^ test_sysSwitch.cpp $(LDFLAGS) -o $(BIN)/$@	
 
-temp: $(OBJECTS)
+temp1: $(OBJECTS)
 	$(COMP) -I $(INC) $(INC_SYS) $^ temp1.cpp $(LDFLAGS) -o $(BIN)/$@	
 
 temp2: $(OBJECTS)
-	$(COMP) -I $(INC) $(INC_SYS) $^ temp2.cpp $(LDFLAGS) -o $(BIN)/$@
+	$(COMP) -pg -I $(INC) $(INC_SYS) $^ temp2.cpp $(LDFLAGS) -o $(BIN)/$@
 
 temp3: $(OBJECTS)
 	$(COMP) -I $(INC) $(INC_SYS) $^ temp3.cpp $(LDFLAGS) -o $(BIN)/$@
@@ -253,11 +247,10 @@ list:
 	@- echo "  arcData"
 	@- echo "  arcset"
 	@- echo "  bc4bpDef"
+	@- echo "  calc"
 	@- echo "  cr3bpFam"
-	@- echo "  event"
-	@- echo "  lambertArc"
-	@- echo "  linMotion"
 	@- echo "  ltFam"
+	@- echo "  linMotion"
 	@- echo "  manifoldEngine"
 	@- echo "  multShootCons_bc4bp"
 	@- echo "  multShootCons_cr3bp"
@@ -265,6 +258,7 @@ list:
 	@- echo "  multShootEngine"
 	@- echo "  simEngine"
 	@- echo "  utilities"
+	@- echo "  event"
 	@- echo ""
 	@- echo "Other Tests:"
 	@- echo "  bcSysTest - test BC4BP system data, saving, loading, etc."
@@ -277,6 +271,3 @@ list:
 	@- echo "  sortEigTest - Test the eigenvalue sorting algorithm"
 	@- echo "  sysSwitchTest - Test functions that convert trajectories between systems and models"
 	@- echo "  temp - test some temporary file"
-
-
-

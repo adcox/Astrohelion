@@ -28,7 +28,7 @@ CFLAGS += -Wall -Wextra -Weffc++ -Wdisabled-optimization -Wold-style-cast -Wimpo
 COMP := $(CXX) $(CFLAGS)
 
 # Library names and locations
-LIBS = gsl gslcblas matio cspice boost_filesystem boost_system boost_unit_test_framework boost_test_exec_monitor
+LIBS = gsl gslcblas matio cspice boost_unit_test_framework boost_test_exec_monitor
 LDFLAGS += $(foreach lib, $(LIBS),-l$(lib))
 LDFLAGS += -L/opt/local/lib
 

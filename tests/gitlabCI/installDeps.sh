@@ -28,9 +28,9 @@ if [ ! -f "$INSTALL_DIR/include/boost" ]; then
 	echo "Installing BOOST"
 	./bootstrap.sh --prefix=$INSTALL_DIR >> $LOG
 	if [[ "$OS" == "darwin" ]]; then
-		./b2 toolset=gcc-6 -d0 install --with-filesystem --with-system --with-test >> $LOG
+		./b2 toolset=gcc-6 -d0 install --with-test >> $LOG
 	else
-		./b2 -d0 install --with-filesystem --with-system --with-test >> $LOG
+		./b2 -d0 install --with-test >> $LOG
 	fi
 	cd ..
 	rm boost_1_62_0.tar.gz

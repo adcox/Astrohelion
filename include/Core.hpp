@@ -71,7 +71,9 @@
 
 #pragma once
 
-#define NDEBUG		// Dissable all asserts and other debugging features
+#ifndef NDEBUG
+	#define NDEBUG		// Dissable all asserts and other debugging features
+#endif
 
 /* base radix of the computer architecture; almost always 2 (binary),
  * but may be different for some unique systems.

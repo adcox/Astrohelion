@@ -15,6 +15,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
+<link href="customdoxygen.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -176,12 +177,12 @@ virtual unsigned int&#160;</td><td class="memItemRight" valign="bottom"><b>getNu
 <tr class="memdesc:aad602c3b6d27e3f2e72862958f86abfa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the family sort type.  <a href="#aad602c3b6d27e3f2e72862958f86abfa">More...</a><br /></td></tr>
 <tr class="separator:aad602c3b6d27e3f2e72862958f86abfa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">File I/O</div></td></tr>
-<tr class="memitem:a09bd21a235b8ddc6cb967fd10eca7b89"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a09bd21a235b8ddc6cb967fd10eca7b89"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>readFromMat</b> (const char *, std::vector&lt; <a class="el" href="classastrohelion_1_1_control_law.html">ControlLaw</a> * &gt; &amp;, bool bReconstruct=false)=0</td></tr>
-<tr class="separator:a09bd21a235b8ddc6cb967fd10eca7b89"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5e96449385d0009db1e3789f840c57a2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5e96449385d0009db1e3789f840c57a2"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>saveToMat</b> (const char *) const =0</td></tr>
-<tr class="separator:a5e96449385d0009db1e3789f840c57a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5aefa8054f0ed5cd94f29cc6552588eb"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_family.html#a5aefa8054f0ed5cd94f29cc6552588eb">readFromMat</a> (const char *<a class="el" href="classastrohelion_1_1_family.html#aff3cad73c8661d5803bebc6551c5f049">name</a>, std::vector&lt; <a class="el" href="classastrohelion_1_1_control_law.html">ControlLaw</a> * &gt; &amp;laws, bool bReconstruct=false)=0</td></tr>
+<tr class="memdesc:a5aefa8054f0ed5cd94f29cc6552588eb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load a family from a Matlab data file.  <a href="#a5aefa8054f0ed5cd94f29cc6552588eb">More...</a><br /></td></tr>
+<tr class="separator:a5aefa8054f0ed5cd94f29cc6552588eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a78f7f97c6cebd78b039edb801f66fef5"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_family.html#a78f7f97c6cebd78b039edb801f66fef5">saveToMat</a> (const char *<a class="el" href="classastrohelion_1_1_family.html#aff3cad73c8661d5803bebc6551c5f049">name</a>, <a class="el" href="namespaceastrohelion.html#a93445970eb6efda1fdad3b3c90ae9c6a">Save_tp</a> saveTp=<a class="el" href="namespaceastrohelion.html#a93445970eb6efda1fdad3b3c90ae9c6aa70c1e3d11b317e91017980a46f9578cf">Save_tp::SAVE_FRAME</a>) const =0</td></tr>
+<tr class="memdesc:a78f7f97c6cebd78b039edb801f66fef5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save the family to a Matlab data file.  <a href="#a78f7f97c6cebd78b039edb801f66fef5">More...</a><br /></td></tr>
+<tr class="separator:a78f7f97c6cebd78b039edb801f66fef5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
 Protected Attributes</h2></td></tr>
@@ -219,11 +220,12 @@ Utility Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
 Analysis Functions</h2></td></tr>
-<tr class="memitem:a3738fe98a1f2aee7ad2242a519cf5619"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3738fe98a1f2aee7ad2242a519cf5619"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>sortMembers</b> ()=0</td></tr>
+<tr class="memitem:a3738fe98a1f2aee7ad2242a519cf5619"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_family.html#a3738fe98a1f2aee7ad2242a519cf5619">sortMembers</a> ()=0</td></tr>
+<tr class="memdesc:a3738fe98a1f2aee7ad2242a519cf5619"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sort family members according to their sort type.  <a href="#a3738fe98a1f2aee7ad2242a519cf5619">More...</a><br /></td></tr>
 <tr class="separator:a3738fe98a1f2aee7ad2242a519cf5619"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a908c58769731112bb2f26ce8490e727e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a908c58769731112bb2f26ce8490e727e"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>reverseOrder</b> ()=0</td></tr>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_family.html#a908c58769731112bb2f26ce8490e727e">reverseOrder</a> ()=0</td></tr>
+<tr class="memdesc:a908c58769731112bb2f26ce8490e727e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reverse the order of the family members from their current order. <br /></td></tr>
 <tr class="separator:a908c58769731112bb2f26ce8490e727e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a66453bb87e006dc20a0ef3e2772d22b9"><td class="memItemLeft" align="right" valign="top">std::vector&lt; unsigned int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_family.html#a66453bb87e006dc20a0ef3e2772d22b9">findMatches</a> (double, std::vector&lt; double &gt; *) const </td></tr>
 <tr class="memdesc:a66453bb87e006dc20a0ef3e2772d22b9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Locate places in a data set where a specific value probably exists.  <a href="#a66453bb87e006dc20a0ef3e2772d22b9">More...</a><br /></td></tr>
@@ -530,6 +532,103 @@ virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>reverseOrder<
 
 </div>
 </div>
+<a class="anchor" id="a5aefa8054f0ed5cd94f29cc6552588eb"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual void astrohelion::Family::readFromMat </td>
+          <td>(</td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::vector&lt; <a class="el" href="classastrohelion_1_1_control_law.html">ControlLaw</a> * &gt; &amp;&#160;</td>
+          <td class="paramname"><em>laws</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>bReconstruct</em> = <code>false</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Load a family from a Matlab data file. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">name</td><td>path to the file </td></tr>
+    <tr><td class="paramname">laws</td><td>vector in which to store any laws loaded from the file </td></tr>
+    <tr><td class="paramname">bReconstruct</td><td>whether or not to propagate each segment of each family member for a more complete representation of the motion </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Implemented in <a class="el" href="classastrohelion_1_1_family___p_o.html#a948d23f0ace4b74a08bc933e329052ef">astrohelion::Family_PO</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a78f7f97c6cebd78b039edb801f66fef5"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual void astrohelion::Family::saveToMat </td>
+          <td>(</td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="namespaceastrohelion.html#a93445970eb6efda1fdad3b3c90ae9c6a">Save_tp</a>&#160;</td>
+          <td class="paramname"><em>saveTp</em> = <code><a class="el" href="namespaceastrohelion.html#a93445970eb6efda1fdad3b3c90ae9c6aa70c1e3d11b317e91017980a46f9578cf">Save_tp::SAVE_FRAME</a></code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Save the family to a Matlab data file. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">name</td><td>path to the file; must include the .mat extension </td></tr>
+    <tr><td class="paramname">saveTp</td><td>describes how members are saved </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Implemented in <a class="el" href="classastrohelion_1_1_family___p_o.html#a370d935063c090317bb678d25de6b4bc">astrohelion::Family_PO</a>.</p>
+
+</div>
+</div>
 <a class="anchor" id="a0cbef271d9974d142c5c59a3cf679120"></a>
 <div class="memitem">
 <div class="memproto">
@@ -597,11 +696,41 @@ virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>reverseOrder<
 <p>Set the family sort type. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">tp</td><td>describes how family members are sorted when sortMembers() is called </td></tr>
+    <tr><td class="paramname">tp</td><td>describes how family members are sorted when <a class="el" href="classastrohelion_1_1_family.html#a3738fe98a1f2aee7ad2242a519cf5619" title="Sort family members according to their sort type. ">sortMembers()</a> is called </td></tr>
   </table>
   </dd>
 </dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="classastrohelion_1_1_family.html#a1913dab05f61470721742004a98fdc4f" title="Retrieve the sortType associated with this family. ">getSortType()</a> </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a3738fe98a1f2aee7ad2242a519cf5619"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual void astrohelion::Family::sortMembers </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Sort family members according to their sort type. </p>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classastrohelion_1_1_family.html#aad602c3b6d27e3f2e72862958f86abfa" title="Set the family sort type. ">setSortType()</a> </dd>
+<dd>
+<a class="el" href="classastrohelion_1_1_family.html#a1913dab05f61470721742004a98fdc4f" title="Retrieve the sortType associated with this family. ">getSortType()</a> </dd></dl>
+
+<p>Implemented in <a class="el" href="classastrohelion_1_1_family___p_o.html#ad521a51889376c3ecabb6a7be73bb4f5">astrohelion::Family_PO</a>.</p>
 
 </div>
 </div>

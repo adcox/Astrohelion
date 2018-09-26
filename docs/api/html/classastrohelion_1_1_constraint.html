@@ -15,6 +15,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
+<link href="customdoxygen.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -152,6 +153,9 @@ Public Member Functions</h2></td></tr>
 <tr><td colspan="2"><div class="groupHeader">Analysis Functions</div></td></tr>
 <tr class="memitem:a3e5a4115e57589de12a7b46f394e2f0a"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_constraint.html#a3e5a4115e57589de12a7b46f394e2f0a">countConstrainedStates</a> () const </td></tr>
 <tr class="separator:a3e5a4115e57589de12a7b46f394e2f0a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa17eea1563fcd621b31b4a0962daee16"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_constraint.html#aa17eea1563fcd621b31b4a0962daee16">conflicts</a> (const <a class="el" href="classastrohelion_1_1_constraint.html">Constraint</a> &amp;) const </td></tr>
+<tr class="memdesc:aa17eea1563fcd621b31b4a0962daee16"><td class="mdescLeft">&#160;</td><td class="mdescRight">Determine if this constraint conflics with another.  <a href="#aa17eea1563fcd621b31b4a0962daee16">More...</a><br /></td></tr>
+<tr class="separator:aa17eea1563fcd621b31b4a0962daee16"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
@@ -428,6 +432,32 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 
 <p>Check to see if the core is initialized. </p>
 <p>This function wraps a static boolean object to avoid multiple instances of the variable in different translation units </p><dl class="section return"><dt>Returns</dt><dd>whether or not the core is initialized </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="aa17eea1563fcd621b31b4a0962daee16"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool astrohelion::Constraint::conflicts </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classastrohelion_1_1_constraint.html">Constraint</a> &amp;&#160;</td>
+          <td class="paramname"><em>con</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Determine if this constraint conflics with another. </p>
+<p>Conflicts may result in singular Jacobian matrices or simply nonconvergence</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">con</td><td>reference to another constraint </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if this constraint conflicts with con </dd></dl>
 
 </div>
 </div>

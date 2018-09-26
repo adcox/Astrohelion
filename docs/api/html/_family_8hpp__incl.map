@@ -1,4 +1,5 @@
 <map id="include/Family.hpp" name="include/Family.hpp">
-<area shape="rect" id="node4" href="$_core_8hpp.html" title="Contains functions and variables that are global for the entire library. " alt="" coords="250,155,325,181"/>
-<area shape="rect" id="node6" href="$_sys_data_8hpp.html" title="SysData.hpp" alt="" coords="93,80,191,107"/>
+<area shape="rect" id="node4" href="$_core_8hpp.html" title="Contains functions and variables that are global for the entire library. " alt="" coords="245,155,320,181"/>
+<area shape="rect" id="node6" href="$_common_8hpp.html" title="Contains values for physical constants like pi, G, etc. and custom data wrappers. ..." alt="" coords="325,80,425,107"/>
+<area shape="rect" id="node8" href="$_sys_data_8hpp.html" title="SysData.hpp" alt="" coords="100,80,199,107"/>
 </map>

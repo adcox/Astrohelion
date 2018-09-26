@@ -15,6 +15,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
+<link href="customdoxygen.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -215,6 +216,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a40332b2b3cdc6fdd7140f43dbd98e054"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="classastrohelion_1_1_control_law.html">ControlLaw</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_dynamics_model.html#a40332b2b3cdc6fdd7140f43dbd98e054">createControlLaw</a> (unsigned int, const std::vector&lt; double &gt; &amp;params) const </td></tr>
 <tr class="memdesc:a40332b2b3cdc6fdd7140f43dbd98e054"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new control law and allocated it on the stack.  <a href="#a40332b2b3cdc6fdd7140f43dbd98e054">More...</a><br /></td></tr>
 <tr class="separator:a40332b2b3cdc6fdd7140f43dbd98e054"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afaf8a9859f96e6cda8f4bda525e75e54"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_dynamics_model.html#afaf8a9859f96e6cda8f4bda525e75e54">finiteDiff_checkAMat</a> (double *q, double t, double pertSize, <a class="el" href="structastrohelion_1_1_e_o_m___param_struct.html">EOM_ParamStruct</a> *params, <a class="el" href="namespaceastrohelion.html#a4f72fd54458caa1641be0bf23f61720a">Verbosity_tp</a> verb=<a class="el" href="namespaceastrohelion.html#a4f72fd54458caa1641be0bf23f61720aae9df7cb3ea60641454150b4eaee065df">Verbosity_tp::SOME_MSG</a>, bool writeToFile=false) const </td></tr>
+<tr class="memdesc:afaf8a9859f96e6cda8f4bda525e75e54"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check the analytically-computed partial derivatives in the A matrix by comparing with a central-differencing method.  <a href="#afaf8a9859f96e6cda8f4bda525e75e54">More...</a><br /></td></tr>
+<tr class="separator:afaf8a9859f96e6cda8f4bda525e75e54"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
@@ -514,6 +518,78 @@ Multiple Shooting Analysis Functions</h2></td></tr>
 <dl class="section return"><dt>Returns</dt><dd>A pointer to a control law object. The object has been allocated on the stack so the delete() function must be employed to free the memory </dd></dl>
 
 <p>Reimplemented in <a class="el" href="classastrohelion_1_1_dynamics_model__cr3bp__lt.html#a44c5a9ebf6da16f79067c89d8cf632e2">astrohelion::DynamicsModel_cr3bp_lt</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="afaf8a9859f96e6cda8f4bda525e75e54"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool astrohelion::DynamicsModel::finiteDiff_checkAMat </td>
+          <td>(</td>
+          <td class="paramtype">double *&#160;</td>
+          <td class="paramname"><em>q</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>t</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>pertSize</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structastrohelion_1_1_e_o_m___param_struct.html">EOM_ParamStruct</a> *&#160;</td>
+          <td class="paramname"><em>params</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="namespaceastrohelion.html#a4f72fd54458caa1641be0bf23f61720a">Verbosity_tp</a>&#160;</td>
+          <td class="paramname"><em>verb</em> = <code><a class="el" href="namespaceastrohelion.html#a4f72fd54458caa1641be0bf23f61720aae9df7cb3ea60641454150b4eaee065df">Verbosity_tp::SOME_MSG</a></code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>writeToFile</em> = <code>false</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">virtual</span><span class="mlabel">inherited</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Check the analytically-computed partial derivatives in the A matrix by comparing with a central-differencing method. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">q</td><td><a class="el" href="classastrohelion_1_1_core.html" title="An object that serves as a parent to all Core objects. ">Core</a> and control state vector; must have enough elements to specify all core and control states with the core size from the <a class="el" href="classastrohelion_1_1_dynamics_model.html" title="A base class that defines the behavior of a dynamical model and provides functions used in simulation...">DynamicsModel</a> and the control size from the control law in the <a class="el" href="structastrohelion_1_1_e_o_m___param_struct.html" title="Container for EOM parameters. ">EOM_ParamStruct</a> </td></tr>
+    <tr><td class="paramname">t</td><td>time at which to evaluate the equations of motion </td></tr>
+    <tr><td class="paramname">pertSize</td><td>size of the perturbation to use in central differencing </td></tr>
+    <tr><td class="paramname">params</td><td>structure containing information for the equations of motion, including the system data and control law </td></tr>
+    <tr><td class="paramname">verb</td><td>Verbosity, defaults to <a class="el" href="namespaceastrohelion.html#a4f72fd54458caa1641be0bf23f61720aae9df7cb3ea60641454150b4eaee065df" title="Some useful messages are printed to standard output. ">Verbosity_tp::SOME_MSG</a> </td></tr>
+    <tr><td class="paramname">writeToFile</td><td>Whether or not to save the computing A matrices to file; they are saved to the current directory with filenames following the pattern "FiniteDiff_A*.csv"</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the numeric and analytic A matrices match to within a "reasonable" tolerance </dd></dl>
 
 </div>
 </div>

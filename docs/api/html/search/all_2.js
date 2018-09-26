@@ -44,6 +44,7 @@ var searchData=
   ['boldwhite',['BOLDWHITE',['../group__util.html#gaa4ef051614aa0bd503b0a18ee158c5d7',1,'AsciiOutput.hpp']]],
   ['boldyellow',['BOLDYELLOW',['../group__util.html#ga8cec79108dfc3c61e8e32d390ec28b26',1,'AsciiOutput.hpp']]],
   ['boundvalue',['boundValue',['../group__util.html#gab1e3afdce59fbddb2ee46721bad81e3c',1,'astrohelion']]],
+  ['bprintcolor',['bPrintColor',['../classastrohelion_1_1_core___initializer.html#a636e0c9a3504df2620ab1614db5cd698',1,'astrohelion::Core_Initializer']]],
   ['brevtime',['bRevTime',['../classastrohelion_1_1_sim_engine.html#a7a751863055dc137d4e8a5d29b77fbd3',1,'astrohelion::SimEngine']]],
   ['bsaveeachit',['bSaveEachIt',['../classastrohelion_1_1_mult_shoot_engine.html#ad6429ea63ec924dda33bab0dc65ae222',1,'astrohelion::MultShootEngine']]],
   ['bsimpleintegration',['bSimpleIntegration',['../classastrohelion_1_1_sim_engine.html#adfec47e46db246fb085991330199a094',1,'astrohelion::SimEngine']]],

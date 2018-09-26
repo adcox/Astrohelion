@@ -19,6 +19,7 @@ var searchData=
   ['integrate',['integrate',['../classastrohelion_1_1_sim_engine.html#a539d5092beb8fa551e6d5b6fc0173f5d',1,'astrohelion::SimEngine']]],
   ['interppointattime',['interpPointAtTime',['../group__util.html#ga3c0f5dcd605acc6d0212181a69746844',1,'astrohelion']]],
   ['invalid_5fid',['INVALID_ID',['../classastrohelion_1_1_linkable.html#a0a0578810f652b6daffb5251e1fd84a5',1,'astrohelion::Linkable']]],
+  ['iscoloron',['isColorOn',['../group__util.html#ga087d01fb92d8e87ff55e673ff6438c94',1,'astrohelion']]],
   ['isfindingevent',['isFindingEvent',['../classastrohelion_1_1_mult_shoot_engine.html#a934e0b4bacbef6b2fe1dee6e98537466',1,'astrohelion::MultShootEngine']]],
   ['isinchronoorder',['isInChronoOrder',['../classastrohelion_1_1_base_arcset.html#ac5756bb8fecfc4f22e97aa5f6f956768',1,'astrohelion::BaseArcset']]],
   ['islinkedto',['isLinkedTo',['../classastrohelion_1_1_linkable.html#aa2d8b99fca4078d0084564ec08375fc2',1,'astrohelion::Linkable']]]

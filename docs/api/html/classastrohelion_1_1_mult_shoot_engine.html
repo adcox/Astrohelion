@@ -15,6 +15,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
+<link href="customdoxygen.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -1073,10 +1074,11 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>A corrected <a class="el" href="classastrohelion_1_1_mult_shoot_data.html" title="a custom data class to encapsulate data used in each iteration of the corrections process...">MultShootData</a> object </dd></dl>
-<dl class="section see"><dt>See also</dt><dd>multShoot(Arcset*) </dd></dl>
+<dl class="section see"><dt>See also</dt><dd>multShoot(Arcset*)</dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname"><a class="el" href="classastrohelion_1_1_diverge_exception.html" title="Exception class for numerical methods that attempt to converge on a solution. ">DivergeException</a></td><td>if the multiple shooting process does not converge </td></tr>
+    <tr><td class="paramname"><a class="el" href="classastrohelion_1_1_lin_alg_exception.html" title="Exception class for linear algebra errors. ">LinAlgException</a></td><td>if the update equation cannot be solved </td></tr>
   </table>
   </dd>
 </dl>

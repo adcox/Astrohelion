@@ -2,7 +2,7 @@ var searchData=
 [
   ['makesdefaultevents',['makesDefaultEvents',['../classastrohelion_1_1_sim_engine.html#add420f66a0031b0ce500d2b740da5784',1,'astrohelion::SimEngine']]],
   ['manifoldengine',['ManifoldEngine',['../classastrohelion_1_1_manifold_engine.html#ab63431123b07102617af7c3682d0c91d',1,'astrohelion::ManifoldEngine::ManifoldEngine()'],['../classastrohelion_1_1_manifold_engine.html#a6145f4938ce2068ef12d8d03cf652e6b',1,'astrohelion::ManifoldEngine::ManifoldEngine(const ManifoldEngine &amp;)']]],
-  ['manifoldsfromltpopoint',['manifoldsFromLTPOPoint',['../classastrohelion_1_1_manifold_engine.html#ad8ec1c280bfa7dcc491a8d3bc501b6fb',1,'astrohelion::ManifoldEngine']]],
+  ['manifoldsfromltpopoint',['manifoldsFromLTPOPoint',['../classastrohelion_1_1_manifold_engine.html#ad3efc9ba922cdcedaa9cf778853b606a',1,'astrohelion::ManifoldEngine']]],
   ['manifoldsfrompopoint',['manifoldsFromPOPoint',['../classastrohelion_1_1_manifold_engine.html#a827318042f1cfea319614e4b55c77879',1,'astrohelion::ManifoldEngine']]],
   ['matches',['matches',['../structastrohelion_1_1_m_s_var_map___obj.html#abf418e5b712fa9605533cd24006c6d21',1,'astrohelion::MSVarMap_Obj']]],
   ['mean',['mean',['../group__util.html#gac1ff60d4af4abee3c46c2895e200e7c3',1,'astrohelion::mean(T *data, int length)'],['../group__util.html#ga145908792689d801e6f32baf855972bc',1,'astrohelion::mean(std::vector&lt; T &gt; data)']]],

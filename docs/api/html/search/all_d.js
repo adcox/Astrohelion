@@ -16,7 +16,7 @@ var searchData=
   ['manifoldengine',['ManifoldEngine',['../classastrohelion_1_1_manifold_engine.html#ab63431123b07102617af7c3682d0c91d',1,'astrohelion::ManifoldEngine::ManifoldEngine()'],['../classastrohelion_1_1_manifold_engine.html#a6145f4938ce2068ef12d8d03cf652e6b',1,'astrohelion::ManifoldEngine::ManifoldEngine(const ManifoldEngine &amp;)']]],
   ['manifoldengine_2ecpp',['ManifoldEngine.cpp',['../_manifold_engine_8cpp.html',1,'']]],
   ['manifoldengine_2ehpp',['ManifoldEngine.hpp',['../_manifold_engine_8hpp.html',1,'']]],
-  ['manifoldsfromltpopoint',['manifoldsFromLTPOPoint',['../classastrohelion_1_1_manifold_engine.html#ad8ec1c280bfa7dcc491a8d3bc501b6fb',1,'astrohelion::ManifoldEngine']]],
+  ['manifoldsfromltpopoint',['manifoldsFromLTPOPoint',['../classastrohelion_1_1_manifold_engine.html#ad3efc9ba922cdcedaa9cf778853b606a',1,'astrohelion::ManifoldEngine']]],
   ['manifoldsfrompopoint',['manifoldsFromPOPoint',['../classastrohelion_1_1_manifold_engine.html#a827318042f1cfea319614e4b55c77879',1,'astrohelion::ManifoldEngine']]],
   ['mass',['mass',['../classastrohelion_1_1_body_data.html#abce8b80193087d3269b484ea459d911f',1,'astrohelion::BodyData::mass()'],['../namespaceastrohelion.html#ac0e2051d7aba2a2654a357b5d4b93438acb6c2c4b3c8f95f9b58ad13f0a97245d',1,'astrohelion::MASS()']]],
   ['match_5fall',['MATCH_ALL',['../namespaceastrohelion.html#aeedbcf8a5d31bb478577ed8b34a902e6a627c7991c5d0265194247e92fcf120b0',1,'astrohelion']]],

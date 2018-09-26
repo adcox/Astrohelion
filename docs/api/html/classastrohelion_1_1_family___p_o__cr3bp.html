@@ -15,6 +15,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
+<link href="customdoxygen.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -143,6 +144,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a31a9fa242d130c1d700698875c7616d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieve all family members that have Jacobi constant values matching the specified value.  <a href="#a31a9fa242d130c1d700698875c7616d4">More...</a><br /></td></tr>
 <tr class="separator:a31a9fa242d130c1d700698875c7616d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Set and Get Functions</div></td></tr>
+<tr class="memitem:ae053066d08f5dace078d9d4758633065"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="namespaceastrohelion.html#adad21911fcb9bf6db78b0ee09397edd1">cdouble</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_family___p_o.html#ae053066d08f5dace078d9d4758633065">getEigVals</a> (int) const </td></tr>
+<tr class="memdesc:ae053066d08f5dace078d9d4758633065"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieve the eigenvalues associated with a specific family member.  <a href="#ae053066d08f5dace078d9d4758633065">More...</a><br /></td></tr>
+<tr class="separator:ae053066d08f5dace078d9d4758633065"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a98f7cb0d305e0b79845c98c67e8b35d3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespaceastrohelion.html#a864c99da947f1112284463c6b1136310">MatrixXRcd</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_family___p_o.html#a98f7cb0d305e0b79845c98c67e8b35d3">getEigVecs</a> (int) const </td></tr>
+<tr class="memdesc:a98f7cb0d305e0b79845c98c67e8b35d3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieve the eigenvectors associated with a specific family member.  <a href="#a98f7cb0d305e0b79845c98c67e8b35d3">More...</a><br /></td></tr>
+<tr class="separator:a98f7cb0d305e0b79845c98c67e8b35d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a07c673114592708476e1aee880be23b0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classastrohelion_1_1_arcset__periodic.html">Arcset_periodic</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_family___p_o.html#a07c673114592708476e1aee880be23b0">getMember</a> (int) const </td></tr>
 <tr class="memdesc:a07c673114592708476e1aee880be23b0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieve a copy of a family member.  <a href="#a07c673114592708476e1aee880be23b0">More...</a><br /></td></tr>
 <tr class="separator:a07c673114592708476e1aee880be23b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -276,15 +283,18 @@ Analysis Functions</h2></td></tr>
 <tr class="memitem:ae5670ff45817bcb5b72e056d0c38b63c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_family___p_o.html#ae5670ff45817bcb5b72e056d0c38b63c">getCoord</a> (unsigned int, std::vector&lt; double &gt; *) const </td></tr>
 <tr class="memdesc:ae5670ff45817bcb5b72e056d0c38b63c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Populate a vector with a single coordinate from the initial state of each family member.  <a href="#ae5670ff45817bcb5b72e056d0c38b63c">More...</a><br /></td></tr>
 <tr class="separator:ae5670ff45817bcb5b72e056d0c38b63c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0e5c820d273b6833f5114c9cf215483c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_family___p_o.html#a0e5c820d273b6833f5114c9cf215483c">replaceMirrorCond</a> (<a class="el" href="classastrohelion_1_1_arcset__periodic.html">Arcset_periodic</a> *) const </td></tr>
+<tr class="memdesc:a0e5c820d273b6833f5114c9cf215483c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Replace mirror condition constraints with an alternative, but equivalent, set.  <a href="#a0e5c820d273b6833f5114c9cf215483c">More...</a><br /></td></tr>
+<tr class="separator:a0e5c820d273b6833f5114c9cf215483c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
 File I/O</h2></td></tr>
 <tr class="memitem:a948d23f0ace4b74a08bc933e329052ef"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_family___p_o.html#a948d23f0ace4b74a08bc933e329052ef">readFromMat</a> (const char *, std::vector&lt; <a class="el" href="classastrohelion_1_1_control_law.html">ControlLaw</a> * &gt; &amp;, bool bReconstruct=false)</td></tr>
 <tr class="memdesc:a948d23f0ace4b74a08bc933e329052ef"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read family data from a Matlab file.  <a href="#a948d23f0ace4b74a08bc933e329052ef">More...</a><br /></td></tr>
 <tr class="separator:a948d23f0ace4b74a08bc933e329052ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2cf283e7eab45d653d275cd1277ed1b6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_family___p_o.html#a2cf283e7eab45d653d275cd1277ed1b6">saveToMat</a> (const char *) const </td></tr>
-<tr class="memdesc:a2cf283e7eab45d653d275cd1277ed1b6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save the family to a Matlab file.  <a href="#a2cf283e7eab45d653d275cd1277ed1b6">More...</a><br /></td></tr>
-<tr class="separator:a2cf283e7eab45d653d275cd1277ed1b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a370d935063c090317bb678d25de6b4bc"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_family___p_o.html#a370d935063c090317bb678d25de6b4bc">saveToMat</a> (const char *, <a class="el" href="namespaceastrohelion.html#a93445970eb6efda1fdad3b3c90ae9c6a">Save_tp</a> saveTp=<a class="el" href="namespaceastrohelion.html#a93445970eb6efda1fdad3b3c90ae9c6aa70c1e3d11b317e91017980a46f9578cf">Save_tp::SAVE_FRAME</a>) const </td></tr>
+<tr class="memdesc:a370d935063c090317bb678d25de6b4bc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save the family to a Matlab file.  <a href="#a370d935063c090317bb678d25de6b4bc">More...</a><br /></td></tr>
+<tr class="separator:a370d935063c090317bb678d25de6b4bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aea876e4a4b8da535133daa2357a3a38e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_family___p_o.html#aea876e4a4b8da535133daa2357a3a38e">loadMembers</a> (mat_t *, std::vector&lt; <a class="el" href="classastrohelion_1_1_control_law.html">ControlLaw</a> * &gt; &amp;, bool bReconstruct)</td></tr>
 <tr class="memdesc:aea876e4a4b8da535133daa2357a3a38e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load family members from a Matlab file.  <a href="#aea876e4a4b8da535133daa2357a3a38e">More...</a><br /></td></tr>
 <tr class="separator:aea876e4a4b8da535133daa2357a3a38e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -297,9 +307,9 @@ File I/O</h2></td></tr>
 <tr class="memitem:aa6cb243b9708e4d7ff77fa5ffa6ea17a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_family___p_o.html#aa6cb243b9708e4d7ff77fa5ffa6ea17a">loadEigVecs</a> (mat_t *)</td></tr>
 <tr class="memdesc:aa6cb243b9708e4d7ff77fa5ffa6ea17a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load eigenvectors from the data file.  <a href="#aa6cb243b9708e4d7ff77fa5ffa6ea17a">More...</a><br /></td></tr>
 <tr class="separator:aa6cb243b9708e4d7ff77fa5ffa6ea17a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acb0cac6bf3add91ea7abecd703675bf3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_family___p_o.html#acb0cac6bf3add91ea7abecd703675bf3">saveMembers</a> (mat_t *) const </td></tr>
-<tr class="memdesc:acb0cac6bf3add91ea7abecd703675bf3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save family members to a matlab file.  <a href="#acb0cac6bf3add91ea7abecd703675bf3">More...</a><br /></td></tr>
-<tr class="separator:acb0cac6bf3add91ea7abecd703675bf3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1354cbb975fa53817c20861b8ee8be4d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_family___p_o.html#a1354cbb975fa53817c20861b8ee8be4d">saveMembers</a> (mat_t *, <a class="el" href="namespaceastrohelion.html#a93445970eb6efda1fdad3b3c90ae9c6a">Save_tp</a>) const </td></tr>
+<tr class="memdesc:a1354cbb975fa53817c20861b8ee8be4d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save family members to a matlab file.  <a href="#a1354cbb975fa53817c20861b8ee8be4d">More...</a><br /></td></tr>
+<tr class="separator:a1354cbb975fa53817c20861b8ee8be4d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acf5f2cd53f8c1ad3004a9866749a24a7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_family___p_o.html#acf5f2cd53f8c1ad3004a9866749a24a7">saveMiscData</a> (mat_t *) const </td></tr>
 <tr class="memdesc:acf5f2cd53f8c1ad3004a9866749a24a7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save other useful information to a matlab file.  <a href="#acf5f2cd53f8c1ad3004a9866749a24a7">More...</a><br /></td></tr>
 <tr class="separator:acf5f2cd53f8c1ad3004a9866749a24a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -570,6 +580,86 @@ File I/O</h2></td></tr>
   <table class="params">
     <tr><td class="paramname">coordIx</td><td>index of the coordinate within the state vector </td></tr>
     <tr><td class="paramname">data</td><td>pointer to the storage vector </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="ae053066d08f5dace078d9d4758633065"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt; <a class="el" href="namespaceastrohelion.html#adad21911fcb9bf6db78b0ee09397edd1">cdouble</a> &gt; astrohelion::Family_PO::getEigVals </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>ix</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inherited</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Retrieve the eigenvalues associated with a specific family member. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ix</td><td>Index of the family member. If ix &lt; 0, it counts backward from the end of the family. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>a vector of complex eigenvalues associated with the specified family member's monodromy matrix</dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classastrohelion_1_1_exception.html" title="Base Exception class for all my exceptions. ">Exception</a></td><td>if the eigenvalue and eigenvector arrays have not been populated </td></tr>
+    <tr><td class="paramname"><a class="el" href="classastrohelion_1_1_exception.html" title="Base Exception class for all my exceptions. ">Exception</a></td><td>if <code>ix</code> is out of bounds </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a98f7cb0d305e0b79845c98c67e8b35d3"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespaceastrohelion.html#a864c99da947f1112284463c6b1136310">MatrixXRcd</a> astrohelion::Family_PO::getEigVecs </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>ix</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inherited</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Retrieve the eigenvectors associated with a specific family member. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ix</td><td>Index of the family member. If ix &lt; 0, it counts backward from the end of the family. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>a matrix of complex eigenvectors associated with the specified family member's monodromy matrix; each column is an eigenvector</dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classastrohelion_1_1_exception.html" title="Base Exception class for all my exceptions. ">Exception</a></td><td>if the eigenvector array has not been populated </td></tr>
+    <tr><td class="paramname"><a class="el" href="classastrohelion_1_1_exception.html" title="Base Exception class for all my exceptions. ">Exception</a></td><td>if <code>ix</code> is out of bounds </td></tr>
   </table>
   </dd>
 </dl>
@@ -1190,7 +1280,41 @@ File I/O</h2></td></tr>
   </dd>
 </dl>
 
-<p>Implements <a class="el" href="classastrohelion_1_1_family.html">astrohelion::Family</a>.</p>
+<p>Implements <a class="el" href="classastrohelion_1_1_family.html#a5aefa8054f0ed5cd94f29cc6552588eb">astrohelion::Family</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a0e5c820d273b6833f5114c9cf215483c"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void astrohelion::Family_PO::replaceMirrorCond </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classastrohelion_1_1_arcset__periodic.html">Arcset_periodic</a> *&#160;</td>
+          <td class="paramname"><em>pArc</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span><span class="mlabel">inherited</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Replace mirror condition constraints with an alternative, but equivalent, set. </p>
+<p>When an orbit is selected for its energy, a conflict is often found between the energy constraint and a mirror condition constraint on the first node. To ensure that periodic orbits maintain periodicity when recorrected at the new energy, this function is leveraged to reformulate the constraints.</p>
+<p>Note that any extra state constraints, i.e., a fixed intercept at the mirror, are not preserved; only the periodicity constraint aspect of the multiple mirror condition constraints are reproduced.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">pArc</td><td>pointer to an arcset that will be reconfigured for periodicity without multiple mirror condition constraints </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -1218,7 +1342,7 @@ File I/O</h2></td></tr>
 <p>Reverse the order of the family members. </p>
 <p><a class="el" href="classastrohelion_1_1_family.html" title="[brief description] ">Family</a> member data objects, their eigenvalues, and their eigenvectors are swapped in-place to reverse the order. </p>
 
-<p>Implements <a class="el" href="classastrohelion_1_1_family.html">astrohelion::Family</a>.</p>
+<p>Implements <a class="el" href="classastrohelion_1_1_family.html#a908c58769731112bb2f26ce8490e727e">astrohelion::Family</a>.</p>
 
 </div>
 </div>
@@ -1292,7 +1416,7 @@ File I/O</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="acb0cac6bf3add91ea7abecd703675bf3"></a>
+<a class="anchor" id="a1354cbb975fa53817c20861b8ee8be4d"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -1303,8 +1427,18 @@ File I/O</h2></td></tr>
           <td class="memname">void astrohelion::Family_PO::saveMembers </td>
           <td>(</td>
           <td class="paramtype">mat_t *&#160;</td>
-          <td class="paramname"><em>pMatFile</em></td><td>)</td>
-          <td> const</td>
+          <td class="paramname"><em>pMatFile</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="namespaceastrohelion.html#a93445970eb6efda1fdad3b3c90ae9c6a">Save_tp</a>&#160;</td>
+          <td class="paramname"><em>saveTp</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
         </tr>
       </table>
   </td>
@@ -1319,6 +1453,7 @@ File I/O</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">pMatFile</td><td>pointer to an open Matlab file </td></tr>
+    <tr><td class="paramname">saveTp</td><td>describes how members are saved </td></tr>
   </table>
   </dd>
 </dl>
@@ -1357,7 +1492,7 @@ File I/O</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a2cf283e7eab45d653d275cd1277ed1b6"></a>
+<a class="anchor" id="a370d935063c090317bb678d25de6b4bc"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -1368,8 +1503,18 @@ File I/O</h2></td></tr>
           <td class="memname">void astrohelion::Family_PO::saveToMat </td>
           <td>(</td>
           <td class="paramtype">const char *&#160;</td>
-          <td class="paramname"><em>filename</em></td><td>)</td>
-          <td> const</td>
+          <td class="paramname"><em>filename</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="namespaceastrohelion.html#a93445970eb6efda1fdad3b3c90ae9c6a">Save_tp</a>&#160;</td>
+          <td class="paramname"><em>saveTp</em> = <code><a class="el" href="namespaceastrohelion.html#a93445970eb6efda1fdad3b3c90ae9c6aa70c1e3d11b317e91017980a46f9578cf">Save_tp::SAVE_FRAME</a></code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
         </tr>
       </table>
   </td>
@@ -1383,11 +1528,12 @@ File I/O</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">filename</td><td>file name (or path) </td></tr>
+    <tr><td class="paramname">saveTp</td><td>describes how members are saved </td></tr>
   </table>
   </dd>
 </dl>
 
-<p>Implements <a class="el" href="classastrohelion_1_1_family.html">astrohelion::Family</a>.</p>
+<p>Implements <a class="el" href="classastrohelion_1_1_family.html#a78f7f97c6cebd78b039edb801f66fef5">astrohelion::Family</a>.</p>
 
 </div>
 </div>
@@ -1482,7 +1628,7 @@ File I/O</h2></td></tr>
 <p>Set the family sort type. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">tp</td><td>describes how family members are sorted when sortMembers() is called </td></tr>
+    <tr><td class="paramname">tp</td><td>describes how family members are sorted when <a class="el" href="classastrohelion_1_1_family.html#a3738fe98a1f2aee7ad2242a519cf5619" title="Sort family members according to their sort type. ">sortMembers()</a> is called </td></tr>
   </table>
   </dd>
 </dl>
@@ -1547,7 +1693,7 @@ File I/O</h2></td></tr>
   </dd>
 </dl>
 
-<p>Implements <a class="el" href="classastrohelion_1_1_family.html">astrohelion::Family</a>.</p>
+<p>Implements <a class="el" href="classastrohelion_1_1_family.html#a3738fe98a1f2aee7ad2242a519cf5619">astrohelion::Family</a>.</p>
 
 </div>
 </div>

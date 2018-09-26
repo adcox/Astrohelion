@@ -15,6 +15,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
+<link href="customdoxygen.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -139,8 +140,11 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li>getAccel_ConstC_2D()
 : <a class="el" href="classastrohelion_1_1_control_law__cr3bp__lt.html#aca881cc0aaead27afe50a4647eb8792e">astrohelion::ControlLaw_cr3bp_lt</a>
 </li>
-<li>getAccel_GeneralDir()
-: <a class="el" href="classastrohelion_1_1_control_law__cr3bp__lt.html#a199a2c454d74f31da5ff48c91e0cd272">astrohelion::ControlLaw_cr3bp_lt</a>
+<li>getAccel_GeneralInert()
+: <a class="el" href="classastrohelion_1_1_control_law__cr3bp__lt.html#ab9fb706ecdcd2f091ef711d4d3115616">astrohelion::ControlLaw_cr3bp_lt</a>
+</li>
+<li>getAccel_GeneralRot()
+: <a class="el" href="classastrohelion_1_1_control_law__cr3bp__lt.html#a4182b7b37e75daedce7984c51eaeaea3">astrohelion::ControlLaw_cr3bp_lt</a>
 </li>
 <li>getAllConstraints()
 : <a class="el" href="classastrohelion_1_1_base_arcset.html#a459186fb23b639d6f7925deae21a4a55">astrohelion::BaseArcset</a>
@@ -202,7 +206,10 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 : <a class="el" href="classastrohelion_1_1_segment.html#aecb3332543d0901c2f5c5decec1a2e52">astrohelion::Segment</a>
 </li>
 <li>getCtrlLawByIx()
-: <a class="el" href="classastrohelion_1_1_base_arcset.html#a3c313aeee661de335931e191148caaae">astrohelion::BaseArcset</a>
+: <a class="el" href="classastrohelion_1_1_base_arcset.html#a24a82f9aca02c373dc08b1dabc84ccd0">astrohelion::BaseArcset</a>
+</li>
+<li>getCtrlLawByIx_const()
+: <a class="el" href="classastrohelion_1_1_base_arcset.html#a50af3f821077ee2de2c9f290f4faddd2">astrohelion::BaseArcset</a>
 </li>
 <li>getCurveFitMem()
 : <a class="el" href="classastrohelion_1_1_nat_param_engine.html#a95f944ed627e8c721a4012ac62ca36a7">astrohelion::NatParamEngine</a>
@@ -228,6 +235,12 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </li>
 <li>getEigData()
 : <a class="el" href="classastrohelion_1_1_arcset__periodic.html#accb997b3803890058cbb8c3d1cfe9fe6">astrohelion::Arcset_periodic</a>
+</li>
+<li>getEigVals()
+: <a class="el" href="classastrohelion_1_1_family___p_o.html#ae053066d08f5dace078d9d4758633065">astrohelion::Family_PO</a>
+</li>
+<li>getEigVecs()
+: <a class="el" href="classastrohelion_1_1_family___p_o.html#a98f7cb0d305e0b79845c98c67e8b35d3">astrohelion::Family_PO</a>
 </li>
 <li>getEpoch()
 : <a class="el" href="classastrohelion_1_1_base_arcset.html#a9a6f06a5c4c7d6f88207ecb715f0f375">astrohelion::BaseArcset</a>
@@ -486,8 +499,11 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li>getPartials_AccelWRTCore_ConstC_2D()
 : <a class="el" href="classastrohelion_1_1_control_law__cr3bp__lt.html#aaca90a26b4b01108df2e9c3ad2a43fa7">astrohelion::ControlLaw_cr3bp_lt</a>
 </li>
-<li>getPartials_AccelWRTCore_GeneralDir()
-: <a class="el" href="classastrohelion_1_1_control_law__cr3bp__lt.html#aa9206173f7f023ace6b2697b025ee3d5">astrohelion::ControlLaw_cr3bp_lt</a>
+<li>getPartials_AccelWRTCore_GeneralInert()
+: <a class="el" href="classastrohelion_1_1_control_law__cr3bp__lt.html#a2c52aaa3bcc8ed7c83bd178a7a5beb4f">astrohelion::ControlLaw_cr3bp_lt</a>
+</li>
+<li>getPartials_AccelWRTCore_GeneralRot()
+: <a class="el" href="classastrohelion_1_1_control_law__cr3bp__lt.html#a60401ef1b99fab60eb67455f15ee5475">astrohelion::ControlLaw_cr3bp_lt</a>
 </li>
 <li>getPartials_EOMsWRTCtrl_GeneralDir()
 : <a class="el" href="classastrohelion_1_1_control_law__cr3bp__lt.html#a3ab7f0efb6b6ba1c20a32040aabd6fc5">astrohelion::ControlLaw_cr3bp_lt</a>
@@ -521,7 +537,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </li>
 <li>getPrimPos()
 : <a class="el" href="classastrohelion_1_1_dynamics_model.html#af6fb0ecdc66dc7b5f11cb0e0d3daacca">astrohelion::DynamicsModel</a>
-, <a class="el" href="classastrohelion_1_1_dynamics_model__2bp.html#a7b5de08921c84991e6cd5cbe25a6f7ca">astrohelion::DynamicsModel_2bp</a>
+, <a class="el" href="classastrohelion_1_1_dynamics_model__2bp.html#a851795fc15a60b1725de696fcdf46efb">astrohelion::DynamicsModel_2bp</a>
 , <a class="el" href="classastrohelion_1_1_dynamics_model__bc4bp.html#a81111a7bc28cd786c7d1bc6b8a2efbb2">astrohelion::DynamicsModel_bc4bp</a>
 , <a class="el" href="classastrohelion_1_1_dynamics_model__cr3bp.html#a1eeefc5e34092a7c85177f90aa7b20b2">astrohelion::DynamicsModel_cr3bp</a>
 </li>
@@ -529,7 +545,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 : <a class="el" href="classastrohelion_1_1_dynamics_model.html#a6f1067ceaf10935809a13777b715d900">astrohelion::DynamicsModel</a>
 , <a class="el" href="classastrohelion_1_1_dynamics_model__2bp.html#a9d54794ed28d174e77ef50b0f2561bdb">astrohelion::DynamicsModel_2bp</a>
 , <a class="el" href="classastrohelion_1_1_dynamics_model__bc4bp.html#a76e4abd6611eeac8d22fd0a4e8aab75a">astrohelion::DynamicsModel_bc4bp</a>
-, <a class="el" href="classastrohelion_1_1_dynamics_model__cr3bp.html#a9f94fe2c717fdabb79f1d788c1dac421">astrohelion::DynamicsModel_cr3bp</a>
+, <a class="el" href="classastrohelion_1_1_dynamics_model__cr3bp.html#ac37463aad3133f6ff6d73dfb5506e722">astrohelion::DynamicsModel_cr3bp</a>
 </li>
 <li>getRDot()
 : <a class="el" href="classastrohelion_1_1_dynamics_model.html#a23090081ccb30054305bccf843c4ada6">astrohelion::DynamicsModel</a>
@@ -628,6 +644,9 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </li>
 <li>getSTMByIx()
 : <a class="el" href="classastrohelion_1_1_base_arcset.html#a388f1be5eb8fe2a06aaba4e9da9352ae">astrohelion::BaseArcset</a>
+</li>
+<li>getSTMElementsByIx()
+: <a class="el" href="classastrohelion_1_1_base_arcset.html#a42b82ff1647ee0c1c29ef443ba0d35b5">astrohelion::BaseArcset</a>
 </li>
 <li>getStopCount()
 : <a class="el" href="classastrohelion_1_1_event.html#a1fb2bcb2d89afacf5e86805dd7e27ef7">astrohelion::Event</a>

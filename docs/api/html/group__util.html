@@ -15,6 +15,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
+<link href="customdoxygen.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -308,21 +309,27 @@ CR3BP Analysis Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
 Standard Output</h2></td></tr>
-<tr class="memitem:gac3b46b081f51bdb325b1e196564183ae"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#gac3b46b081f51bdb325b1e196564183ae">astrohelion::printVerb</a> (bool verbose, const char *format,...)</td></tr>
-<tr class="memdesc:gac3b46b081f51bdb325b1e196564183ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">A wrapper function to print a message.  <a href="group__util.html#gac3b46b081f51bdb325b1e196564183ae">More...</a><br /></td></tr>
-<tr class="separator:gac3b46b081f51bdb325b1e196564183ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga0c62b88d77cf0935f4d74187423143e6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga0c62b88d77cf0935f4d74187423143e6">astrohelion::printErr</a> (const char *format,...)</td></tr>
-<tr class="memdesc:ga0c62b88d77cf0935f4d74187423143e6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Print an error message to the standard output in red.  <a href="group__util.html#ga0c62b88d77cf0935f4d74187423143e6">More...</a><br /></td></tr>
-<tr class="separator:ga0c62b88d77cf0935f4d74187423143e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga48bfcd6112b39e450fd33621c7a67b00"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga48bfcd6112b39e450fd33621c7a67b00">astrohelion::printWarn</a> (const char *format,...)</td></tr>
-<tr class="memdesc:ga48bfcd6112b39e450fd33621c7a67b00"><td class="mdescLeft">&#160;</td><td class="mdescRight">Print a warning messate to the standard output in yellow.  <a href="group__util.html#ga48bfcd6112b39e450fd33621c7a67b00">More...</a><br /></td></tr>
-<tr class="separator:ga48bfcd6112b39e450fd33621c7a67b00"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gad0aa1c81b491a8022db82871f168bbec"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#gad0aa1c81b491a8022db82871f168bbec">astrohelion::printColor</a> (const char *color, const char *format,...)</td></tr>
-<tr class="memdesc:gad0aa1c81b491a8022db82871f168bbec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Print a message to the standard output using an ASCII escape-type color.  <a href="group__util.html#gad0aa1c81b491a8022db82871f168bbec">More...</a><br /></td></tr>
-<tr class="separator:gad0aa1c81b491a8022db82871f168bbec"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gaa97e4e3ab8efb5ae96fa6d0d8cf018c3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#gaa97e4e3ab8efb5ae96fa6d0d8cf018c3">astrohelion::printVerbColor</a> (bool verbose, const char *color, const char *format,...)</td></tr>
-<tr class="memdesc:gaa97e4e3ab8efb5ae96fa6d0d8cf018c3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Print a message to the standard output using an ASCII escape-type color.  <a href="group__util.html#gaa97e4e3ab8efb5ae96fa6d0d8cf018c3">More...</a><br /></td></tr>
-<tr class="separator:gaa97e4e3ab8efb5ae96fa6d0d8cf018c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga90a05459ef09a1ed0d347cf0ae2f145a"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga90a05459ef09a1ed0d347cf0ae2f145a">astrohelion::printf</a> (const char *format,...)</td></tr>
+<tr class="memdesc:ga90a05459ef09a1ed0d347cf0ae2f145a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Overload printf to pipe output to std::cout.  <a href="group__util.html#ga90a05459ef09a1ed0d347cf0ae2f145a">More...</a><br /></td></tr>
+<tr class="separator:ga90a05459ef09a1ed0d347cf0ae2f145a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gac68832c835c5de07bd2baff571a52fc8"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#gac68832c835c5de07bd2baff571a52fc8">astrohelion::printVerb</a> (bool verbose, const char *format,...)</td></tr>
+<tr class="memdesc:gac68832c835c5de07bd2baff571a52fc8"><td class="mdescLeft">&#160;</td><td class="mdescRight">A wrapper function to print a message.  <a href="group__util.html#gac68832c835c5de07bd2baff571a52fc8">More...</a><br /></td></tr>
+<tr class="separator:gac68832c835c5de07bd2baff571a52fc8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga1f4b6719172d2fdb31064c7cd816c680"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga1f4b6719172d2fdb31064c7cd816c680">astrohelion::printErr</a> (const char *format,...)</td></tr>
+<tr class="memdesc:ga1f4b6719172d2fdb31064c7cd816c680"><td class="mdescLeft">&#160;</td><td class="mdescRight">Print an error message to the standard output in red.  <a href="group__util.html#ga1f4b6719172d2fdb31064c7cd816c680">More...</a><br /></td></tr>
+<tr class="separator:ga1f4b6719172d2fdb31064c7cd816c680"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gacc4af1fd97ed72fa6cc4cce80a577d98"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#gacc4af1fd97ed72fa6cc4cce80a577d98">astrohelion::printWarn</a> (const char *format,...)</td></tr>
+<tr class="memdesc:gacc4af1fd97ed72fa6cc4cce80a577d98"><td class="mdescLeft">&#160;</td><td class="mdescRight">Print a warning messate to the standard output in yellow.  <a href="group__util.html#gacc4af1fd97ed72fa6cc4cce80a577d98">More...</a><br /></td></tr>
+<tr class="separator:gacc4af1fd97ed72fa6cc4cce80a577d98"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaa2271d2dd6a802a2103f2b5ec19e8d51"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#gaa2271d2dd6a802a2103f2b5ec19e8d51">astrohelion::printColor</a> (const char *color, const char *format,...)</td></tr>
+<tr class="memdesc:gaa2271d2dd6a802a2103f2b5ec19e8d51"><td class="mdescLeft">&#160;</td><td class="mdescRight">Print a message to the standard output using an ASCII escape-type color.  <a href="group__util.html#gaa2271d2dd6a802a2103f2b5ec19e8d51">More...</a><br /></td></tr>
+<tr class="separator:gaa2271d2dd6a802a2103f2b5ec19e8d51"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gade3fb67e12c7e7cd784f503efddb5386"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#gade3fb67e12c7e7cd784f503efddb5386">astrohelion::printVerbColor</a> (bool verbose, const char *color, const char *format,...)</td></tr>
+<tr class="memdesc:gade3fb67e12c7e7cd784f503efddb5386"><td class="mdescLeft">&#160;</td><td class="mdescRight">Print a message to the standard output using an ASCII escape-type color.  <a href="group__util.html#gade3fb67e12c7e7cd784f503efddb5386">More...</a><br /></td></tr>
+<tr class="separator:gade3fb67e12c7e7cd784f503efddb5386"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga087d01fb92d8e87ff55e673ff6438c94"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga087d01fb92d8e87ff55e673ff6438c94">astrohelion::isColorOn</a> ()</td></tr>
+<tr class="memdesc:ga087d01fb92d8e87ff55e673ff6438c94"><td class="mdescLeft">&#160;</td><td class="mdescRight">Determine if colors should be used in text outputs.  <a href="group__util.html#ga087d01fb92d8e87ff55e673ff6438c94">More...</a><br /></td></tr>
+<tr class="separator:ga087d01fb92d8e87ff55e673ff6438c94"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
 File I/O</h2></td></tr>
@@ -332,12 +339,12 @@ File I/O</h2></td></tr>
 <tr class="memitem:ga4be30e012cbdb013c3fa4658e9131e16"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga4be30e012cbdb013c3fa4658e9131e16">astrohelion::saveDoubleToFile</a> (mat_t *matfp, const char *varName, double data)</td></tr>
 <tr class="memdesc:ga4be30e012cbdb013c3fa4658e9131e16"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save a single double-precision value to a Matlab file.  <a href="group__util.html#ga4be30e012cbdb013c3fa4658e9131e16">More...</a><br /></td></tr>
 <tr class="separator:ga4be30e012cbdb013c3fa4658e9131e16"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga3c3045a2c2270ba2e6e2ff0ed671d72c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga3c3045a2c2270ba2e6e2ff0ed671d72c">astrohelion::saveMatrixToFile</a> (const char *filename, const char *varName, std::vector&lt; double &gt; data, size_t rows, size_t cols)</td></tr>
-<tr class="memdesc:ga3c3045a2c2270ba2e6e2ff0ed671d72c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save a matrix of data to a Matlab .mat file.  <a href="group__util.html#ga3c3045a2c2270ba2e6e2ff0ed671d72c">More...</a><br /></td></tr>
-<tr class="separator:ga3c3045a2c2270ba2e6e2ff0ed671d72c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga15cf53228c93a84457dffacd64475a56"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga15cf53228c93a84457dffacd64475a56">astrohelion::saveMatrixToFile</a> (mat_t *matfp, const char *varName, std::vector&lt; double &gt; data, size_t rows, size_t cols)</td></tr>
-<tr class="memdesc:ga15cf53228c93a84457dffacd64475a56"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save a matrix of data to an open matlab .mat file.  <a href="group__util.html#ga15cf53228c93a84457dffacd64475a56">More...</a><br /></td></tr>
-<tr class="separator:ga15cf53228c93a84457dffacd64475a56"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga34add57d2a55dbb4531fc2380317afca"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga34add57d2a55dbb4531fc2380317afca">astrohelion::saveMatrixToFile</a> (const char *filename, const char *varName, const std::vector&lt; double &gt; &amp;data, size_t rows, size_t cols)</td></tr>
+<tr class="memdesc:ga34add57d2a55dbb4531fc2380317afca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save a matrix of data to a Matlab .mat file.  <a href="group__util.html#ga34add57d2a55dbb4531fc2380317afca">More...</a><br /></td></tr>
+<tr class="separator:ga34add57d2a55dbb4531fc2380317afca"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga4282a6b6a3cd916591693421221fef09"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga4282a6b6a3cd916591693421221fef09">astrohelion::saveMatrixToFile</a> (mat_t *matfp, const char *varName, const std::vector&lt; double &gt; &amp;data, size_t rows, size_t cols)</td></tr>
+<tr class="memdesc:ga4282a6b6a3cd916591693421221fef09"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save a matrix of data to an open matlab .mat file.  <a href="group__util.html#ga4282a6b6a3cd916591693421221fef09">More...</a><br /></td></tr>
+<tr class="separator:ga4282a6b6a3cd916591693421221fef09"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gae8dbbfc9dd4aaa93bc5efcaace5933de"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#gae8dbbfc9dd4aaa93bc5efcaace5933de">astrohelion::saveStringToFile</a> (mat_t *matfp, const char *varName, std::string text, const int strlen)</td></tr>
 <tr class="memdesc:gae8dbbfc9dd4aaa93bc5efcaace5933de"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save a string to an open Matlab data file.  <a href="group__util.html#gae8dbbfc9dd4aaa93bc5efcaace5933de">More...</a><br /></td></tr>
 <tr class="separator:gae8dbbfc9dd4aaa93bc5efcaace5933de"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1797,6 +1804,24 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
+<a class="anchor" id="ga087d01fb92d8e87ff55e673ff6438c94"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool astrohelion::isColorOn </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Determine if colors should be used in text outputs. </p>
+<p>By default, colored output is enabled. However, by setting the ASTRO_COLOR environment variable to 0, color output is disabled. For example, <code>export ASTRO_COLOR=0</code> on a Linux machine disables colored output. </p><dl class="section return"><dt>Returns</dt><dd>whether or not color should be used in outputs </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="ga4d6ccbe0327d00b4e2e0ad30cbf0e744"></a>
 <div class="memitem">
 <div class="memproto">
@@ -2050,12 +2075,12 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a class="anchor" id="gad0aa1c81b491a8022db82871f168bbec"></a>
+<a class="anchor" id="gaa2271d2dd6a802a2103f2b5ec19e8d51"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void astrohelion::printColor </td>
+          <td class="memname">int astrohelion::printColor </td>
           <td>(</td>
           <td class="paramtype">const char *&#160;</td>
           <td class="paramname"><em>color</em>, </td>
@@ -2091,12 +2116,12 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a class="anchor" id="ga0c62b88d77cf0935f4d74187423143e6"></a>
+<a class="anchor" id="ga1f4b6719172d2fdb31064c7cd816c680"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void astrohelion::printErr </td>
+          <td class="memname">int astrohelion::printErr </td>
           <td>(</td>
           <td class="paramtype">const char *&#160;</td>
           <td class="paramname"><em>format</em>, </td>
@@ -2125,12 +2150,47 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a class="anchor" id="gac3b46b081f51bdb325b1e196564183ae"></a>
+<a class="anchor" id="ga90a05459ef09a1ed0d347cf0ae2f145a"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void astrohelion::printVerb </td>
+          <td class="memname">int astrohelion::printf </td>
+          <td>(</td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>format</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>...</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Overload printf to pipe output to std::cout. </p>
+<p>Functionally equivalent to the usual printf, but this output can be captured by MATLAB (or other external callers) when compiled</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">format</td><td>a standard format string literal to pass to <code>vprintf</code> </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="gac68832c835c5de07bd2baff571a52fc8"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int astrohelion::printVerb </td>
           <td>(</td>
           <td class="paramtype">bool&#160;</td>
           <td class="paramname"><em>verbose</em>, </td>
@@ -2166,12 +2226,12 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a class="anchor" id="gaa97e4e3ab8efb5ae96fa6d0d8cf018c3"></a>
+<a class="anchor" id="gade3fb67e12c7e7cd784f503efddb5386"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void astrohelion::printVerbColor </td>
+          <td class="memname">int astrohelion::printVerbColor </td>
           <td>(</td>
           <td class="paramtype">bool&#160;</td>
           <td class="paramname"><em>verbose</em>, </td>
@@ -2214,12 +2274,12 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a class="anchor" id="ga48bfcd6112b39e450fd33621c7a67b00"></a>
+<a class="anchor" id="gacc4af1fd97ed72fa6cc4cce80a577d98"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void astrohelion::printWarn </td>
+          <td class="memname">int astrohelion::printWarn </td>
           <td>(</td>
           <td class="paramtype">const char *&#160;</td>
           <td class="paramname"><em>format</em>, </td>
@@ -2495,7 +2555,7 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a class="anchor" id="ga3c3045a2c2270ba2e6e2ff0ed671d72c"></a>
+<a class="anchor" id="ga34add57d2a55dbb4531fc2380317afca"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -2514,7 +2574,7 @@ template&lt;typename T &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">std::vector&lt; double &gt;&#160;</td>
+          <td class="paramtype">const std::vector&lt; double &gt; &amp;&#160;</td>
           <td class="paramname"><em>data</em>, </td>
         </tr>
         <tr>
@@ -2552,7 +2612,7 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a class="anchor" id="ga15cf53228c93a84457dffacd64475a56"></a>
+<a class="anchor" id="ga4282a6b6a3cd916591693421221fef09"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -2571,7 +2631,7 @@ template&lt;typename T &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">std::vector&lt; double &gt;&#160;</td>
+          <td class="paramtype">const std::vector&lt; double &gt; &amp;&#160;</td>
           <td class="paramname"><em>data</em>, </td>
         </tr>
         <tr>

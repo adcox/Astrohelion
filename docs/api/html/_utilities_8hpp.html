@@ -15,6 +15,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
+<link href="customdoxygen.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -150,14 +151,15 @@ This graph shows which files directly or indirectly include this file:</div>
 <area shape="rect" id="node24" href="_nat_param_engine_8cpp.html" title="src/NatParamEngine.cpp" alt="" coords="3855,87,4023,114"/>
 <area shape="rect" id="node25" href="_node_8cpp.html" title="Stores information about a single node or integration state. " alt="" coords="4047,87,4147,114"/>
 <area shape="rect" id="node26" href="_pseudo_arc_engine_8cpp.html" title="src/PseudoArcEngine.cpp" alt="" coords="4172,87,4345,114"/>
-<area shape="rect" id="node27" href="_sim_engine_8cpp.html" title="Performs numerical integration on a set of initial conditions in any dynamic model and system..." alt="" coords="4370,87,4502,114"/>
-<area shape="rect" id="node28" href="_sys_data_8cpp.html" title="System Data (Abstract Base Class) " alt="" coords="4527,87,4647,114"/>
-<area shape="rect" id="node29" href="_sys_data__2bp_8cpp.html" title="Derivative of SysData, specific to 2BP. " alt="" coords="4671,87,4819,114"/>
-<area shape="rect" id="node30" href="_sys_data__bc4bp_8cpp.html" title="Derivative of SysData, specific to BCR4BPR. " alt="" coords="4844,87,5007,114"/>
-<area shape="rect" id="node31" href="_sys_data__cr3bp_8cpp.html" title="Derivative of SysData, specific to CR3BP. " alt="" coords="5031,87,5190,114"/>
-<area shape="rect" id="node32" href="_sys_data__cr3bp__lt_8cpp.html" title="Derivative of SysData, specific to CR3BP&#45;LTVP. " alt="" coords="5215,87,5388,114"/>
-<area shape="rect" id="node33" href="_utilities_8cpp.html" title="Similar to tpat_calculations, but these functions are more general, less math&#45;y. " alt="" coords="5413,87,5526,114"/>
-<area shape="rect" id="node34" href="_all_includes_8hpp.html" title="Provides easy include for all headers in the Core library. " alt="" coords="5550,87,5706,114"/>
+<area shape="rect" id="node27" href="_segment_8cpp.html" title="Stores information about how nodes are linked. " alt="" coords="4370,87,4491,114"/>
+<area shape="rect" id="node28" href="_sim_engine_8cpp.html" title="Performs numerical integration on a set of initial conditions in any dynamic model and system..." alt="" coords="4515,87,4647,114"/>
+<area shape="rect" id="node29" href="_sys_data_8cpp.html" title="System Data (Abstract Base Class) " alt="" coords="4672,87,4792,114"/>
+<area shape="rect" id="node30" href="_sys_data__2bp_8cpp.html" title="Derivative of SysData, specific to 2BP. " alt="" coords="4817,87,4965,114"/>
+<area shape="rect" id="node31" href="_sys_data__bc4bp_8cpp.html" title="Derivative of SysData, specific to BCR4BPR. " alt="" coords="4989,87,5152,114"/>
+<area shape="rect" id="node32" href="_sys_data__cr3bp_8cpp.html" title="Derivative of SysData, specific to CR3BP. " alt="" coords="5177,87,5335,114"/>
+<area shape="rect" id="node33" href="_sys_data__cr3bp__lt_8cpp.html" title="Derivative of SysData, specific to CR3BP&#45;LTVP. " alt="" coords="5360,87,5533,114"/>
+<area shape="rect" id="node34" href="_utilities_8cpp.html" title="Similar to tpat_calculations, but these functions are more general, less math&#45;y. " alt="" coords="5558,87,5671,114"/>
+<area shape="rect" id="node35" href="_all_includes_8hpp.html" title="Provides easy include for all headers in the Core library. " alt="" coords="5695,87,5851,114"/>
 </map>
 </div>
 </div>
@@ -288,21 +290,27 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="grou
 <tr class="memdesc:gab475c37dc35eebe25514c0e5c7061711"><td class="mdescLeft">&#160;</td><td class="mdescRight">Suspend operation until the user presses a key. <br /></td></tr>
 <tr class="separator:gab475c37dc35eebe25514c0e5c7061711"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Standard Output</div></td></tr>
-<tr class="memitem:ga0c62b88d77cf0935f4d74187423143e6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga0c62b88d77cf0935f4d74187423143e6">astrohelion::printErr</a> (const char *format,...)</td></tr>
-<tr class="memdesc:ga0c62b88d77cf0935f4d74187423143e6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Print an error message to the standard output in red.  <a href="group__util.html#ga0c62b88d77cf0935f4d74187423143e6">More...</a><br /></td></tr>
-<tr class="separator:ga0c62b88d77cf0935f4d74187423143e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga48bfcd6112b39e450fd33621c7a67b00"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga48bfcd6112b39e450fd33621c7a67b00">astrohelion::printWarn</a> (const char *format,...)</td></tr>
-<tr class="memdesc:ga48bfcd6112b39e450fd33621c7a67b00"><td class="mdescLeft">&#160;</td><td class="mdescRight">Print a warning messate to the standard output in yellow.  <a href="group__util.html#ga48bfcd6112b39e450fd33621c7a67b00">More...</a><br /></td></tr>
-<tr class="separator:ga48bfcd6112b39e450fd33621c7a67b00"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gac3b46b081f51bdb325b1e196564183ae"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#gac3b46b081f51bdb325b1e196564183ae">astrohelion::printVerb</a> (bool verbose, const char *format,...)</td></tr>
-<tr class="memdesc:gac3b46b081f51bdb325b1e196564183ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">A wrapper function to print a message.  <a href="group__util.html#gac3b46b081f51bdb325b1e196564183ae">More...</a><br /></td></tr>
-<tr class="separator:gac3b46b081f51bdb325b1e196564183ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gad0aa1c81b491a8022db82871f168bbec"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#gad0aa1c81b491a8022db82871f168bbec">astrohelion::printColor</a> (const char *color, const char *format,...)</td></tr>
-<tr class="memdesc:gad0aa1c81b491a8022db82871f168bbec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Print a message to the standard output using an ASCII escape-type color.  <a href="group__util.html#gad0aa1c81b491a8022db82871f168bbec">More...</a><br /></td></tr>
-<tr class="separator:gad0aa1c81b491a8022db82871f168bbec"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gaa97e4e3ab8efb5ae96fa6d0d8cf018c3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#gaa97e4e3ab8efb5ae96fa6d0d8cf018c3">astrohelion::printVerbColor</a> (bool verbose, const char *color, const char *format,...)</td></tr>
-<tr class="memdesc:gaa97e4e3ab8efb5ae96fa6d0d8cf018c3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Print a message to the standard output using an ASCII escape-type color.  <a href="group__util.html#gaa97e4e3ab8efb5ae96fa6d0d8cf018c3">More...</a><br /></td></tr>
-<tr class="separator:gaa97e4e3ab8efb5ae96fa6d0d8cf018c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga087d01fb92d8e87ff55e673ff6438c94"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga087d01fb92d8e87ff55e673ff6438c94">astrohelion::isColorOn</a> ()</td></tr>
+<tr class="memdesc:ga087d01fb92d8e87ff55e673ff6438c94"><td class="mdescLeft">&#160;</td><td class="mdescRight">Determine if colors should be used in text outputs.  <a href="group__util.html#ga087d01fb92d8e87ff55e673ff6438c94">More...</a><br /></td></tr>
+<tr class="separator:ga087d01fb92d8e87ff55e673ff6438c94"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga90a05459ef09a1ed0d347cf0ae2f145a"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga90a05459ef09a1ed0d347cf0ae2f145a">astrohelion::printf</a> (const char *format,...)</td></tr>
+<tr class="memdesc:ga90a05459ef09a1ed0d347cf0ae2f145a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Overload printf to pipe output to std::cout.  <a href="group__util.html#ga90a05459ef09a1ed0d347cf0ae2f145a">More...</a><br /></td></tr>
+<tr class="separator:ga90a05459ef09a1ed0d347cf0ae2f145a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga1f4b6719172d2fdb31064c7cd816c680"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga1f4b6719172d2fdb31064c7cd816c680">astrohelion::printErr</a> (const char *format,...)</td></tr>
+<tr class="memdesc:ga1f4b6719172d2fdb31064c7cd816c680"><td class="mdescLeft">&#160;</td><td class="mdescRight">Print an error message to the standard output in red.  <a href="group__util.html#ga1f4b6719172d2fdb31064c7cd816c680">More...</a><br /></td></tr>
+<tr class="separator:ga1f4b6719172d2fdb31064c7cd816c680"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gacc4af1fd97ed72fa6cc4cce80a577d98"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#gacc4af1fd97ed72fa6cc4cce80a577d98">astrohelion::printWarn</a> (const char *format,...)</td></tr>
+<tr class="memdesc:gacc4af1fd97ed72fa6cc4cce80a577d98"><td class="mdescLeft">&#160;</td><td class="mdescRight">Print a warning messate to the standard output in yellow.  <a href="group__util.html#gacc4af1fd97ed72fa6cc4cce80a577d98">More...</a><br /></td></tr>
+<tr class="separator:gacc4af1fd97ed72fa6cc4cce80a577d98"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gac68832c835c5de07bd2baff571a52fc8"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#gac68832c835c5de07bd2baff571a52fc8">astrohelion::printVerb</a> (bool verbose, const char *format,...)</td></tr>
+<tr class="memdesc:gac68832c835c5de07bd2baff571a52fc8"><td class="mdescLeft">&#160;</td><td class="mdescRight">A wrapper function to print a message.  <a href="group__util.html#gac68832c835c5de07bd2baff571a52fc8">More...</a><br /></td></tr>
+<tr class="separator:gac68832c835c5de07bd2baff571a52fc8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaa2271d2dd6a802a2103f2b5ec19e8d51"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#gaa2271d2dd6a802a2103f2b5ec19e8d51">astrohelion::printColor</a> (const char *color, const char *format,...)</td></tr>
+<tr class="memdesc:gaa2271d2dd6a802a2103f2b5ec19e8d51"><td class="mdescLeft">&#160;</td><td class="mdescRight">Print a message to the standard output using an ASCII escape-type color.  <a href="group__util.html#gaa2271d2dd6a802a2103f2b5ec19e8d51">More...</a><br /></td></tr>
+<tr class="separator:gaa2271d2dd6a802a2103f2b5ec19e8d51"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gade3fb67e12c7e7cd784f503efddb5386"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#gade3fb67e12c7e7cd784f503efddb5386">astrohelion::printVerbColor</a> (bool verbose, const char *color, const char *format,...)</td></tr>
+<tr class="memdesc:gade3fb67e12c7e7cd784f503efddb5386"><td class="mdescLeft">&#160;</td><td class="mdescRight">Print a message to the standard output using an ASCII escape-type color.  <a href="group__util.html#gade3fb67e12c7e7cd784f503efddb5386">More...</a><br /></td></tr>
+<tr class="separator:gade3fb67e12c7e7cd784f503efddb5386"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">File I/O</div></td></tr>
 <tr class="memitem:gaf353962161fbf0c85dd7313165903068"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#gaf353962161fbf0c85dd7313165903068">astrohelion::readDoubleFromMat</a> (mat_t *matFile, const char *varName)</td></tr>
 <tr class="memdesc:gaf353962161fbf0c85dd7313165903068"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a double from a mat file.  <a href="group__util.html#gaf353962161fbf0c85dd7313165903068">More...</a><br /></td></tr>
@@ -319,12 +327,12 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="grou
 <tr class="memitem:gae8dbbfc9dd4aaa93bc5efcaace5933de"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#gae8dbbfc9dd4aaa93bc5efcaace5933de">astrohelion::saveStringToFile</a> (mat_t *matfp, const char *varName, std::string text, const int strlen)</td></tr>
 <tr class="memdesc:gae8dbbfc9dd4aaa93bc5efcaace5933de"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save a string to an open Matlab data file.  <a href="group__util.html#gae8dbbfc9dd4aaa93bc5efcaace5933de">More...</a><br /></td></tr>
 <tr class="separator:gae8dbbfc9dd4aaa93bc5efcaace5933de"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga3c3045a2c2270ba2e6e2ff0ed671d72c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga3c3045a2c2270ba2e6e2ff0ed671d72c">astrohelion::saveMatrixToFile</a> (const char *filename, const char *varName, std::vector&lt; double &gt; data, size_t rows, size_t cols)</td></tr>
-<tr class="memdesc:ga3c3045a2c2270ba2e6e2ff0ed671d72c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save a matrix of data to a Matlab .mat file.  <a href="group__util.html#ga3c3045a2c2270ba2e6e2ff0ed671d72c">More...</a><br /></td></tr>
-<tr class="separator:ga3c3045a2c2270ba2e6e2ff0ed671d72c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga15cf53228c93a84457dffacd64475a56"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga15cf53228c93a84457dffacd64475a56">astrohelion::saveMatrixToFile</a> (mat_t *matfp, const char *varName, std::vector&lt; double &gt; data, size_t rows, size_t cols)</td></tr>
-<tr class="memdesc:ga15cf53228c93a84457dffacd64475a56"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save a matrix of data to an open matlab .mat file.  <a href="group__util.html#ga15cf53228c93a84457dffacd64475a56">More...</a><br /></td></tr>
-<tr class="separator:ga15cf53228c93a84457dffacd64475a56"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga34add57d2a55dbb4531fc2380317afca"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga34add57d2a55dbb4531fc2380317afca">astrohelion::saveMatrixToFile</a> (const char *filename, const char *varName, const std::vector&lt; double &gt; &amp;data, size_t rows, size_t cols)</td></tr>
+<tr class="memdesc:ga34add57d2a55dbb4531fc2380317afca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save a matrix of data to a Matlab .mat file.  <a href="group__util.html#ga34add57d2a55dbb4531fc2380317afca">More...</a><br /></td></tr>
+<tr class="separator:ga34add57d2a55dbb4531fc2380317afca"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga4282a6b6a3cd916591693421221fef09"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga4282a6b6a3cd916591693421221fef09">astrohelion::saveMatrixToFile</a> (mat_t *matfp, const char *varName, const std::vector&lt; double &gt; &amp;data, size_t rows, size_t cols)</td></tr>
+<tr class="memdesc:ga4282a6b6a3cd916591693421221fef09"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save a matrix of data to an open matlab .mat file.  <a href="group__util.html#ga4282a6b6a3cd916591693421221fef09">More...</a><br /></td></tr>
+<tr class="separator:ga4282a6b6a3cd916591693421221fef09"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga700e474992a0c8c70a5d87801d2022ce"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga700e474992a0c8c70a5d87801d2022ce">astrohelion::saveTimestampToFile</a> (mat_t *matfp, const char *varName)</td></tr>
 <tr class="memdesc:ga700e474992a0c8c70a5d87801d2022ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save a timestamp to a file.  <a href="group__util.html#ga700e474992a0c8c70a5d87801d2022ce">More...</a><br /></td></tr>
 <tr class="separator:ga700e474992a0c8c70a5d87801d2022ce"><td class="memSeparator" colspan="2">&#160;</td></tr>

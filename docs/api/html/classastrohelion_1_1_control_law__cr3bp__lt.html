@@ -15,6 +15,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
+<link href="customdoxygen.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -258,8 +259,11 @@ static const unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a 
 <tr class="memdesc:a1270ac1ed30d3cc6a55d37474204542f"><td class="mdescLeft">&#160;</td><td class="mdescRight">masks the sixth option <br /></td></tr>
 <tr class="separator:a1270ac1ed30d3cc6a55d37474204542f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af0a6525774c737ff1b41738f01880978"><td class="memItemLeft" align="right" valign="top">static const unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_control_law__cr3bp__lt.html#af0a6525774c737ff1b41738f01880978">GENERAL</a> = 1 &lt;&lt; 11</td></tr>
-<tr class="memdesc:af0a6525774c737ff1b41738f01880978"><td class="mdescLeft">&#160;</td><td class="mdescRight">Represents a control law with arbitrary pointing in 3D space.  <a href="#af0a6525774c737ff1b41738f01880978">More...</a><br /></td></tr>
+<tr class="memdesc:af0a6525774c737ff1b41738f01880978"><td class="mdescLeft">&#160;</td><td class="mdescRight">Represents a control law with arbitrary pointing in 3D space, relative to the rotating frame.  <a href="#af0a6525774c737ff1b41738f01880978">More...</a><br /></td></tr>
 <tr class="separator:af0a6525774c737ff1b41738f01880978"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa8341258ad7a46f843795b0f4f91030a"><td class="memItemLeft" align="right" valign="top">static const unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_control_law__cr3bp__lt.html#aa8341258ad7a46f843795b0f4f91030a">GEN_INERT</a> = 4 &lt;&lt; 11</td></tr>
+<tr class="memdesc:aa8341258ad7a46f843795b0f4f91030a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Represents a control law with arbitrary pointing in 3D space, relative to the inertial frame.  <a href="#aa8341258ad7a46f843795b0f4f91030a">More...</a><br /></td></tr>
+<tr class="separator:aa8341258ad7a46f843795b0f4f91030a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abd31f494d7448597f311abc94e259b4e"><td class="memItemLeft" align="right" valign="top">static const unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_control_law__cr3bp__lt.html#abd31f494d7448597f311abc94e259b4e">VEL_PT</a> = 2 &lt;&lt; 11</td></tr>
 <tr class="memdesc:abd31f494d7448597f311abc94e259b4e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Represents a control law with thrust aligned with the velocity vector.  <a href="#abd31f494d7448597f311abc94e259b4e">More...</a><br /></td></tr>
 <tr class="separator:abd31f494d7448597f311abc94e259b4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -358,18 +362,24 @@ Analysis Functions</h2></td></tr>
 <tr class="memitem:aca881cc0aaead27afe50a4647eb8792e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_control_law__cr3bp__lt.html#aca881cc0aaead27afe50a4647eb8792e">getAccel_ConstC_2D</a> (double, const double *, const <a class="el" href="classastrohelion_1_1_sys_data__cr3bp__lt.html">SysData_cr3bp_lt</a> *, double *, unsigned int) const </td></tr>
 <tr class="memdesc:aca881cc0aaead27afe50a4647eb8792e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieve the output of the Jacobi-preserving 2D control laws.  <a href="#aca881cc0aaead27afe50a4647eb8792e">More...</a><br /></td></tr>
 <tr class="separator:aca881cc0aaead27afe50a4647eb8792e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a199a2c454d74f31da5ff48c91e0cd272"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_control_law__cr3bp__lt.html#a199a2c454d74f31da5ff48c91e0cd272">getAccel_GeneralDir</a> (double, const double *, const <a class="el" href="classastrohelion_1_1_sys_data__cr3bp__lt.html">SysData_cr3bp_lt</a> *, double *, unsigned int) const </td></tr>
-<tr class="memdesc:a199a2c454d74f31da5ff48c91e0cd272"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieve the output of the general direction, constant thrust control law.  <a href="#a199a2c454d74f31da5ff48c91e0cd272">More...</a><br /></td></tr>
-<tr class="separator:a199a2c454d74f31da5ff48c91e0cd272"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4182b7b37e75daedce7984c51eaeaea3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_control_law__cr3bp__lt.html#a4182b7b37e75daedce7984c51eaeaea3">getAccel_GeneralRot</a> (double, const double *, const <a class="el" href="classastrohelion_1_1_sys_data__cr3bp__lt.html">SysData_cr3bp_lt</a> *, double *, unsigned int) const </td></tr>
+<tr class="memdesc:a4182b7b37e75daedce7984c51eaeaea3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieve the output of the general direction (rotating) control law.  <a href="#a4182b7b37e75daedce7984c51eaeaea3">More...</a><br /></td></tr>
+<tr class="separator:a4182b7b37e75daedce7984c51eaeaea3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab9fb706ecdcd2f091ef711d4d3115616"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_control_law__cr3bp__lt.html#ab9fb706ecdcd2f091ef711d4d3115616">getAccel_GeneralInert</a> (double, const double *, const <a class="el" href="classastrohelion_1_1_sys_data__cr3bp__lt.html">SysData_cr3bp_lt</a> *, double *, unsigned int) const </td></tr>
+<tr class="memdesc:ab9fb706ecdcd2f091ef711d4d3115616"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieve the output of the general direction (inertial) control law.  <a href="#ab9fb706ecdcd2f091ef711d4d3115616">More...</a><br /></td></tr>
+<tr class="separator:ab9fb706ecdcd2f091ef711d4d3115616"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a068e89df67a62a993356121a2acd42cb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_control_law__cr3bp__lt.html#a068e89df67a62a993356121a2acd42cb">getPartials_AccelWRTCore_AlongVel</a> (double, const double *, const <a class="el" href="classastrohelion_1_1_sys_data__cr3bp__lt.html">SysData_cr3bp_lt</a> *, double *, unsigned int) const </td></tr>
 <tr class="memdesc:a068e89df67a62a993356121a2acd42cb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieve the partial derivatives of the control law output with respect to state variables.  <a href="#a068e89df67a62a993356121a2acd42cb">More...</a><br /></td></tr>
 <tr class="separator:a068e89df67a62a993356121a2acd42cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaca90a26b4b01108df2e9c3ad2a43fa7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_control_law__cr3bp__lt.html#aaca90a26b4b01108df2e9c3ad2a43fa7">getPartials_AccelWRTCore_ConstC_2D</a> (double, const double *, const <a class="el" href="classastrohelion_1_1_sys_data__cr3bp__lt.html">SysData_cr3bp_lt</a> *, double *, unsigned int) const </td></tr>
 <tr class="memdesc:aaca90a26b4b01108df2e9c3ad2a43fa7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieve the partial derivatives of the control law output with respect to state variables.  <a href="#aaca90a26b4b01108df2e9c3ad2a43fa7">More...</a><br /></td></tr>
 <tr class="separator:aaca90a26b4b01108df2e9c3ad2a43fa7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa9206173f7f023ace6b2697b025ee3d5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_control_law__cr3bp__lt.html#aa9206173f7f023ace6b2697b025ee3d5">getPartials_AccelWRTCore_GeneralDir</a> (double, const double *, const <a class="el" href="classastrohelion_1_1_sys_data__cr3bp__lt.html">SysData_cr3bp_lt</a> *, double *, unsigned int) const </td></tr>
-<tr class="memdesc:aa9206173f7f023ace6b2697b025ee3d5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieve the partial derivatives of the control law output with respect to state variables.  <a href="#aa9206173f7f023ace6b2697b025ee3d5">More...</a><br /></td></tr>
-<tr class="separator:aa9206173f7f023ace6b2697b025ee3d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a60401ef1b99fab60eb67455f15ee5475"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_control_law__cr3bp__lt.html#a60401ef1b99fab60eb67455f15ee5475">getPartials_AccelWRTCore_GeneralRot</a> (double, const double *, const <a class="el" href="classastrohelion_1_1_sys_data__cr3bp__lt.html">SysData_cr3bp_lt</a> *, double *, unsigned int) const </td></tr>
+<tr class="memdesc:a60401ef1b99fab60eb67455f15ee5475"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieve the partial derivatives of the control law output with respect to state variables.  <a href="#a60401ef1b99fab60eb67455f15ee5475">More...</a><br /></td></tr>
+<tr class="separator:a60401ef1b99fab60eb67455f15ee5475"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2c52aaa3bcc8ed7c83bd178a7a5beb4f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_control_law__cr3bp__lt.html#a2c52aaa3bcc8ed7c83bd178a7a5beb4f">getPartials_AccelWRTCore_GeneralInert</a> (double, const double *, const <a class="el" href="classastrohelion_1_1_sys_data__cr3bp__lt.html">SysData_cr3bp_lt</a> *, double *, unsigned int) const </td></tr>
+<tr class="memdesc:a2c52aaa3bcc8ed7c83bd178a7a5beb4f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieve the partial derivatives of the control law output with respect to state variables.  <a href="#a2c52aaa3bcc8ed7c83bd178a7a5beb4f">More...</a><br /></td></tr>
+<tr class="separator:a2c52aaa3bcc8ed7c83bd178a7a5beb4f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3ab7f0efb6b6ba1c20a32040aabd6fc5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_control_law__cr3bp__lt.html#a3ab7f0efb6b6ba1c20a32040aabd6fc5">getPartials_EOMsWRTCtrl_GeneralDir</a> (double, const double *, const <a class="el" href="classastrohelion_1_1_sys_data__cr3bp__lt.html">SysData_cr3bp_lt</a> *, double *, unsigned int) const </td></tr>
 <tr class="memdesc:a3ab7f0efb6b6ba1c20a32040aabd6fc5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieve the partial derivatives of the core state EOMs with respect to the control states.  <a href="#a3ab7f0efb6b6ba1c20a32040aabd6fc5">More...</a><br /></td></tr>
 <tr class="separator:a3ab7f0efb6b6ba1c20a32040aabd6fc5"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -391,12 +401,12 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>print</b> () const </
 <tr class="memitem:a1f2287e5c3e8a1d21969c95208f7b9d0"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_control_law__cr3bp__lt.html#a1f2287e5c3e8a1d21969c95208f7b9d0">convertLaws</a> (<a class="el" href="classastrohelion_1_1_arcset__cr3bp__lt.html">Arcset_cr3bp_lt</a> *, <a class="el" href="classastrohelion_1_1_control_law__cr3bp__lt.html">ControlLaw_cr3bp_lt</a> *)</td></tr>
 <tr class="memdesc:a1f2287e5c3e8a1d21969c95208f7b9d0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert an arcset with an arbitrary set of control laws to leverage the specified control law on all segments.  <a href="#a1f2287e5c3e8a1d21969c95208f7b9d0">More...</a><br /></td></tr>
 <tr class="separator:a1f2287e5c3e8a1d21969c95208f7b9d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a334809c4445e8c8f9c5fc798474db153"><td class="memItemLeft" align="right" valign="top">static double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_control_law__cr3bp__lt.html#a334809c4445e8c8f9c5fc798474db153">thrust_dim2nondim</a> (double, <a class="el" href="classastrohelion_1_1_sys_data__cr3bp__lt.html">SysData_cr3bp_lt</a> *)</td></tr>
-<tr class="memdesc:a334809c4445e8c8f9c5fc798474db153"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert dimensional thrust to nondimensional thrust in the specified system.  <a href="#a334809c4445e8c8f9c5fc798474db153">More...</a><br /></td></tr>
-<tr class="separator:a334809c4445e8c8f9c5fc798474db153"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a60f773546f98cca7cb005e6f5620f837"><td class="memItemLeft" align="right" valign="top">static double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_control_law__cr3bp__lt.html#a60f773546f98cca7cb005e6f5620f837">thrust_nondim2dim</a> (double, <a class="el" href="classastrohelion_1_1_sys_data__cr3bp__lt.html">SysData_cr3bp_lt</a> *)</td></tr>
-<tr class="memdesc:a60f773546f98cca7cb005e6f5620f837"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert nondimensional thrust to dimensional thrust in the specified system.  <a href="#a60f773546f98cca7cb005e6f5620f837">More...</a><br /></td></tr>
-<tr class="separator:a60f773546f98cca7cb005e6f5620f837"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8d83283f5de2cb126433f5af328c01f3"><td class="memItemLeft" align="right" valign="top">static double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_control_law__cr3bp__lt.html#a8d83283f5de2cb126433f5af328c01f3">thrust_dim2nondim</a> (double, const <a class="el" href="classastrohelion_1_1_sys_data__cr3bp__lt.html">SysData_cr3bp_lt</a> *)</td></tr>
+<tr class="memdesc:a8d83283f5de2cb126433f5af328c01f3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert dimensional thrust to nondimensional thrust in the specified system.  <a href="#a8d83283f5de2cb126433f5af328c01f3">More...</a><br /></td></tr>
+<tr class="separator:a8d83283f5de2cb126433f5af328c01f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afe5f9b1bed53a2863da8e5a4e506b467"><td class="memItemLeft" align="right" valign="top">static double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_control_law__cr3bp__lt.html#afe5f9b1bed53a2863da8e5a4e506b467">thrust_nondim2dim</a> (double, const <a class="el" href="classastrohelion_1_1_sys_data__cr3bp__lt.html">SysData_cr3bp_lt</a> *)</td></tr>
+<tr class="memdesc:afe5f9b1bed53a2863da8e5a4e506b467"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert nondimensional thrust to dimensional thrust in the specified system.  <a href="#afe5f9b1bed53a2863da8e5a4e506b467">More...</a><br /></td></tr>
+<tr class="separator:afe5f9b1bed53a2863da8e5a4e506b467"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6aa01c18d78131fc7055b64294a7cae0"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_control_law__cr3bp__lt.html#a6aa01c18d78131fc7055b64294a7cae0">pointingVecToAngles</a> (Eigen::Vector3d, double *, double *)</td></tr>
 <tr class="memdesc:a6aa01c18d78131fc7055b64294a7cae0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a vector to spherical coordinates.  <a href="#a6aa01c18d78131fc7055b64294a7cae0">More...</a><br /></td></tr>
 <tr class="separator:a6aa01c18d78131fc7055b64294a7cae0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -847,7 +857,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>print</b> () const </
 
 </div>
 </div>
-<a class="anchor" id="a199a2c454d74f31da5ff48c91e0cd272"></a>
+<a class="anchor" id="ab9fb706ecdcd2f091ef711d4d3115616"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -855,7 +865,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>print</b> () const </
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void astrohelion::ControlLaw_cr3bp_lt::getAccel_GeneralDir </td>
+          <td class="memname">void astrohelion::ControlLaw_cr3bp_lt::getAccel_GeneralInert </td>
           <td>(</td>
           <td class="paramtype">double&#160;</td>
           <td class="paramname"><em>t</em>, </td>
@@ -897,7 +907,72 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>print</b> () const </
 </table>
 </div><div class="memdoc">
 
-<p>Retrieve the output of the general direction, constant thrust control law. </p>
+<p>Retrieve the output of the general direction (inertial) control law. </p>
+<p>A set of outputs are computed according to the specified control law, given the input time, state, and system data.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">t</td><td>time parameter </td></tr>
+    <tr><td class="paramname">s</td><td>full state vector; contains core state, control states, STM elements, and extra states </td></tr>
+    <tr><td class="paramname">pSys</td><td>system data object </td></tr>
+    <tr><td class="paramname">law</td><td>empty, initialized array to store the control law output in </td></tr>
+    <tr><td class="paramname">len</td><td>number of elements in the <code>law</code> array </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a4182b7b37e75daedce7984c51eaeaea3"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void astrohelion::ControlLaw_cr3bp_lt::getAccel_GeneralRot </td>
+          <td>(</td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>t</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const double *&#160;</td>
+          <td class="paramname"><em>s</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classastrohelion_1_1_sys_data__cr3bp__lt.html">SysData_cr3bp_lt</a> *&#160;</td>
+          <td class="paramname"><em>pSys</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double *&#160;</td>
+          <td class="paramname"><em>law</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>len</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Retrieve the output of the general direction (rotating) control law. </p>
 <p>A set of outputs are computed according to the specified control law, given the input time, state, and system data.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -1181,7 +1256,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>print</b> () const </
     <tr><td class="paramname">s</td><td>full state vector; contains core state, control states, STM elements, and extra states </td></tr>
     <tr><td class="paramname">pSys</td><td>system data object </td></tr>
     <tr><td class="paramname">partials</td><td>empty, initialized array of zeros to store the control law derivatives in. The partials are stored in mxn row-major order array where each row represents the partials of one of the m control outputs with respect to each of the n core states </td></tr>
-    <tr><td class="paramname">len</td><td>number of elements in the <code>law</code> array </td></tr>
+    <tr><td class="paramname">len</td><td>number of elements in the <code>partials</code> array </td></tr>
   </table>
   </dd>
 </dl>
@@ -1246,14 +1321,14 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>print</b> () const </
     <tr><td class="paramname">s</td><td>full state vector; contains core state, control states, STM elements, and extra states </td></tr>
     <tr><td class="paramname">pSys</td><td>system data object </td></tr>
     <tr><td class="paramname">partials</td><td>empty, initialized array of zeros to store the control law derivatives in. The partials are stored in mxn row-major order array where each row represents the partials of one of the m control outputs with respect to each of the n core states </td></tr>
-    <tr><td class="paramname">len</td><td>number of elements in the <code>law</code> array </td></tr>
+    <tr><td class="paramname">len</td><td>number of elements in the <code>partials</code> array </td></tr>
   </table>
   </dd>
 </dl>
 
 </div>
 </div>
-<a class="anchor" id="aa9206173f7f023ace6b2697b025ee3d5"></a>
+<a class="anchor" id="a2c52aaa3bcc8ed7c83bd178a7a5beb4f"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -1261,7 +1336,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>print</b> () const </
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void astrohelion::ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_GeneralDir </td>
+          <td class="memname">void astrohelion::ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_GeneralInert </td>
           <td>(</td>
           <td class="paramtype">double&#160;</td>
           <td class="paramname"><em>t</em>, </td>
@@ -1311,7 +1386,72 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>print</b> () const </
     <tr><td class="paramname">s</td><td>full state vector; contains core state, control states, STM elements, and extra states </td></tr>
     <tr><td class="paramname">pSys</td><td>system data object </td></tr>
     <tr><td class="paramname">partials</td><td>empty, initialized array of zeros to store the control law derivatives in. The partials are stored in mxn row-major order array where each row represents the partials of one of the m control outputs with respect to each of the n core states </td></tr>
-    <tr><td class="paramname">len</td><td>number of elements in the <code>law</code> array </td></tr>
+    <tr><td class="paramname">len</td><td>number of elements in the <code>partials</code> array </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a60401ef1b99fab60eb67455f15ee5475"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void astrohelion::ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_GeneralRot </td>
+          <td>(</td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>t</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const double *&#160;</td>
+          <td class="paramname"><em>s</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classastrohelion_1_1_sys_data__cr3bp__lt.html">SysData_cr3bp_lt</a> *&#160;</td>
+          <td class="paramname"><em>pSys</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double *&#160;</td>
+          <td class="paramname"><em>partials</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>len</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Retrieve the partial derivatives of the control law output with respect to state variables. </p>
+<p>A set of partial derivatives of the control law outputs are computed with respect to the states at the given time, state, in the specified system</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">t</td><td>time parameter </td></tr>
+    <tr><td class="paramname">s</td><td>full state vector; contains core state, control states, STM elements, and extra states </td></tr>
+    <tr><td class="paramname">pSys</td><td>system data object </td></tr>
+    <tr><td class="paramname">partials</td><td>empty, initialized array of zeros to store the control law derivatives in. The partials are stored in mxn row-major order array where each row represents the partials of one of the m control outputs with respect to each of the n core states </td></tr>
+    <tr><td class="paramname">len</td><td>number of elements in the <code>partials</code> array </td></tr>
   </table>
   </dd>
 </dl>
@@ -2075,7 +2215,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>print</b> () const </
 
 </div>
 </div>
-<a class="anchor" id="a334809c4445e8c8f9c5fc798474db153"></a>
+<a class="anchor" id="a8d83283f5de2cb126433f5af328c01f3"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -2091,7 +2231,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>print</b> () const </
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classastrohelion_1_1_sys_data__cr3bp__lt.html">SysData_cr3bp_lt</a> *&#160;</td>
+          <td class="paramtype">const <a class="el" href="classastrohelion_1_1_sys_data__cr3bp__lt.html">SysData_cr3bp_lt</a> *&#160;</td>
           <td class="paramname"><em>pSys</em>&#160;</td>
         </tr>
         <tr>
@@ -2119,7 +2259,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>print</b> () const </
 
 </div>
 </div>
-<a class="anchor" id="a60f773546f98cca7cb005e6f5620f837"></a>
+<a class="anchor" id="afe5f9b1bed53a2863da8e5a4e506b467"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -2135,7 +2275,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>print</b> () const </
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classastrohelion_1_1_sys_data__cr3bp__lt.html">SysData_cr3bp_lt</a> *&#160;</td>
+          <td class="paramtype">const <a class="el" href="classastrohelion_1_1_sys_data__cr3bp__lt.html">SysData_cr3bp_lt</a> *&#160;</td>
           <td class="paramname"><em>pSys</em>&#160;</td>
         </tr>
         <tr>
@@ -2298,6 +2438,33 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>print</b> () const </
 
 </div>
 </div>
+<a class="anchor" id="aa8341258ad7a46f843795b0f4f91030a"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const unsigned int astrohelion::ControlLaw_cr3bp_lt::GEN_INERT = 4 &lt;&lt; 11</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Represents a control law with arbitrary pointing in 3D space, relative to the inertial frame. </p>
+<p>Constant parameters: <code>params = {theta0}</code></p>
+<p>where <code>theta0</code> represents the orientation of the rotating frame w.r.t. the inertial frame at time t = 0.</p>
+<p>Variable control states: <code>ctrl = {psi, beta}</code></p>
+<p>where <code>psi</code> is the in-plane pointing angle relative to the inertial X-axis and <code>beta</code> is the out of plane angle relative to the XY-plane. The inertial frame is assumed to be coplanar with the rotating frame where inertial Z = rotating z.</p>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classastrohelion_1_1_control_law__cr3bp__lt.html#af0a6525774c737ff1b41738f01880978" title="Represents a control law with arbitrary pointing in 3D space, relative to the rotating frame...">GENERAL</a> </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="af0a6525774c737ff1b41738f01880978"></a>
 <div class="memitem">
 <div class="memproto">
@@ -2316,10 +2483,11 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>print</b> () const </
 </table>
 </div><div class="memdoc">
 
-<p>Represents a control law with arbitrary pointing in 3D space. </p>
+<p>Represents a control law with arbitrary pointing in 3D space, relative to the rotating frame. </p>
 <p>Constant parameters: <code>params = {}</code></p>
 <p>Variable control states: <code>ctrl = {alpha, beta}</code></p>
-<p>where alpha represents the in-plane pointing angle and beta represents the out-of-plane pointing angle (i.e., spherical coordinates). Alpha is zero when the thrust is in the XZ-plane with a positive x-component and increases with right-handed rotation about z. Beta is zero when the thrust is in the XY-plane and is positive when the z-component is positive. </p>
+<p>where <code>alpha</code> represents the in-plane pointing angle and <code>beta</code> represents the out-of-plane pointing angle (i.e., spherical coordinates). Alpha is zero when the thrust is in the XZ-plane with a positive x-component and increases with right-handed rotation about z. Beta is zero when the thrust is in the XY-plane and is positive when the z-component is positive.</p>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classastrohelion_1_1_control_law__cr3bp__lt.html#aa8341258ad7a46f843795b0f4f91030a" title="Represents a control law with arbitrary pointing in 3D space, relative to the inertial frame...">GEN_INERT</a> </dd></dl>
 
 </div>
 </div>

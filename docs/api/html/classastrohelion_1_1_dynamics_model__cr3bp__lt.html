@@ -15,6 +15,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
+<link href="customdoxygen.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -200,6 +201,10 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a61d4aaf5aafeb34139cf0289d774fde3"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_dynamics_model.html#a61d4aaf5aafeb34139cf0289d774fde3">supportsEvent</a> (<a class="el" href="namespaceastrohelion.html#ac0e2051d7aba2a2654a357b5d4b93438">Event_tp</a>) const </td></tr>
 <tr class="memdesc:a61d4aaf5aafeb34139cf0289d774fde3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Determine whether the specified event type is supported in this model.  <a href="#a61d4aaf5aafeb34139cf0289d774fde3">More...</a><br /></td></tr>
 <tr class="separator:a61d4aaf5aafeb34139cf0289d774fde3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr><td colspan="2"><div class="groupHeader">Utility Functions</div></td></tr>
+<tr class="memitem:afaf8a9859f96e6cda8f4bda525e75e54"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_dynamics_model.html#afaf8a9859f96e6cda8f4bda525e75e54">finiteDiff_checkAMat</a> (double *q, double t, double pertSize, <a class="el" href="structastrohelion_1_1_e_o_m___param_struct.html">EOM_ParamStruct</a> *params, <a class="el" href="namespaceastrohelion.html#a4f72fd54458caa1641be0bf23f61720a">Verbosity_tp</a> verb=<a class="el" href="namespaceastrohelion.html#a4f72fd54458caa1641be0bf23f61720aae9df7cb3ea60641454150b4eaee065df">Verbosity_tp::SOME_MSG</a>, bool writeToFile=false) const </td></tr>
+<tr class="memdesc:afaf8a9859f96e6cda8f4bda525e75e54"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check the analytically-computed partial derivatives in the A matrix by comparing with a central-differencing method.  <a href="#afaf8a9859f96e6cda8f4bda525e75e54">More...</a><br /></td></tr>
+<tr class="separator:afaf8a9859f96e6cda8f4bda525e75e54"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
@@ -267,7 +272,7 @@ Multiple Shooting Analysis Functions</h2></td></tr>
 <tr class="memdesc:a93ff0a1fee6ae3b00a2afe5670e3e69a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute the value of a slack variable for an inequality constraint.  <a href="#a93ff0a1fee6ae3b00a2afe5670e3e69a">More...</a><br /></td></tr>
 <tr class="separator:a93ff0a1fee6ae3b00a2afe5670e3e69a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aac731d132fb26368d30d20bc46ddfbfe"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_dynamics_model.html#aac731d132fb26368d30d20bc46ddfbfe">multShoot_createOutput</a> (const <a class="el" href="classastrohelion_1_1_mult_shoot_data.html">MultShootData</a> &amp;it) const </td></tr>
-<tr class="memdesc:aac731d132fb26368d30d20bc46ddfbfe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Take the final, corrected free variable vector <code>X</code> and create an output nodeset.  <a href="#aac731d132fb26368d30d20bc46ddfbfe">More...</a><br /></td></tr>
+<tr class="memdesc:aac731d132fb26368d30d20bc46ddfbfe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Take the final, corrected free variable vector <code>X</code> and create an output arcset.  <a href="#aac731d132fb26368d30d20bc46ddfbfe">More...</a><br /></td></tr>
 <tr class="separator:aac731d132fb26368d30d20bc46ddfbfe"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab34a6426626dfdc78bc5ddd3a7cffc36"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_dynamics_model.html#ab34a6426626dfdc78bc5ddd3a7cffc36">multShoot_targetApse</a> (<a class="el" href="classastrohelion_1_1_mult_shoot_data.html">MultShootData</a> &amp;, const <a class="el" href="classastrohelion_1_1_constraint.html">Constraint</a> &amp;, int) const </td></tr>
 <tr class="memdesc:ab34a6426626dfdc78bc5ddd3a7cffc36"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute partials and constraint function values for apse constraints.  <a href="#ab34a6426626dfdc78bc5ddd3a7cffc36">More...</a><br /></td></tr>
@@ -534,6 +539,78 @@ Core Analysis Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="afaf8a9859f96e6cda8f4bda525e75e54"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool astrohelion::DynamicsModel::finiteDiff_checkAMat </td>
+          <td>(</td>
+          <td class="paramtype">double *&#160;</td>
+          <td class="paramname"><em>q</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>t</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>pertSize</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structastrohelion_1_1_e_o_m___param_struct.html">EOM_ParamStruct</a> *&#160;</td>
+          <td class="paramname"><em>params</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="namespaceastrohelion.html#a4f72fd54458caa1641be0bf23f61720a">Verbosity_tp</a>&#160;</td>
+          <td class="paramname"><em>verb</em> = <code><a class="el" href="namespaceastrohelion.html#a4f72fd54458caa1641be0bf23f61720aae9df7cb3ea60641454150b4eaee065df">Verbosity_tp::SOME_MSG</a></code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>writeToFile</em> = <code>false</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">virtual</span><span class="mlabel">inherited</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Check the analytically-computed partial derivatives in the A matrix by comparing with a central-differencing method. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">q</td><td><a class="el" href="classastrohelion_1_1_core.html" title="An object that serves as a parent to all Core objects. ">Core</a> and control state vector; must have enough elements to specify all core and control states with the core size from the <a class="el" href="classastrohelion_1_1_dynamics_model.html" title="A base class that defines the behavior of a dynamical model and provides functions used in simulation...">DynamicsModel</a> and the control size from the control law in the <a class="el" href="structastrohelion_1_1_e_o_m___param_struct.html" title="Container for EOM parameters. ">EOM_ParamStruct</a> </td></tr>
+    <tr><td class="paramname">t</td><td>time at which to evaluate the equations of motion </td></tr>
+    <tr><td class="paramname">pertSize</td><td>size of the perturbation to use in central differencing </td></tr>
+    <tr><td class="paramname">params</td><td>structure containing information for the equations of motion, including the system data and control law </td></tr>
+    <tr><td class="paramname">verb</td><td>Verbosity, defaults to <a class="el" href="namespaceastrohelion.html#a4f72fd54458caa1641be0bf23f61720aae9df7cb3ea60641454150b4eaee065df" title="Some useful messages are printed to standard output. ">Verbosity_tp::SOME_MSG</a> </td></tr>
+    <tr><td class="paramname">writeToFile</td><td>Whether or not to save the computing A matrices to file; they are saved to the current directory with filenames following the pattern "FiniteDiff_A*.csv"</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the numeric and analytic A matrices match to within a "reasonable" tolerance </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="a3a67f2a7e068ecf2e8a52868468f238d"></a>
 <div class="memitem">
 <div class="memproto">
@@ -583,7 +660,7 @@ Core Analysis Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramname">t</td><td>the current time of the integration </td></tr>
     <tr><td class="paramname">s</td><td>the state vector passed in from the <a class="el" href="classastrohelion_1_1_sim_engine.html" title="Performs numerical integration on any system type and produces an Arcset object. ">SimEngine</a>. This vector includes the core states, STM states, extra states, and control states, in that order. </td></tr>
-    <tr><td class="paramname">sdot</td><td>the 43-d state derivative vector </td></tr>
+    <tr><td class="paramname">sdot</td><td>the state derivative vector, initialized to zero </td></tr>
     <tr><td class="paramname">*params</td><td>pointer to extra parameters required for integration. For this function, the pointer points to an <a class="el" href="structastrohelion_1_1_e_o_m___param_struct.html" title="Container for EOM parameters. ">EOM_ParamStruct</a> object </td></tr>
   </table>
   </dd>
@@ -1404,17 +1481,12 @@ Core Analysis Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Take the final, corrected free variable vector <code>X</code> and create an output nodeset. </p>
-<p>If <code>findEvent</code> is set to true, the output nodeset will contain extra information for the simulation engine to use. Rather than returning only the position and velocity states, the output nodeset will contain the STM and other values for the final node; this information will be appended to the extraParameter vector in the final node.</p>
+<p>Take the final, corrected free variable vector <code>X</code> and create an output arcset. </p>
+<p>Take the final, corrected free variable vector <code>X</code> and create an output nodeset.</p>
+<p>If <code>findEvent</code> is set to true, the output arcset will contain extra information for the simulation engine to use. Rather than returning only the position and velocity states, the output arcset will contain the STM and other values for the final node; this information will be appended to the extraParameter vector in the final node.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">it</td><td>an iteration data object containing all info from the corrections process</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>a pointer to a nodeset containing the corrected nodes</dd></dl>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
     <tr><td class="paramname">it</td><td>an iteration data object containing all info from the corrections process </td></tr>
   </table>
   </dd>

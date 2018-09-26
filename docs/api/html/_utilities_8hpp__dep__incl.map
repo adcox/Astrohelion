@@ -24,12 +24,13 @@
 <area shape="rect" id="node24" href="$_nat_param_engine_8cpp.html" title="src/NatParamEngine.cpp" alt="" coords="3855,87,4023,114"/>
 <area shape="rect" id="node25" href="$_node_8cpp.html" title="Stores information about a single node or integration state. " alt="" coords="4047,87,4147,114"/>
 <area shape="rect" id="node26" href="$_pseudo_arc_engine_8cpp.html" title="src/PseudoArcEngine.cpp" alt="" coords="4172,87,4345,114"/>
-<area shape="rect" id="node27" href="$_sim_engine_8cpp.html" title="Performs numerical integration on a set of initial conditions in any dynamic model and system..." alt="" coords="4370,87,4502,114"/>
-<area shape="rect" id="node28" href="$_sys_data_8cpp.html" title="System Data (Abstract Base Class) " alt="" coords="4527,87,4647,114"/>
-<area shape="rect" id="node29" href="$_sys_data__2bp_8cpp.html" title="Derivative of SysData, specific to 2BP. " alt="" coords="4671,87,4819,114"/>
-<area shape="rect" id="node30" href="$_sys_data__bc4bp_8cpp.html" title="Derivative of SysData, specific to BCR4BPR. " alt="" coords="4844,87,5007,114"/>
-<area shape="rect" id="node31" href="$_sys_data__cr3bp_8cpp.html" title="Derivative of SysData, specific to CR3BP. " alt="" coords="5031,87,5190,114"/>
-<area shape="rect" id="node32" href="$_sys_data__cr3bp__lt_8cpp.html" title="Derivative of SysData, specific to CR3BP&#45;LTVP. " alt="" coords="5215,87,5388,114"/>
-<area shape="rect" id="node33" href="$_utilities_8cpp.html" title="Similar to tpat_calculations, but these functions are more general, less math&#45;y. " alt="" coords="5413,87,5526,114"/>
-<area shape="rect" id="node34" href="$_all_includes_8hpp.html" title="Provides easy include for all headers in the Core library. " alt="" coords="5550,87,5706,114"/>
+<area shape="rect" id="node27" href="$_segment_8cpp.html" title="Stores information about how nodes are linked. " alt="" coords="4370,87,4491,114"/>
+<area shape="rect" id="node28" href="$_sim_engine_8cpp.html" title="Performs numerical integration on a set of initial conditions in any dynamic model and system..." alt="" coords="4515,87,4647,114"/>
+<area shape="rect" id="node29" href="$_sys_data_8cpp.html" title="System Data (Abstract Base Class) " alt="" coords="4672,87,4792,114"/>
+<area shape="rect" id="node30" href="$_sys_data__2bp_8cpp.html" title="Derivative of SysData, specific to 2BP. " alt="" coords="4817,87,4965,114"/>
+<area shape="rect" id="node31" href="$_sys_data__bc4bp_8cpp.html" title="Derivative of SysData, specific to BCR4BPR. " alt="" coords="4989,87,5152,114"/>
+<area shape="rect" id="node32" href="$_sys_data__cr3bp_8cpp.html" title="Derivative of SysData, specific to CR3BP. " alt="" coords="5177,87,5335,114"/>
+<area shape="rect" id="node33" href="$_sys_data__cr3bp__lt_8cpp.html" title="Derivative of SysData, specific to CR3BP&#45;LTVP. " alt="" coords="5360,87,5533,114"/>
+<area shape="rect" id="node34" href="$_utilities_8cpp.html" title="Similar to tpat_calculations, but these functions are more general, less math&#45;y. " alt="" coords="5558,87,5671,114"/>
+<area shape="rect" id="node35" href="$_all_includes_8hpp.html" title="Provides easy include for all headers in the Core library. " alt="" coords="5695,87,5851,114"/>
 </map>

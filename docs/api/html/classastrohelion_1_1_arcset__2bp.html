@@ -15,6 +15,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
+<link href="customdoxygen.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -229,9 +230,12 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>saveToStruct</b> (mat
 <tr class="memitem:ab0a43ec879c5c350281f0242ad64835a"><td class="memItemLeft" align="right" valign="top">std::vector&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_base_arcset.html#ab0a43ec879c5c350281f0242ad64835a">getCoord</a> (unsigned int) const </td></tr>
 <tr class="memdesc:ab0a43ec879c5c350281f0242ad64835a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a vector of one coordinate for all nodes.  <a href="#ab0a43ec879c5c350281f0242ad64835a">More...</a><br /></td></tr>
 <tr class="separator:ab0a43ec879c5c350281f0242ad64835a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3c313aeee661de335931e191148caaae"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classastrohelion_1_1_control_law.html">ControlLaw</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_base_arcset.html#a3c313aeee661de335931e191148caaae">getCtrlLawByIx</a> (int) const </td></tr>
-<tr class="memdesc:a3c313aeee661de335931e191148caaae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieve the control law ID for a segment at the specified index.  <a href="#a3c313aeee661de335931e191148caaae">More...</a><br /></td></tr>
-<tr class="separator:a3c313aeee661de335931e191148caaae"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a24a82f9aca02c373dc08b1dabc84ccd0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classastrohelion_1_1_control_law.html">ControlLaw</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_base_arcset.html#a24a82f9aca02c373dc08b1dabc84ccd0">getCtrlLawByIx</a> (int)</td></tr>
+<tr class="memdesc:a24a82f9aca02c373dc08b1dabc84ccd0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieve a pointer to the control law for a segment at the specified index.  <a href="#a24a82f9aca02c373dc08b1dabc84ccd0">More...</a><br /></td></tr>
+<tr class="separator:a24a82f9aca02c373dc08b1dabc84ccd0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a50af3f821077ee2de2c9f290f4faddd2"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classastrohelion_1_1_control_law.html">ControlLaw</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_base_arcset.html#a50af3f821077ee2de2c9f290f4faddd2">getCtrlLawByIx_const</a> (int) const </td></tr>
+<tr class="memdesc:a50af3f821077ee2de2c9f290f4faddd2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieve a constant pointer to the control law for a segment at the specified index.  <a href="#a50af3f821077ee2de2c9f290f4faddd2">More...</a><br /></td></tr>
+<tr class="separator:a50af3f821077ee2de2c9f290f4faddd2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9a6f06a5c4c7d6f88207ecb715f0f375"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_base_arcset.html#a9a6f06a5c4c7d6f88207ecb715f0f375">getEpoch</a> (int) const </td></tr>
 <tr class="memdesc:a9a6f06a5c4c7d6f88207ecb715f0f375"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieve the epoch associated with a node with the specified ID.  <a href="#a9a6f06a5c4c7d6f88207ecb715f0f375">More...</a><br /></td></tr>
 <tr class="separator:a9a6f06a5c4c7d6f88207ecb715f0f375"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -320,8 +324,11 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>saveToStruct</b> (mat
 <tr class="memdesc:ab556be1b6fce4637ee8589d5ba5f92df"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieve the STM associated with a segment with the specified ID.  <a href="#ab556be1b6fce4637ee8589d5ba5f92df">More...</a><br /></td></tr>
 <tr class="separator:ab556be1b6fce4637ee8589d5ba5f92df"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a388f1be5eb8fe2a06aaba4e9da9352ae"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespaceastrohelion.html#a782f34ea53766b09a0c076f1cc70c011">MatrixXRd</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_base_arcset.html#a388f1be5eb8fe2a06aaba4e9da9352ae">getSTMByIx</a> (int) const </td></tr>
-<tr class="memdesc:a388f1be5eb8fe2a06aaba4e9da9352ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieve an STM on the arc.  <a href="#a388f1be5eb8fe2a06aaba4e9da9352ae">More...</a><br /></td></tr>
+<tr class="memdesc:a388f1be5eb8fe2a06aaba4e9da9352ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieve an STM associated with a segment with the specified index.  <a href="#a388f1be5eb8fe2a06aaba4e9da9352ae">More...</a><br /></td></tr>
 <tr class="separator:a388f1be5eb8fe2a06aaba4e9da9352ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a42b82ff1647ee0c1c29ef443ba0d35b5"><td class="memItemLeft" align="right" valign="top">std::vector&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_base_arcset.html#a42b82ff1647ee0c1c29ef443ba0d35b5">getSTMElementsByIx</a> (int) const </td></tr>
+<tr class="memdesc:a42b82ff1647ee0c1c29ef443ba0d35b5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the elements of the STM at the specified index.  <a href="#a42b82ff1647ee0c1c29ef443ba0d35b5">More...</a><br /></td></tr>
+<tr class="separator:a42b82ff1647ee0c1c29ef443ba0d35b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a52e822e63473e652fe9e567a9adbf5a1"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classastrohelion_1_1_sys_data.html">SysData</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_base_arcset.html#a52e822e63473e652fe9e567a9adbf5a1">getSysData</a> () const </td></tr>
 <tr class="memdesc:a52e822e63473e652fe9e567a9adbf5a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieve the a pointer to the system data object associated with this arc.  <a href="#a52e822e63473e652fe9e567a9adbf5a1">More...</a><br /></td></tr>
 <tr class="separator:a52e822e63473e652fe9e567a9adbf5a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -535,9 +542,9 @@ Analysis Functions</h2></td></tr>
 <tr class="memitem:a30978e664f92ace8203b7c7501f3c03d"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_base_arcset.html#a30978e664f92ace8203b7c7501f3c03d">addSeg</a> (<a class="el" href="classastrohelion_1_1_segment.html">Segment</a>)</td></tr>
 <tr class="memdesc:a30978e664f92ace8203b7c7501f3c03d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a segment to the arcset object.  <a href="#a30978e664f92ace8203b7c7501f3c03d">More...</a><br /></td></tr>
 <tr class="separator:a30978e664f92ace8203b7c7501f3c03d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae8cd180aa515f56c828a97256472d750"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_base_arcset.html#ae8cd180aa515f56c828a97256472d750">appendSetAtNode</a> (const <a class="el" href="classastrohelion_1_1_base_arcset.html">BaseArcset</a> *, int, int, double)</td></tr>
-<tr class="memdesc:ae8cd180aa515f56c828a97256472d750"><td class="mdescLeft">&#160;</td><td class="mdescRight">Append an arcset object (i.e., a set of nodes and segments) to this one.  <a href="#ae8cd180aa515f56c828a97256472d750">More...</a><br /></td></tr>
-<tr class="separator:ae8cd180aa515f56c828a97256472d750"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a56c63d09bb611d313e0f2f98d1f1a150"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_base_arcset.html#a56c63d09bb611d313e0f2f98d1f1a150">appendSetAtNode</a> (const <a class="el" href="classastrohelion_1_1_base_arcset.html">BaseArcset</a> *, int, int, double, <a class="el" href="classastrohelion_1_1_control_law.html">ControlLaw</a> *pNewSegLaw=nullptr)</td></tr>
+<tr class="memdesc:a56c63d09bb611d313e0f2f98d1f1a150"><td class="mdescLeft">&#160;</td><td class="mdescRight">Append an arcset object (i.e., a set of nodes and segments) to this one.  <a href="#a56c63d09bb611d313e0f2f98d1f1a150">More...</a><br /></td></tr>
+<tr class="separator:a56c63d09bb611d313e0f2f98d1f1a150"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a81785d4f1f41ecab632a3b014b142f02"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_base_arcset.html#a81785d4f1f41ecab632a3b014b142f02">clearArcConstraints</a> ()</td></tr>
 <tr class="memdesc:a81785d4f1f41ecab632a3b014b142f02"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove all constraints from this arcset object.  <a href="#a81785d4f1f41ecab632a3b014b142f02">More...</a><br /></td></tr>
 <tr class="separator:a81785d4f1f41ecab632a3b014b142f02"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -560,9 +567,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr class="memitem:a4b2f591140f4ac96e0811e71c2c2d134"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_base_arcset.html#a4b2f591140f4ac96e0811e71c2c2d134">deleteSegByIx</a> (int)</td></tr>
 <tr class="memdesc:a4b2f591140f4ac96e0811e71c2c2d134"><td class="mdescLeft">&#160;</td><td class="mdescRight">Delete a segment at the specified index.  <a href="#a4b2f591140f4ac96e0811e71c2c2d134">More...</a><br /></td></tr>
 <tr class="separator:a4b2f591140f4ac96e0811e71c2c2d134"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0a0ca5ce64d9232c906297851de452b7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_base_arcset.html#a0a0ca5ce64d9232c906297851de452b7">putInChronoOrder</a> (bool force=false)</td></tr>
-<tr class="memdesc:a0a0ca5ce64d9232c906297851de452b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Rearrange the nodes and segments so that they are listed in chronological order in their storage arrays.  <a href="#a0a0ca5ce64d9232c906297851de452b7">More...</a><br /></td></tr>
-<tr class="separator:a0a0ca5ce64d9232c906297851de452b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a40a2e3f124a0fe971475fb3c55e35d7c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_base_arcset.html#a40a2e3f124a0fe971475fb3c55e35d7c">sortChrono</a> (bool force=false)</td></tr>
+<tr class="memdesc:a40a2e3f124a0fe971475fb3c55e35d7c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Rearrange the nodes and segments so that they are listed in chronological order in their storage arrays.  <a href="#a40a2e3f124a0fe971475fb3c55e35d7c">More...</a><br /></td></tr>
+<tr class="separator:a40a2e3f124a0fe971475fb3c55e35d7c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4ef68a2edceb7a4d8a2b27f83b94c78b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classastrohelion_1_1_base_arcset.html#a4ef68a2edceb7a4d8a2b27f83b94c78b">updateEpochs</a> (int, double)</td></tr>
 <tr class="memdesc:a4ef68a2edceb7a4d8a2b27f83b94c78b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update the epochs of all nodes such that time is continuous.  <a href="#a4ef68a2edceb7a4d8a2b27f83b94c78b">More...</a><br /></td></tr>
 <tr class="separator:a4ef68a2edceb7a4d8a2b27f83b94c78b"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -830,7 +837,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 
 </div>
 </div>
-<a class="anchor" id="ae8cd180aa515f56c828a97256472d750"></a>
+<a class="anchor" id="a56c63d09bb611d313e0f2f98d1f1a150"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -859,7 +866,13 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">double&#160;</td>
-          <td class="paramname"><em>tof</em>&#160;</td>
+          <td class="paramname"><em>tof</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classastrohelion_1_1_control_law.html">ControlLaw</a> *&#160;</td>
+          <td class="paramname"><em>pNewSegLaw</em> = <code>nullptr</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -875,12 +888,14 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 </div><div class="memdoc">
 
 <p>Append an arcset object (i.e., a set of nodes and segments) to this one. </p>
+<p>The epochs associated with the nodes in this arcset are left unchanged and the epochs of the appended set are updated to be continuous</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">pArcsetIn</td><td>a pointer to the arcset object that will be appended to this object </td></tr>
     <tr><td class="paramname">localNodeID</td><td>the ID of the node in <em>this</em> arcset object that <code>pArcsetIn</code> will be linked to </td></tr>
     <tr><td class="paramname">appendNodeID</td><td>the ID of the node in <code>pArcsetIn</code> to link from </td></tr>
-    <tr><td class="paramname">tof</td><td>time-of-flight between appendNodeID to localNodeID; when this value is nonzero, an artificial segment is constructed two link the two arcsets. If <code>tof</code> is zero, then one of the nodes is deleted. If the node at <code>localNodeID</code> is an origin node, then the node at <code>appendNodeID</code> is deleted. If the local node is not an origin, then it is deleted instead. The segment left without a terminus is then connected to the remaining node.</td></tr>
+    <tr><td class="paramname">tof</td><td>time-of-flight between appendNodeID to localNodeID; when this value is nonzero, an artificial segment is constructed two link the two arcsets. If <code>tof</code> is zero, then one of the nodes is deleted. If the node at <code>localNodeID</code> is an origin node, then the node at <code>appendNodeID</code> is deleted. If the local node is not an origin, then it is deleted instead. The segment left without a terminus is then connected to the remaining node. </td></tr>
+    <tr><td class="paramname">pNewSegLaw</td><td>pointer to a control law that is applied to the artificial segment created if <code>tof</code> is not zero.</td></tr>
   </table>
   </dd>
 </dl>
@@ -1000,7 +1015,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 </div><div class="memdoc">
 
 <p>Concatenate two arcset objects. </p>
-<p>The nodes, segments and constraints are copied from one arcset to another without creating or deleting any nodes or segments; i.e., the arcset object will include two independent "flows" without a segment to connect them</p>
+<p>The nodes, segments and constraints are copied from one arcset to another without creating or deleting any nodes or segments; i.e., the arcset object will include two independent "flows" without a segment to connect them. To construct a continuous "flow", see <a class="el" href="classastrohelion_1_1_base_arcset.html#a56c63d09bb611d313e0f2f98d1f1a150" title="Append an arcset object (i.e., a set of nodes and segments) to this one. ">appendSetAtNode()</a></p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">pSet</td><td>pointer to an arcset object </td></tr>
@@ -1014,6 +1029,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
   </table>
   </dd>
 </dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classastrohelion_1_1_base_arcset.html#a56c63d09bb611d313e0f2f98d1f1a150" title="Append an arcset object (i.e., a set of nodes and segments) to this one. ">appendSetAtNode()</a> </dd></dl>
 
 </div>
 </div>
@@ -2067,7 +2083,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 
 </div>
 </div>
-<a class="anchor" id="a3c313aeee661de335931e191148caaae"></a>
+<a class="anchor" id="a24a82f9aca02c373dc08b1dabc84ccd0"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -2075,7 +2091,46 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">const <a class="el" href="classastrohelion_1_1_control_law.html">ControlLaw</a> * astrohelion::BaseArcset::getCtrlLawByIx </td>
+          <td class="memname"><a class="el" href="classastrohelion_1_1_control_law.html">ControlLaw</a> * astrohelion::BaseArcset::getCtrlLawByIx </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>ix</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inherited</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Retrieve a pointer to the control law for a segment at the specified index. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ix</td><td>Index of the segment within the storage vector. If ix &lt; 0, it will count backwards from the end of the storage vector. s </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>control law pointer for the specified segment </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classastrohelion_1_1_exception.html" title="Base Exception class for all my exceptions. ">Exception</a></td><td>if ix is out of bounds. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a50af3f821077ee2de2c9f290f4faddd2"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="classastrohelion_1_1_control_law.html">ControlLaw</a> * astrohelion::BaseArcset::getCtrlLawByIx_const </td>
           <td>(</td>
           <td class="paramtype">int&#160;</td>
           <td class="paramname"><em>ix</em></td><td>)</td>
@@ -2089,15 +2144,14 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 </table>
 </div><div class="memdoc">
 
-<p>Retrieve the control law ID for a segment at the specified index. </p>
-<p>[long description]</p>
+<p>Retrieve a constant pointer to the control law for a segment at the specified index. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">ix</td><td>Index of the segment within the storage vector. If ix &lt; 0, it will count backwards from the end of the storage vector. s </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>control law ID for the specified segment </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>constant control law pointer for the specified segment </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname"><a class="el" href="classastrohelion_1_1_exception.html" title="Base Exception class for all my exceptions. ">Exception</a></td><td>if ix is out of bounds. </td></tr>
@@ -2255,7 +2309,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <dl class="section return"><dt>Returns</dt><dd>a vector containing the extra parameter at the specified step and index </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
-    <tr><td class="paramname"><a class="el" href="classastrohelion_1_1_exception.html" title="Base Exception class for all my exceptions. ">Exception</a></td><td>if <code>n</code> is out of bounds </td></tr>
+    <tr><td class="paramname"><a class="el" href="classastrohelion_1_1_exception.html" title="Base Exception class for all my exceptions. ">Exception</a></td><td>if <code>n</code> is out of bounds or if the key is invalid </td></tr>
   </table>
   </dd>
 </dl>
@@ -2303,6 +2357,12 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>the set of extra parameters </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classastrohelion_1_1_exception.html" title="Base Exception class for all my exceptions. ">Exception</a></td><td>if the index is out of bounds or if the key is invalid </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -3202,7 +3262,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 </table>
 </div><div class="memdoc">
 
-<p>Retrieve an STM on the arc. </p>
+<p>Retrieve an STM associated with a segment with the specified index. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">ix</td><td>the segment index. If it is negative, the index will count backwards from the end of the <code>segs</code> storage array</td></tr>
@@ -3210,6 +3270,45 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>the STM associated with the specified index </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classastrohelion_1_1_exception.html" title="Base Exception class for all my exceptions. ">Exception</a></td><td>if <code>ix</code> is out of bounds </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a42b82ff1647ee0c1c29ef443ba0d35b5"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt; double &gt; astrohelion::BaseArcset::getSTMElementsByIx </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>ix</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inherited</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get the elements of the STM at the specified index. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ix</td><td>ix the segment index. If it is negative, the index will count backwards from the end of the <code>segs</code> storage array </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The STM elements, in row-major order </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname"><a class="el" href="classastrohelion_1_1_exception.html" title="Base Exception class for all my exceptions. ">Exception</a></td><td>if <code>ix</code> is out of bounds </td></tr>
@@ -3549,45 +3648,6 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>the concatenation of this and <code>rhs</code> </dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="classastrohelion_1_1_arcset.html#a2467eab775ba7b5d780e2387492b069b" title="Combine two arcsets. ">operator +()</a> </dd></dl>
-
-</div>
-</div>
-<a class="anchor" id="a0a0ca5ce64d9232c906297851de452b7"></a>
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void astrohelion::BaseArcset::putInChronoOrder </td>
-          <td>(</td>
-          <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>force</em> = <code>false</code></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Rearrange the nodes and segments so that they are listed in chronological order in their storage arrays. </p>
-<p>This does not change the ID of any of the nodes or segments, only their index within the storage array. After calling this function, accessing the -1 node or segment will return the latest (in time) object.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">force</td><td>if true, the arcset will be sorted regardless of the value of the <a class="el" href="classastrohelion_1_1_base_arcset.html#ac5756bb8fecfc4f22e97aa5f6f956768" title="Determine if the arcset is arranged in chronological order. ">isInChronoOrder()</a> flag.</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="exception"><dt>Exceptions</dt><dd>
-  <table class="exception">
-    <tr><td class="paramname"><a class="el" href="classastrohelion_1_1_exception.html" title="Base Exception class for all my exceptions. ">Exception</a></td><td>if the <a class="el" href="classastrohelion_1_1_base_arcset.html#afd55faf6c1bb134d0269de20bc68b57a" title="Determine what order to place the nodes and segments of this object into to achieve a chronological p...">getChronoOrder()</a> sorting algorithm returns a set of <a class="el" href="structastrohelion_1_1_arc_piece.html" title="A structure used to represent nodes and segments. ">ArcPiece</a> objects that has a different size than the combined node and segment vectors, the function is aborted as it is likely a node or segment was skipped and we don't want to lose information. </td></tr>
-  </table>
-  </dd>
-</dl>
 
 </div>
 </div>
@@ -5178,6 +5238,45 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 
 </div>
 </div>
+<a class="anchor" id="a40a2e3f124a0fe971475fb3c55e35d7c"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void astrohelion::BaseArcset::sortChrono </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>force</em> = <code>false</code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inherited</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Rearrange the nodes and segments so that they are listed in chronological order in their storage arrays. </p>
+<p>This does not change the ID of any of the nodes or segments, only their index within the storage array. After calling this function, accessing the -1 node or segment will return the latest (in time) object.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">force</td><td>if true, the arcset will be sorted regardless of the value of the <a class="el" href="classastrohelion_1_1_base_arcset.html#ac5756bb8fecfc4f22e97aa5f6f956768" title="Determine if the arcset is arranged in chronological order. ">isInChronoOrder()</a> flag.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classastrohelion_1_1_exception.html" title="Base Exception class for all my exceptions. ">Exception</a></td><td>if the <a class="el" href="classastrohelion_1_1_base_arcset.html#afd55faf6c1bb134d0269de20bc68b57a" title="Determine what order to place the nodes and segments of this object into to achieve a chronological p...">getChronoOrder()</a> sorting algorithm returns a set of <a class="el" href="structastrohelion_1_1_arc_piece.html" title="A structure used to represent nodes and segments. ">ArcPiece</a> objects that has a different size than the combined node and segment vectors, the function is aborted as it is likely a node or segment was skipped and we don't want to lose information. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="a75b0b4cdd57c4a2ecfb2a52b43b58497"></a>
 <div class="memitem">
 <div class="memproto">
@@ -5265,8 +5364,8 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <p>By specifying the epoch of one node in the set, all other nodes are updated using the segment times-of-flight between them.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">nodeID</td><td>the ID of a node </td></tr>
-    <tr><td class="paramname">epoch</td><td>the epoch of the node with the specified ID. </td></tr>
+    <tr><td class="paramname">nodeID</td><td>the ID of a node to use as the base point </td></tr>
+    <tr><td class="paramname">epoch</td><td>the epoch of the node with the specified ID. If the epoch currently stored in the node does not match this input value, the stored value is updated to match the specified epoch. </td></tr>
   </table>
   </dd>
 </dl>

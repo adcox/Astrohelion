@@ -1,51 +1,51 @@
 <map id="include/Common.hpp" name="include/Common.hpp">
-<area shape="rect" id="node2" href="$_body_data_8cpp.html" title="Data class that holds data about orbitRad body. " alt="" coords="5436,326,5563,353"/>
-<area shape="rect" id="node3" href="$_calculations_8cpp.html" title="Contains non&#45;member calculation functions. " alt="" coords="741,326,882,353"/>
-<area shape="rect" id="node4" href="$_sim_engine_8cpp.html" title="Performs numerical integration on a set of initial conditions in any dynamic model and system..." alt="" coords="296,326,428,353"/>
-<area shape="rect" id="node5" href="$_sys_data__2bp_8cpp.html" title="Derivative of SysData, specific to 2BP. " alt="" coords="5587,326,5735,353"/>
-<area shape="rect" id="node6" href="$_sys_data__bc4bp_8cpp.html" title="Derivative of SysData, specific to BCR4BPR. " alt="" coords="5198,326,5361,353"/>
-<area shape="rect" id="node7" href="$_sys_data__cr3bp_8cpp.html" title="Derivative of SysData, specific to CR3BP. " alt="" coords="5759,326,5918,353"/>
-<area shape="rect" id="node8" href="$_base_arcset_8hpp.html" title="Basic arcset class (abstract) " alt="" coords="1145,80,1305,107"/>
-<area shape="rect" id="node15" href="$_all_includes_8hpp.html" title="Provides easy include for all headers in the Core library. " alt="" coords="2122,408,2278,435"/>
-<area shape="rect" id="node16" href="$_mult_shoot_engine_8hpp.html" title="Performs corrections on a nodeset subject to a set of constraints. " alt="" coords="1094,244,1284,271"/>
-<area shape="rect" id="node25" href="$_calculations_8hpp.html" title="Includes miscellaneous calculation functions. " alt="" coords="1866,244,2030,271"/>
-<area shape="rect" id="node29" href="$_engine_8hpp.html" title="Contains the base behavior for engine objects. " alt="" coords="1616,162,1748,189"/>
-<area shape="rect" id="node33" href="$_lambert_arc_engine_8hpp.html" title="Generate Lambert Arcs via a Lambert Solver. " alt="" coords="3487,244,3686,271"/>
-<area shape="rect" id="node35" href="$_family___p_o_8hpp.html" title="include/Family_PO.hpp" alt="" coords="2745,244,2902,271"/>
-<area shape="rect" id="node37" href="$_dynamics_model_8hpp.html" title="include/DynamicsModel.hpp" alt="" coords="2669,80,2856,107"/>
-<area shape="rect" id="node41" href="$_sys_data__bc4bp_8hpp.html" title="include/SysData_bc4bp.hpp" alt="" coords="3710,244,3895,271"/>
-<area shape="rect" id="node44" href="$_utilities_8hpp.html" title="Contains miscellaneous utility functions that make coding in C++ easier. " alt="" coords="3328,244,3464,271"/>
-<area shape="rect" id="node9" href="$_base_arcset_8cpp.html" title="Data object that stores information about an integrated arc. " alt="" coords="3348,326,3486,353"/>
-<area shape="rect" id="node10" href="$_arcset_8hpp.html" title="include/Arcset.hpp" alt="" coords="920,162,1050,189"/>
-<area shape="rect" id="node11" href="$_arcset_8cpp.html" title="src/Arcset.cpp" alt="" coords="957,326,1064,353"/>
-<area shape="rect" id="node12" href="$_dynamics_model_8cpp.html" title="Defines behavior for a dynamic model. " alt="" coords="453,326,616,353"/>
-<area shape="rect" id="node13" href="$_nat_param_engine_8cpp.html" title="src/NatParamEngine.cpp" alt="" coords="1760,326,1928,353"/>
-<area shape="rect" id="node14" href="$_pseudo_arc_engine_8cpp.html" title="src/PseudoArcEngine.cpp" alt="" coords="1101,408,1274,435"/>
-<area shape="rect" id="node23" href="$_sim_engine_8hpp.html" title="include/SimEngine.hpp" alt="" coords="1318,244,1473,271"/>
-<area shape="rect" id="node17" href="$_dynamics_model__bc4bp_8cpp.html" title="Derivative of DynamicsModel, specific to BCR4BPR. " alt="" coords="2397,326,2602,353"/>
-<area shape="rect" id="node18" href="$_dynamics_model__cr3bp_8cpp.html" title="Derivative of DynamicsModel, specific to CR3BP. " alt="" coords="1088,326,1290,353"/>
-<area shape="rect" id="node19" href="$_dynamics_model__cr3bp__lt_8cpp.html" title="Derivative of DynamicsModel, specific to CR3BP&#45;LTVP. " alt="" coords="1315,319,1492,360"/>
-<area shape="rect" id="node20" href="$_family___p_o_8cpp.html" title="src/Family_PO.cpp" alt="" coords="2238,326,2372,353"/>
-<area shape="rect" id="node21" href="$_mult_shoot_engine_8cpp.html" title="Engine object that applies differential corrections to arcsets. " alt="" coords="1517,326,1685,353"/>
-<area shape="rect" id="node22" href="$_pseudo_arc_engine_8hpp.html" title="include/PseudoArcEngine.hpp" alt="" coords="76,326,272,353"/>
-<area shape="rect" id="node24" href="$_manifold_engine_8cpp.html" title="src/ManifoldEngine.cpp" alt="" coords="2003,326,2162,353"/>
-<area shape="rect" id="node26" href="$_arcset__periodic_8cpp.html" title="src/Arcset_periodic.cpp" alt="" coords="2627,326,2786,353"/>
-<area shape="rect" id="node27" href="$_dynamics_model__2bp_8cpp.html" title="Derivative of DynamicsModel, specific to 2BP. " alt="" coords="3134,326,3324,353"/>
-<area shape="rect" id="node28" href="$_event_8cpp.html" title="Data object that stores information about a simulation event. " alt="" coords="3510,326,3612,353"/>
-<area shape="rect" id="node30" href="$_manifold_engine_8hpp.html" title="Computes manifolds. " alt="" coords="2054,244,2236,271"/>
-<area shape="rect" id="node31" href="$_lin_motion_engine_8hpp.html" title="include/LinMotionEngine.hpp" alt="" coords="1588,244,1776,271"/>
-<area shape="rect" id="node32" href="$_continuation_engine_8hpp.html" title="Define the basic behavior and common variables for continuation engines. " alt="" coords="616,244,821,271"/>
-<area shape="rect" id="node34" href="$_lambert_arc_engine_8cpp.html" title="Generate Lambert Arcs in the 2BP. " alt="" coords="4660,326,4836,353"/>
-<area shape="rect" id="node36" href="$_family___p_o__cr3bp_8hpp.html" title="include/Family_PO_cr3bp.hpp" alt="" coords="2862,326,3058,353"/>
-<area shape="rect" id="node38" href="$_lin_motion_engine__cr3bp_8cpp.html" title="Uses linear EOMS near libration points to generate trajectories. " alt="" coords="5034,319,5174,360"/>
-<area shape="rect" id="node39" href="$_dynamics_model__2bp_8hpp.html" title="include/DynamicsModel\l_2bp.hpp" alt="" coords="3028,155,3190,196"/>
-<area shape="rect" id="node40" href="$_dynamics_model__bc4bp_8hpp.html" title="include/DynamicsModel\l_bc4bp.hpp" alt="" coords="2695,155,2856,196"/>
-<area shape="rect" id="node43" href="$_dynamics_model__cr3bp_8hpp.html" title="include/DynamicsModel\l_cr3bp.hpp" alt="" coords="2080,155,2242,196"/>
-<area shape="rect" id="node42" href="$_arcset__bc4bp_8cpp.html" title="src/Arcset_bc4bp.cpp" alt="" coords="4860,326,5009,353"/>
-<area shape="rect" id="node45" href="$_arcset__2bp_8cpp.html" title="src/Arcset_2bp.cpp" alt="" coords="3739,326,3874,353"/>
-<area shape="rect" id="node46" href="$_arcset__cr3bp_8cpp.html" title="src/Arcset_cr3bp.cpp" alt="" coords="3898,326,4045,353"/>
-<area shape="rect" id="node47" href="$_core_8cpp.html" title="Base class for all library objects that can exist independently. " alt="" coords="4070,326,4167,353"/>
-<area shape="rect" id="node48" href="$_lin_motion_engine__cr3bp__lt_8cpp.html" title="Uses linear EOMS near libration points to generate trajectories. " alt="" coords="4191,319,4331,360"/>
-<area shape="rect" id="node49" href="$_mult_shoot_data_8cpp.html" title="Contains member functions for several classes that support multiple shooting data manipulation and tr..." alt="" coords="4355,326,4511,353"/>
-<area shape="rect" id="node50" href="$_node_8cpp.html" title="Stores information about a single node or integration state. " alt="" coords="4535,326,4635,353"/>
+<area shape="rect" id="node2" href="$_body_data_8cpp.html" title="Data class that holds data about orbitRad body. " alt="" coords="4909,326,5036,353"/>
+<area shape="rect" id="node3" href="$_calculations_8cpp.html" title="Contains non&#45;member calculation functions. " alt="" coords="740,326,882,353"/>
+<area shape="rect" id="node4" href="$_sim_engine_8cpp.html" title="Performs numerical integration on a set of initial conditions in any dynamic model and system..." alt="" coords="74,326,206,353"/>
+<area shape="rect" id="node5" href="$_sys_data__2bp_8cpp.html" title="Derivative of SysData, specific to 2BP. " alt="" coords="5060,326,5208,353"/>
+<area shape="rect" id="node6" href="$_sys_data__bc4bp_8cpp.html" title="Derivative of SysData, specific to BCR4BPR. " alt="" coords="4094,326,4256,353"/>
+<area shape="rect" id="node7" href="$_sys_data__cr3bp_8cpp.html" title="Derivative of SysData, specific to CR3BP. " alt="" coords="5452,326,5610,353"/>
+<area shape="rect" id="node8" href="$_base_arcset_8hpp.html" title="Basic arcset class (abstract) " alt="" coords="998,80,1158,107"/>
+<area shape="rect" id="node15" href="$_all_includes_8hpp.html" title="Provides easy include for all headers in the Core library. " alt="" coords="2534,408,2690,435"/>
+<area shape="rect" id="node16" href="$_mult_shoot_engine_8hpp.html" title="Performs corrections on a nodeset subject to a set of constraints. " alt="" coords="1094,244,1285,271"/>
+<area shape="rect" id="node25" href="$_calculations_8hpp.html" title="Includes miscellaneous calculation functions. " alt="" coords="1894,244,2058,271"/>
+<area shape="rect" id="node29" href="$_engine_8hpp.html" title="Contains the base behavior for engine objects. " alt="" coords="1533,162,1665,189"/>
+<area shape="rect" id="node33" href="$_lambert_arc_engine_8hpp.html" title="Generate Lambert Arcs via a Lambert Solver. " alt="" coords="3832,244,4030,271"/>
+<area shape="rect" id="node35" href="$_family_8hpp.html" title="include/Family.hpp" alt="" coords="3576,162,3707,189"/>
+<area shape="rect" id="node37" href="$_family___p_o_8hpp.html" title="include/Family_PO.hpp" alt="" coords="3464,244,3622,271"/>
+<area shape="rect" id="node39" href="$_dynamics_model_8hpp.html" title="include/DynamicsModel.hpp" alt="" coords="2566,80,2752,107"/>
+<area shape="rect" id="node43" href="$_sys_data__bc4bp_8hpp.html" title="include/SysData_bc4bp.hpp" alt="" coords="2953,244,3138,271"/>
+<area shape="rect" id="node46" href="$_utilities_8hpp.html" title="Contains miscellaneous utility functions that make coding in C++ easier. " alt="" coords="3163,244,3299,271"/>
+<area shape="rect" id="node9" href="$_base_arcset_8cpp.html" title="Data object that stores information about an integrated arc. " alt="" coords="4281,326,4418,353"/>
+<area shape="rect" id="node10" href="$_arcset_8hpp.html" title="include/Arcset.hpp" alt="" coords="738,162,868,189"/>
+<area shape="rect" id="node11" href="$_arcset_8cpp.html" title="src/Arcset.cpp" alt="" coords="956,326,1063,353"/>
+<area shape="rect" id="node12" href="$_dynamics_model_8cpp.html" title="Defines behavior for a dynamic model. " alt="" coords="231,326,394,353"/>
+<area shape="rect" id="node13" href="$_nat_param_engine_8cpp.html" title="src/NatParamEngine.cpp" alt="" coords="2223,326,2391,353"/>
+<area shape="rect" id="node14" href="$_pseudo_arc_engine_8cpp.html" title="src/PseudoArcEngine.cpp" alt="" coords="1172,408,1346,435"/>
+<area shape="rect" id="node23" href="$_sim_engine_8hpp.html" title="include/SimEngine.hpp" alt="" coords="1522,244,1676,271"/>
+<area shape="rect" id="node17" href="$_dynamics_model__bc4bp_8cpp.html" title="Derivative of DynamicsModel, specific to BCR4BPR. " alt="" coords="1708,326,1914,353"/>
+<area shape="rect" id="node18" href="$_dynamics_model__cr3bp_8cpp.html" title="Derivative of DynamicsModel, specific to CR3BP. " alt="" coords="1087,326,1290,353"/>
+<area shape="rect" id="node19" href="$_dynamics_model__cr3bp__lt_8cpp.html" title="Derivative of DynamicsModel, specific to CR3BP&#45;LTVP. " alt="" coords="1314,319,1492,360"/>
+<area shape="rect" id="node20" href="$_family___p_o_8cpp.html" title="src/Family_PO.cpp" alt="" coords="2650,326,2785,353"/>
+<area shape="rect" id="node21" href="$_mult_shoot_engine_8cpp.html" title="Engine object that applies differential corrections to arcsets. " alt="" coords="1516,326,1684,353"/>
+<area shape="rect" id="node22" href="$_pseudo_arc_engine_8hpp.html" title="include/PseudoArcEngine.hpp" alt="" coords="469,326,665,353"/>
+<area shape="rect" id="node24" href="$_manifold_engine_8cpp.html" title="src/ManifoldEngine.cpp" alt="" coords="2040,326,2198,353"/>
+<area shape="rect" id="node26" href="$_arcset__periodic_8cpp.html" title="src/Arcset_periodic.cpp" alt="" coords="2416,326,2574,353"/>
+<area shape="rect" id="node27" href="$_dynamics_model__2bp_8cpp.html" title="Derivative of DynamicsModel, specific to 2BP. " alt="" coords="2809,326,3000,353"/>
+<area shape="rect" id="node28" href="$_event_8cpp.html" title="Data object that stores information about a simulation event. " alt="" coords="3024,326,3126,353"/>
+<area shape="rect" id="node30" href="$_manifold_engine_8hpp.html" title="Computes manifolds. " alt="" coords="2134,244,2315,271"/>
+<area shape="rect" id="node31" href="$_lin_motion_engine_8hpp.html" title="include/LinMotionEngine.hpp" alt="" coords="1309,244,1497,271"/>
+<area shape="rect" id="node32" href="$_continuation_engine_8hpp.html" title="Define the basic behavior and common variables for continuation engines. " alt="" coords="864,244,1070,271"/>
+<area shape="rect" id="node34" href="$_lambert_arc_engine_8cpp.html" title="Generate Lambert Arcs in the 2BP. " alt="" coords="4494,326,4670,353"/>
+<area shape="rect" id="node36" href="$_family_8cpp.html" title="src/Family.cpp" alt="" coords="3646,244,3754,271"/>
+<area shape="rect" id="node38" href="$_family___p_o__cr3bp_8hpp.html" title="include/Family_PO_cr3bp.hpp" alt="" coords="5232,326,5428,353"/>
+<area shape="rect" id="node40" href="$_lin_motion_engine__cr3bp_8cpp.html" title="Uses linear EOMS near libration points to generate trajectories. " alt="" coords="4745,319,4885,360"/>
+<area shape="rect" id="node41" href="$_dynamics_model__2bp_8hpp.html" title="include/DynamicsModel\l_2bp.hpp" alt="" coords="2773,155,2934,196"/>
+<area shape="rect" id="node42" href="$_dynamics_model__bc4bp_8hpp.html" title="include/DynamicsModel\l_bc4bp.hpp" alt="" coords="2518,155,2680,196"/>
+<area shape="rect" id="node45" href="$_dynamics_model__cr3bp_8hpp.html" title="include/DynamicsModel\l_cr3bp.hpp" alt="" coords="2265,155,2426,196"/>
+<area shape="rect" id="node44" href="$_arcset__bc4bp_8cpp.html" title="src/Arcset_bc4bp.cpp" alt="" coords="3202,326,3351,353"/>
+<area shape="rect" id="node47" href="$_arcset__2bp_8cpp.html" title="src/Arcset_2bp.cpp" alt="" coords="3426,326,3561,353"/>
+<area shape="rect" id="node48" href="$_arcset__cr3bp_8cpp.html" title="src/Arcset_cr3bp.cpp" alt="" coords="3586,326,3732,353"/>
+<area shape="rect" id="node49" href="$_core_8cpp.html" title="Base class for all library objects that can exist independently. " alt="" coords="3757,326,3854,353"/>
+<area shape="rect" id="node50" href="$_lin_motion_engine__cr3bp__lt_8cpp.html" title="Uses linear EOMS near libration points to generate trajectories. " alt="" coords="3878,319,4018,360"/>
 </map>

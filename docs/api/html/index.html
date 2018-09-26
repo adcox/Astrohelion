@@ -15,6 +15,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
+<link href="customdoxygen.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -82,9 +83,42 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="title">Astrohelion </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><h2>Introduction</h2>
-<p>Astrohelion (Astro - heel - eon) is a set of C++ tools that facilitiate multi-body trajectory design. Specifically, analysis in the circular restricted three-body problem (CR3BP) and bi-circular restricted four-body problem (BC4BP) is supported. </p>
-<p>This API strives to provide as much information about how you can use the code as possible. This is very much a work in progress, so don't hesitate to point out errors or suggest improvements. </p>
+<div class="textblock"><h2>Welcome!</h2>
+<p>Astrohelion (Astro - heel - eon) is a set of C++ tools that facilitiate multi-body trajectory design. Specifically, analysis in the circular restricted three-body problem (CR3BP), the CR3BP with low-thrust (CR3BP-LT), and bi-circular restricted four-body problem (BC4BP) is supported.</p>
+<h2>Capabilities</h2>
+<p>So, what can Astrohelion do? There are several key functionalities:</p>
+<ul>
+<li>
+<b>Numerical Integration</b> Astrohelion leverages the ordinary differential equation (ODE) solvers in the GSL library to numerically integrate the equations of motion associated with a few common multi-body astrodynamical systems. This propagation is controlled by a <code>SimEngine</code> object that possesses many of the same features as Matlab's ODE solvers, such as event detection. The engine creates a trajectory object that can then be operated on for further analysis.  </li>
+<li>
+<b>Differential Corrections</b> Continuous trajectories may be discretized into a series of nodes, and constraints can be applied to the nodes, segments between nodes, and the trajectory as a whole. A multiple shooting differential corrections algorithm is then applied to the constrained "arcset" with the goal of satisfying all constraints. The algorithm itself, contained in the <code>MultShootEngine</code> object, is problem-independent and can be applied to CR3BP, CR3BP-LT, or BC4BP arcsets using the same set of commands.  </li>
+<li>
+<b>Continuation</b> Once a desirable trajectory has been computed (and possibly corrected to meet certain constraints), continuation algorithms can be applied to generate a continuous family of similar solutions. Both natural parameter continuation (see <code>NatParamEngine</code>) and psuedo-arclength continuation (see <code>PseudoArcEngine</code>) are avaiable, both of which are agnostic to dynamical model.  </li>
+<li>
+<b>Export to File</b> Trajectories are easily saved to file in MATLAB binary format for further analysis or visualization.  </li>
+</ul>
+<h2>Limitations</h2>
+<p>This software has been developed to support MS and PhD research. Thus, while the tools are fully operational and have been tested fairly well, they are not as flexible or extensible as they could be. Please submit feedback via issue reports if you encounter problems so that we can continue to improve this software! However, note that we make no guarantee that we'll be able to offer support; this software is provided as is, without any quality guarnatee.</p>
+<h2>Installation</h2>
+<p>The following steps describe a general installation process.</p>
+<ol>
+<li>
+Copy the <code>installDeps.sh</code> script into the main directory from the build directory.  </li>
+<li>
+Open installDeps.sh and set the <code>INSTALL_DIR</code>, <code>CONFIG_DIR</code>, and <code>SPICE_DIR</code> variables to point to locations you have write access to.  </li>
+<li>
+Additionally, set the <code>SPK</code> and <code>TLS</code> variables to the names of SPICE kernels you want to download to use for ephemeris data.  </li>
+<li>
+Run the installation script, i.e., <code>sh installDeps.sh</code>. This will download, build, and install the libraries required to run Astrohelion  </li>
+<li>
+Copy makefile out of the build directory into the main directory and adjust the <code>INSTALL_DIR</code> variable to point to the same directory as the <code>INSTALL_DIR</code> variable in <code>installDeps.sh</code>  </li>
+<li>
+Compile the project source, i.e., run <code>make</code>  </li>
+<li>
+Install the Astrohelion libriaries and headers, i.e., run <code>make install</code>  </li>
+</ol>
+<h2>Documentation</h2>
+<p>Astrohelion documentation is available at <a href="http://adcox.gitlab.io/Astrohelion">http://adcox.gitlab.io/Astrohelion/</a>. To build the latest documentation (which is stored in <code>docs/html<code>), run the command <code>make docs</code>. Document generation requires the <code>doxygen</code> and <code>graphviz</code> packages. </code></code></p>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

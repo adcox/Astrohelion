@@ -14,7 +14,8 @@ install:
 
 script:
   - sudo unlink /usr/bin/gcc && sudo ln -s /usr/bin/gcc-6 /usr/bin/gcc
-  - gcc --version
+  - sudo unlink /usr/bin/g++ && sudo ln -s /usr/bin/g++-6 /usr/bin/g++
+  - export OMP_NUM_THREADS=4
   - make all
 
 addons:

@@ -416,12 +416,13 @@ namespace astrohelion{
 	 *  \name Standard Output
 	 *  \{
 	 */
-	void printf(const char*, ...);
-	void printErr(const char*, ...);
-	void printWarn(const char*, ...);
-	void printVerb(bool, const char*, ...);
-	void printColor(const char*, const char*, ...);
-	void printVerbColor(bool, const char*, const char*, ...);
+	bool isColorOn();
+	int printf(const char*, ...);
+	int printErr(const char*, ...);
+	int printWarn(const char*, ...);
+	int printVerb(bool, const char*, ...);
+	int printColor(const char*, const char*, ...);
+	int printVerbColor(bool, const char*, const char*, ...);
 	//\}
 
 	/**

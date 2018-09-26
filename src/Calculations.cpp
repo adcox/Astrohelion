@@ -542,8 +542,8 @@ std::vector<unsigned int> sortEig(const std::vector<cdouble> &eigVals, const std
 
     // Define a custom OpenMP reduction to find the minimum value while
     // saving the index of the associated value
-    #pragma omp declare reduction \
-        (minPair:IndexValuePair:omp_out=minVal(omp_out, omp_in)) \
+    #pragma omp declare reduction\
+        (minPair:IndexValuePair:omp_out=minVal(omp_out, omp_in))\
         initializer(omp_priv = IndexValuePair(0, 1e10))
 
     IndexValuePair minIxVal(0, 1e10);   // Initilize the IndexValuePair

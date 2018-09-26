@@ -17,6 +17,7 @@
  */
 #include "AllIncludes.hpp"
 
+#include <cstdlib>
 #include <exception>
 #include <iostream>
 #include "matio.h"
@@ -44,6 +45,13 @@ int main(){
 	char filename[] = "../../data/families/cr3bp-lt_earth-moon/"
 		"E2_Lyap_f7.0e-02_alph000.00_law2112.mat";
 	SysData_cr3bp_lt sys(filename);
+	
+	if(isColorOn())
+		std::printf("COLOR ON\n");
+	else
+		std::printf("COLOR OFF\n");
+
+
 	Family_PO_cr3bp_lt fam(&sys);
 	std::vector<ControlLaw*> laws;
 	fam.readFromMat(filename, laws);

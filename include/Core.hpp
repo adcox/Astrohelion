@@ -149,6 +149,7 @@ public:
 	/** Variable to save body data filepath in after it is determined or created */
 	std::string body_data_filepath = "";
 	
+
 }; // END OF Core_Settings
 
 /**
@@ -164,6 +165,7 @@ public:
 
 	Core_Settings settings;					//!< A collection of settings that various Core algorithms use
 	std::map<int, Body_Data> allBodyData {};	//!< Map of Body_Data objects; key is the SPICE ID
+	bool bPrintColor = true;	//!< Whether or not to print ASCII color codes for pretty output
 };
 
 /**

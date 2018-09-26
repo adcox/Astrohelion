@@ -73,13 +73,14 @@ std::string complexToStr(std::complex<double> num){
  * 
  * @param format a standard format string literal to pass to `vprintf`
  */
-void printf(const char* format, ...){
+int printf(const char* format, ...){
     va_list args;
     va_start(args, format);
     char buffer[BUFFER_SIZE];
-    vsnprintf(buffer, BUFFER_SIZE, format, args);
+    int r = vsnprintf(buffer, BUFFER_SIZE, format, args);
     va_end(args);
     std::cout << buffer;
+    return r;
 }//====================================================
 
 /**
@@ -87,49 +88,51 @@ void printf(const char* format, ...){
  *	@param verbose whether or not to be verbose; message is not printed if verbose is false
  *	@param format a standard format string literal to pass to `vprintf`
  */
-void printVerb(bool verbose, const char * format, ...){
+int printVerb(bool verbose, const char * format, ...){
     if(verbose){
         va_list args;
         va_start(args, format);
         char buffer[BUFFER_SIZE];
-        vsnprintf(buffer, BUFFER_SIZE, format, args);
+        int r = vsnprintf(buffer, BUFFER_SIZE, format, args);
         va_end(args);
         std::cout << buffer;
+        return r;
     }
+    return 0;
 }//==========================================
 
 /**
  *	@brief Print an error message to the standard output in red
  *	@param format a standard format string literal to pass to `vprintf`
  */
-void printErr(const char * format, ...){
+int printErr(const char * format, ...){
     va_list args;
     va_start(args, format);
     char buffer[BUFFER_SIZE];
-    vsnprintf(buffer, BUFFER_SIZE, format, args);
+    int r = vsnprintf(buffer, BUFFER_SIZE, format, args);
     va_end(args);
-    #ifdef ASTRO_NO_COLOR
-        std::cout << buffer;
-    #else
+    if(isColorOn())
         std::cout << RED << buffer << RESET;
-    #endif
+    else
+        std::cout << buffer;
+    return r;
 }//==========================================
 
 /**
  *	@brief Print a warning messate to the standard output in yellow
  *	@param format a standard format string literal to pass to `vprintf`
  */
-void printWarn(const char * format, ...){
+int printWarn(const char * format, ...){
     va_list args;
     va_start(args, format);
     char buffer[BUFFER_SIZE];
-    vsnprintf(buffer, BUFFER_SIZE, format, args);
+    int r = vsnprintf(buffer, BUFFER_SIZE, format, args);
     va_end(args);
-    #ifdef ASTRO_NO_COLOR
-        std::cout << buffer;
-    #else
+    if(isColorOn())
         std::cout << YELLOW << buffer << RESET;
-    #endif
+    else
+        std::cout << buffer;
+    return r;
 }//==========================================
 
 /**
@@ -137,17 +140,18 @@ void printWarn(const char * format, ...){
  *	@param color one of the constant color values stored in the ascii-output header
  *	@param format a standard format string literal to pass to `vprintf`
  */
-void printColor(const char* color, const char * format, ...){
+int printColor(const char* color, const char * format, ...){
     va_list args;
     va_start(args, format);
     char buffer[BUFFER_SIZE];
-    vsnprintf(buffer, BUFFER_SIZE, format, args);
+    int r = vsnprintf(buffer, BUFFER_SIZE, format, args);
     va_end(args);
-    #ifdef ASTRO_NO_COLOR
-        std::cout << buffer;
-    #else
+    if(isColorOn())
         std::cout << color << buffer << RESET;
-    #endif
+    else
+        std::cout << buffer;
+
+    return r;
 }//==========================================
 
 /**
@@ -156,19 +160,37 @@ void printColor(const char* color, const char * format, ...){
  *	@param color one of the constant color values stored in the ascii-output header
  *	@param format a standard format string literal to pass to `vprintf`
  */
-void printVerbColor(bool verbose, const char* color, const char * format, ...){
+int printVerbColor(bool verbose, const char* color, const char * format, ...){
 	if(verbose){
         va_list args;
         va_start(args, format);
         char buffer[BUFFER_SIZE];
-        vsnprintf(buffer, BUFFER_SIZE, format, args);
+        int r = vsnprintf(buffer, BUFFER_SIZE, format, args);
         va_end(args);
-        #ifdef ASTRO_NO_COLOR
-            std::cout << buffer;
-        #else
+        if(isColorOn())
             std::cout << color << buffer << RESET;
-        #endif
+        else
+            std::cout << buffer;
+        return r;
 	}
+    return 0;
+}//==========================================
+
+/**
+ * @brief Determine if colors should be used in text outputs
+ * @details By default, colored output is enabled. However, by setting the 
+ * ASTRO_COLOR environment variable to 0, color output is disabled. For example,
+ * `export ASTRO_COLOR=0` on a Linux machine disables colored output.
+ * @return whether or not color should be used in outputs
+ */
+bool isColorOn(){
+    if(const char* p_env = std::getenv("ASTRO_COLOR")){
+        if(std::strcmp(p_env, "0") == 0)
+            return false;
+        else
+            return true;
+    }
+    return true;
 }//==========================================
 
 /**

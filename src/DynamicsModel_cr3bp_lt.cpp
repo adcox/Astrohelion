@@ -168,15 +168,15 @@ void DynamicsModel_cr3bp_lt::multShoot_targetHLT(MultShootData &it,
 
     // Figure out which segments the node is linked to
     // in order to get the control law
-    const Node& node = it.pArcIn->getNodeRef_const(con.getID());
+    const Node& node = it.pArcIn->getNodeRef(con.getID());
     int links[2] = {node.getLink(0), node.getLink(1)};
     
     ControlLaw_cr3bp_lt *pLaw = nullptr;
     if(links[1] == Linkable::INVALID_ID){
-        pLaw = static_cast<ControlLaw_cr3bp_lt *>(it.pArcIn->getSegRef_const(links[0]).getCtrlLaw());
+        pLaw = static_cast<ControlLaw_cr3bp_lt *>(it.pArcIn->getSegRef(links[0]).getCtrlLaw());
     }else{
-        const Segment &seg0 = it.pArcIn->getSegRef_const(links[0]);
-        const Segment &seg1 = it.pArcIn->getSegRef_const(links[1]);
+        const Segment &seg0 = it.pArcIn->getSegRef(links[0]);
+        const Segment &seg1 = it.pArcIn->getSegRef(links[1]);
 
         // Use the law of the segment that has an origin at the node
         // If both segments originate at the node, use seg0
@@ -199,7 +199,7 @@ void DynamicsModel_cr3bp_lt::multShoot_targetHLT(MultShootData &it,
     // Copy in the state information
     if(state_var.row0 == -1){
         const std::vector<double> q_in =
-            it.pArcIn->getNodeRef_const(con.getID()).getStateRef_const();
+            it.pArcIn->getNodeRef(con.getID()).getStateRef();
         // Expect q_in to have size equal to core_dim
         std::copy(q_in.begin(), q_in.end(), q.begin());
     }else{
@@ -219,7 +219,7 @@ void DynamicsModel_cr3bp_lt::multShoot_targetHLT(MultShootData &it,
         }else if(ctrl_var.row0 == -1){
             // State is variable but ctrl is fixed; get ctrl from input arcset
             std::vector<double> ctrl_in = 
-                it.pArcIn->getNodeRef_const(con.getID()).getExtraParamVec(PARAMKEY_CTRL);
+                it.pArcIn->getNodeRef(con.getID()).getExtraParamVec(PARAMKEY_CTRL);
             std::copy(ctrl_in.begin(), ctrl_in.end(), q.begin()+core_dim);
         }else{
             // state and ctrl are variable; get control from free var vector
@@ -256,7 +256,7 @@ void DynamicsModel_cr3bp_lt::multShoot_targetHLT(MultShootData &it,
         0.5*(q[0]*q[0] + q[1]*q[1]) - (1-mu)/r13 - mu/r23 - a[0]*q[0] - 
         a[1]*q[1] - a[2]*q[2];
     
-    const std::vector<double>& conData = con.getDataRef_const();
+    const std::vector<double>& conData = con.getDataRef();
     it.FX[row0] = H_lt - conData[0];
 
     unsigned int i;

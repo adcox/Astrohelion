@@ -73,7 +73,7 @@ public:
 	unsigned int getNumStates() const;
 	double getParam(int) const;
 	std::vector<double> getParams() const;
-	const std::vector<double>& getParamsRef_const() const;
+	const std::vector<double>& getParamsRef() const;
 
 	void setType(unsigned int);
 	void setParam(int, double);

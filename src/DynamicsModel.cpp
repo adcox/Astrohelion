@@ -272,7 +272,7 @@ void DynamicsModel::multShoot_initDesignVec(MultShootData &it) const{
 	for(unsigned int n = 0; n < it.pArcIn->getNumNodes(); n++){
 		// Determine if this state should be withheld from the free variable vector
 		bool stateIsFree = true, ctrlIsFree = true;
-		std::vector<Constraint> nodeCons = it.pArcIn->getNodeRefByIx_const(n).getConstraints();
+		std::vector<Constraint> nodeCons = it.pArcIn->getNodeRefByIx(n).getConstraints();
 		for(const Constraint &con : nodeCons){
 			if(con.getType() == Constraint_tp::RM_STATE)
 				stateIsFree = false;
@@ -288,26 +288,26 @@ void DynamicsModel::multShoot_initDesignVec(MultShootData &it) const{
 			it.X.insert(it.X.end(), state.begin(), state.end());
 			// Save a key and object that represents the state and remembers its location in 
 			// the free variable vector
-			MSVarMap_Key key(MSVar_tp::STATE, it.pArcIn->getNodeRefByIx_const(n).getID());
+			MSVarMap_Key key(MSVar_tp::STATE, it.pArcIn->getNodeRefByIx(n).getID());
 			it.freeVarMap[key] = MSVarMap_Obj(key, rowNum, state.size());
 		}else{
 			// Create a key and object for the free variable map that will tell multiple
 			// shooting functions that the state is not part of the free variable vector
-			MSVarMap_Key key(MSVar_tp::STATE, it.pArcIn->getNodeRefByIx_const(n).getID());
+			MSVarMap_Key key(MSVar_tp::STATE, it.pArcIn->getNodeRefByIx(n).getID());
 			it.freeVarMap[key] = MSVarMap_Obj(key, -1, it.pArcIn->getSysData()->getDynamicsModel()->getCoreStateSize());
 		}
 
 		try{
-			std::vector<double> ctrlStates = it.pArcIn->getNodeRefByIx_const(n).getExtraParamVec(PARAMKEY_CTRL);
+			std::vector<double> ctrlStates = it.pArcIn->getNodeRefByIx(n).getExtraParamVec(PARAMKEY_CTRL);
 
 			if(ctrlIsFree){
 				rowNum = it.X.size();
 				it.X.insert(it.X.end(), ctrlStates.begin(), ctrlStates.end());
 
-				MSVarMap_Key key(MSVar_tp::CTRL, it.pArcIn->getNodeRefByIx_const(n).getID());
+				MSVarMap_Key key(MSVar_tp::CTRL, it.pArcIn->getNodeRefByIx(n).getID());
 				it.freeVarMap[key] = MSVarMap_Obj(key, rowNum, ctrlStates.size());
 			}else{
-				MSVarMap_Key key(MSVar_tp::CTRL, it.pArcIn->getNodeRefByIx_const(n).getID());
+				MSVarMap_Key key(MSVar_tp::CTRL, it.pArcIn->getNodeRefByIx(n).getID());
 				it.freeVarMap[key] = MSVarMap_Obj(key, -1, ctrlStates.size());
 			}
 		}catch(const Exception &e){
@@ -321,7 +321,7 @@ void DynamicsModel::multShoot_initDesignVec(MultShootData &it) const{
 			{
 				// Append the TOF for each segment
 				for(unsigned int s = 0; s < it.pArcIn->getNumSegs(); s++){
-					MSVarMap_Key key(MSVar_tp::TOF, it.pArcIn->getSegRefByIx_const(s).getID());
+					MSVarMap_Key key(MSVar_tp::TOF, it.pArcIn->getSegRefByIx(s).getID());
 					it.freeVarMap[key] = MSVarMap_Obj(key, static_cast<int>(it.X.size()));
 					it.X.insert(it.X.end(), it.pArcIn->getTOFByIx(s));
 				}
@@ -346,7 +346,7 @@ void DynamicsModel::multShoot_initDesignVec(MultShootData &it) const{
 			{
 				// Append the sqrt(TOF) for each segment
 				for(unsigned int s = 0; s < it.pArcIn->getNumSegs(); s++){
-					MSVarMap_Key key(MSVar_tp::TOF, it.pArcIn->getSegRefByIx_const(s).getID());
+					MSVarMap_Key key(MSVar_tp::TOF, it.pArcIn->getSegRefByIx(s).getID());
 					it.freeVarMap[key] = MSVarMap_Obj(key, static_cast<int>(it.X.size()));
 					it.X.insert(it.X.end(), sqrt(std::abs(it.pArcIn->getTOFByIx(s))));
 				}
@@ -375,16 +375,16 @@ void DynamicsModel::multShoot_createContCons(MultShootData &it) const{
 	for(unsigned int s = 0; s < it.pArcIn->getNumSegs(); s++){
 		// Force all positions to be continuous
 		std::vector<double> contStates(coreDim, 1);
-		if(it.pArcIn->getSegRefByIx_const(s).getTerminus() != Linkable::INVALID_ID){	
+		if(it.pArcIn->getSegRefByIx(s).getTerminus() != Linkable::INVALID_ID){	
 			// Get a vector specifying which velocity states are continuous
-			std::vector<bool> velCon = it.pArcIn->getSegRefByIx_const(s).getVelCon();
+			std::vector<bool> velCon = it.pArcIn->getSegRefByIx(s).getVelCon();
 			// If not continuous, put NAN into the constraint data; else unity
 			contStates[3] = velCon[0] ? 1 : NAN;
 			contStates[4] = velCon[1] ? 1 : NAN;
 			contStates[5] = velCon[2] ? 1 : NAN;
 			
 			// Create a constraint
-			Constraint con(Constraint_tp::CONT_PV, it.pArcIn->getSegRefByIx_const(s).getID(), contStates);
+			Constraint con(Constraint_tp::CONT_PV, it.pArcIn->getSegRefByIx(s).getID(), contStates);
 
 			// Save constraint to constraint vector
 			it.allCons.push_back(con);
@@ -412,8 +412,8 @@ void DynamicsModel::multShoot_createContCons(MultShootData &it) const{
 void DynamicsModel::multShoot_getSimICs(const MultShootData &it, int s,
 	double *ic, double *ctrl0, double *t0, double *tof) const{
 
-	int segOriginID = it.pArcIn->getSegRef_const(s).getOrigin();
-	ControlLaw *pLaw = it.pArcIn->getSegRef_const(s).getCtrlLaw();
+	int segOriginID = it.pArcIn->getSegRef(s).getOrigin();
+	ControlLaw *pLaw = it.pArcIn->getSegRef(s).getCtrlLaw();
 
 	// Retrieve  representative object for state and get data from free var vec
 	MSVarMap_Obj state_var = it.getVarMap_obj(MSVar_tp::STATE, segOriginID);
@@ -431,7 +431,7 @@ void DynamicsModel::multShoot_getSimICs(const MultShootData &it, int s,
 
 			// If the control variables are not part of the free variable vector, retrieve from input nodeset:
 			if(ctrl_var.row0 == -1){
-				std::vector<double> ctrl = it.pArcIn->getNodeRef_const(segOriginID).getExtraParamVec(PARAMKEY_CTRL);
+				std::vector<double> ctrl = it.pArcIn->getNodeRef(segOriginID).getExtraParamVec(PARAMKEY_CTRL);
 				std::copy(ctrl.begin(), ctrl.end(), ctrl0);
 			}else{
 				std::copy(it.X.begin()+ctrl_var.row0, it.X.begin()+ctrl_var.row0 + ctrl_var.nRows, ctrl0);
@@ -600,14 +600,14 @@ void DynamicsModel::multShoot_targetCont_State(MultShootData& it, const Constrai
 	MatrixXRd stm = it.propSegs[segIx].getSTMByIx(-1);
 
 	// Get index of origin node
-	MSVarMap_Obj state0_var = it.getVarMap_obj(MSVar_tp::STATE, it.pArcIn->getSegRef_const(segID).getOrigin());
-	MSVarMap_Obj statef_var = it.getVarMap_obj(MSVar_tp::STATE, it.pArcIn->getSegRef_const(segID).getTerminus());
+	MSVarMap_Obj state0_var = it.getVarMap_obj(MSVar_tp::STATE, it.pArcIn->getSegRef(segID).getOrigin());
+	MSVarMap_Obj statef_var = it.getVarMap_obj(MSVar_tp::STATE, it.pArcIn->getSegRef(segID).getTerminus());
 
 	// Loop through conData
 	for(unsigned int s = 0; s < conData.size(); s++){
 		if(!std::isnan(conData[s])){
 			// This state is constrained to be continuous; compute error
-			double statef_value = statef_var.row0 == -1 ? it.pArcIn->getNodeRef_const(statef_var.key.id).getStateRef_const()[s] : it.X[statef_var.row0 + s];
+			double statef_value = statef_var.row0 == -1 ? it.pArcIn->getNodeRef(statef_var.key.id).getStateRef()[s] : it.X[statef_var.row0 + s];
 			it.FX[row0+s] = lastState[s] - statef_value;
 
 			// Loop through all design variables for this node and compute partials of F w.r.t. state[x]
@@ -654,10 +654,10 @@ void DynamicsModel::multShoot_targetCont_State(MultShootData& it, const Constrai
 
 	// If the control law is nontrivial, find the control variable and compute partials 
 	// of the continuity constraint w.r.t. control states
-	if(ControlLaw *pLaw = it.pArcIn->getSegRef_const(segID).getCtrlLaw()){
+	if(ControlLaw *pLaw = it.pArcIn->getSegRef(segID).getCtrlLaw()){
 		// Check to make sure the number of states is nontrivial; if numStates = 0, there won't be any MSVarMap_obj stored
 		if(pLaw->getNumStates() > 0){
-			MSVarMap_Obj ctrl0_var = it.getVarMap_obj(MSVar_tp::CTRL, it.pArcIn->getSegRef_const(segID).getOrigin());
+			MSVarMap_Obj ctrl0_var = it.getVarMap_obj(MSVar_tp::CTRL, it.pArcIn->getSegRef(segID).getOrigin());
 
 			if(ctrl0_var.row0 != -1){
 				for(unsigned int s = 0; s < conData.size(); s++){
@@ -695,8 +695,8 @@ void DynamicsModel::multShoot_targetCont_Ctrl(MultShootData& it,
 	std::vector<double> conData = con.getData();
 
 	int segIx = it.pArcIn->getSegIx(segID);
-	const Segment &propSeg = it.propSegs[segIx].getSegRefByIx_const(0);
-	const Segment &inputSeg = it.pArcIn->getSegRef_const(segID);
+	const Segment &propSeg = it.propSegs[segIx].getSegRefByIx(0);
+	const Segment &inputSeg = it.pArcIn->getSegRef(segID);
 
 	if(propSeg.getCtrlLaw() == nullptr)
 		throw Exception("DynamicsModel::multShoot_targetCont_Ctrl: "
@@ -718,7 +718,7 @@ void DynamicsModel::multShoot_targetCont_Ctrl(MultShootData& it,
 		inputSeg.getTerminus());
 
 	std::vector<double> ctrlf_static_vector = 
-		it.pArcIn->getNodeRef_const(ctrlf_var.key.id).\
+		it.pArcIn->getNodeRef(ctrlf_var.key.id).\
 		getExtraParamVec(PARAMKEY_CTRL);
 
 	// Loop through conData
@@ -816,8 +816,8 @@ void DynamicsModel::multShoot_targetCont_State_Seg(MultShootData& it, const Cons
 	int segIx1 = it.pArcIn->getSegIx(segID1);
 	int segIx2 = it.pArcIn->getSegIx(segID2);
 
-	MSVarMap_Obj state01_var = it.getVarMap_obj(MSVar_tp::STATE, it.pArcIn->getSegRef_const(segID1).getOrigin());
-	MSVarMap_Obj state02_var = it.getVarMap_obj(MSVar_tp::STATE, it.pArcIn->getSegRef_const(segID2).getOrigin());
+	MSVarMap_Obj state01_var = it.getVarMap_obj(MSVar_tp::STATE, it.pArcIn->getSegRef(segID1).getOrigin());
+	MSVarMap_Obj state02_var = it.getVarMap_obj(MSVar_tp::STATE, it.pArcIn->getSegRef(segID2).getOrigin());
 
 	std::vector<double> state1 = it.propSegs[segIx1].getStateByIx(-1);
 	std::vector<double> state2 = it.propSegs[segIx2].getStateByIx(-1);
@@ -881,10 +881,10 @@ void DynamicsModel::multShoot_targetCont_State_Seg(MultShootData& it, const Cons
 
 	// If the control law is nontrivial, find the control variable and compute partials 
 	// of the continuity constraint w.r.t. control states
-	if(ControlLaw *pLaw = it.pArcIn->getSegRef_const(segID1).getCtrlLaw()){
+	if(ControlLaw *pLaw = it.pArcIn->getSegRef(segID1).getCtrlLaw()){
 		// Check to make sure the number of states is nontrivial; if numStates = 0, there won't be any MSVarMap_obj stored
 		if(pLaw->getNumStates() > 0){
-			MSVarMap_Obj ctrl1_var = it.getVarMap_obj(MSVar_tp::CTRL, it.pArcIn->getSegRef_const(segID1).getOrigin());
+			MSVarMap_Obj ctrl1_var = it.getVarMap_obj(MSVar_tp::CTRL, it.pArcIn->getSegRef(segID1).getOrigin());
 
 			if(ctrl1_var.row0 != -1){
 				count = 0;
@@ -901,10 +901,10 @@ void DynamicsModel::multShoot_targetCont_State_Seg(MultShootData& it, const Cons
 	}
 
 	// Same for the other segment
-	if(ControlLaw *pLaw = it.pArcIn->getSegRef_const(segID2).getCtrlLaw()){
+	if(ControlLaw *pLaw = it.pArcIn->getSegRef(segID2).getCtrlLaw()){
 		// Check to make sure the number of states is nontrivial; if numStates = 0, there won't be any MSVarMap_obj stored
 		if(pLaw->getNumStates() > 0){
-			MSVarMap_Obj ctrl2_var = it.getVarMap_obj(MSVar_tp::CTRL, it.pArcIn->getSegRef_const(segID2).getOrigin());
+			MSVarMap_Obj ctrl2_var = it.getVarMap_obj(MSVar_tp::CTRL, it.pArcIn->getSegRef(segID2).getOrigin());
 
 			if(ctrl2_var.row0 != -1){
 				count = 0;
@@ -997,7 +997,7 @@ void DynamicsModel::multShoot_targetState_endSeg(MultShootData& it, const Constr
 	int segIx = it.pArcIn->getSegIx(segID);
 	
 	// Get object representing origin of segment
-	MSVarMap_Obj prevNode_var = it.getVarMap_obj(MSVar_tp::STATE, it.pArcIn->getSegRef_const(con.getID()).getOrigin());
+	MSVarMap_Obj prevNode_var = it.getVarMap_obj(MSVar_tp::STATE, it.pArcIn->getSegRef(con.getID()).getOrigin());
 
 	MSVarMap_Obj tof_var;
 	if(to_underlying(it.tofTp) > 0){
@@ -1057,9 +1057,9 @@ void DynamicsModel::multShoot_targetState_endSeg(MultShootData& it, const Constr
 	}
 
 	// Partials w.r.t. control states
-	if(ControlLaw *pLaw = it.pArcIn->getSegRef_const(segID).getCtrlLaw()){
+	if(ControlLaw *pLaw = it.pArcIn->getSegRef(segID).getCtrlLaw()){
 		if(pLaw->getNumStates() > 0){
-			MSVarMap_Obj ctrl_var = it.getVarMap_obj(MSVar_tp::CTRL, it.pArcIn->getSegRef_const(segID).getOrigin());
+			MSVarMap_Obj ctrl_var = it.getVarMap_obj(MSVar_tp::CTRL, it.pArcIn->getSegRef(segID).getOrigin());
 
 			if(ctrl_var.row0 != -1){
 				for(unsigned int s = 0; s < conData.size(); s++){
@@ -1124,8 +1124,8 @@ void DynamicsModel::multShoot_targetMatchAll(MultShootData& it, const Constraint
 	if(state1_var.row0 == -1 && state2_var.row0 == -1)
 		throw Exception("DynamicsModel::multShoot_targetMatchAll: Neither state vector is free; constraint is uncontrollabel.");
 
-	const double *state1 = state1_var.row0 == -1 ? &(it.pArcIn->getNodeRef_const(state1_var.key.id).getStateRef_const().front()) : &(it.X[state1_var.row0]);
-	const double *state2 = state2_var.row0 == -1 ? &(it.pArcIn->getNodeRef_const(state2_var.key.id).getStateRef_const().front()) : &(it.X[state2_var.row0]);
+	const double *state1 = state1_var.row0 == -1 ? &(it.pArcIn->getNodeRef(state1_var.key.id).getStateRef().front()) : &(it.X[state1_var.row0]);
+	const double *state2 = state2_var.row0 == -1 ? &(it.pArcIn->getNodeRef(state2_var.key.id).getStateRef().front()) : &(it.X[state2_var.row0]);
 
 	for(unsigned int row = 0; row < coreDim; row++){
 		// Constrain the states of THIS node to be equal to the node 
@@ -1172,10 +1172,10 @@ void DynamicsModel::multShoot_targetMatchCust(MultShootData& it,
 			"state vector is free; constraint is uncontrollabel.");
 
 	const double *state1 = state1_var.row0 == -1 ? 
-		&(it.pArcIn->getNodeRef_const(state1_var.key.id).getStateRef_const().front()) : 
+		&(it.pArcIn->getNodeRef(state1_var.key.id).getStateRef().front()) : 
 		&(it.X[state1_var.row0]);
 	const double *state2 = state2_var.row0 == -1 ? 
-		&(it.pArcIn->getNodeRef_const(state2_var.key.id).getStateRef_const().front()) : 
+		&(it.pArcIn->getNodeRef(state2_var.key.id).getStateRef().front()) : 
 		&(it.X[state2_var.row0]);
 
 	int count = 0;
@@ -1280,7 +1280,7 @@ void DynamicsModel::multShoot_targetDist_endSeg(MultShootData& it, const Constra
 	int segIx = it.pArcIn->getSegIx(con.getID());
 
 	// Get object representing origin node state of segment
-	MSVarMap_Obj prevNode_var = it.getVarMap_obj(MSVar_tp::STATE, it.pArcIn->getSegRef_const(con.getID()).getOrigin());
+	MSVarMap_Obj prevNode_var = it.getVarMap_obj(MSVar_tp::STATE, it.pArcIn->getSegRef(con.getID()).getOrigin());
 	
 	MSVarMap_Obj tof_var;
 	double timeCoeff = 1;
@@ -1427,7 +1427,7 @@ double DynamicsModel::multShoot_targetDist_compSlackVar(const MultShootData& it,
 double DynamicsModel::multShoot_targetDist_endSeg_compSlackVar(const MultShootData& it, const Constraint& con) const{
 	std::vector<double> conData = con.getData();
 
-	std::vector<double> lastState = it.pArcIn->getSegRef_const(con.getID()).getStateByRow(-1);
+	std::vector<double> lastState = it.pArcIn->getSegRef(con.getID()).getStateByRow(-1);
 	
 	int Pix = static_cast<int>(conData[0]);	// index of primary
 	double t = 0;	// If the system is non-autonomous, this will need to be replaced with an epoch time
@@ -1503,8 +1503,8 @@ void DynamicsModel::multShoot_targetDeltaV(MultShootData& it, const Constraint& 
 			// Partial w.r.t. integrated path (newSeg) from origin node
 			Eigen::RowVectorXd dFdq_nf = -1*dFdq_n2*stm;
 
-			MSVarMap_Obj state0_var = it.getVarMap_obj(MSVar_tp::STATE, it.pArcIn->getSegRefByIx_const(s).getOrigin());
-			MSVarMap_Obj statef_var = it.getVarMap_obj(MSVar_tp::STATE, it.pArcIn->getSegRefByIx_const(s).getTerminus());
+			MSVarMap_Obj state0_var = it.getVarMap_obj(MSVar_tp::STATE, it.pArcIn->getSegRefByIx(s).getOrigin());
+			MSVarMap_Obj statef_var = it.getVarMap_obj(MSVar_tp::STATE, it.pArcIn->getSegRefByIx(s).getTerminus());
 
 			for(unsigned int i = 0; i < 6; i++){
 				if(statef_var.row0 != -1)
@@ -1524,11 +1524,11 @@ void DynamicsModel::multShoot_targetDeltaV(MultShootData& it, const Constraint& 
 				MSVarMap_Obj tof_var;
 				switch(it.tofTp){
 					case MSTOF_tp::VAR_FIXSIGN:
-						tof_var = it.getVarMap_obj(MSVar_tp::TOF, it.pArcIn->getSegRefByIx_const(s).getID());
+						tof_var = it.getVarMap_obj(MSVar_tp::TOF, it.pArcIn->getSegRefByIx(s).getID());
 						timeCoeff = astrohelion::sign(it.pArcIn->getTOFByIx(s))*2*it.X[tof_var.row0];
 						break;
 					case MSTOF_tp::VAR_FREE:
-						tof_var = it.getVarMap_obj(MSVar_tp::TOF, it.pArcIn->getSegRefByIx_const(s).getID());
+						tof_var = it.getVarMap_obj(MSVar_tp::TOF, it.pArcIn->getSegRefByIx(s).getID());
 						break;
 					case MSTOF_tp::VAR_EQUALARC:
 						tof_var = it.getVarMap_obj(MSVar_tp::TOF_TOTAL, Linkable::INVALID_ID);
@@ -1615,7 +1615,7 @@ void DynamicsModel::multShoot_targetTOF(MultShootData& it, const Constraint& con
 		{
 			// Sum all TOF for total, set partials w.r.t. integration times equal to one
 			for(unsigned int s = 0; s < it.pArcIn->getNumSegs(); s++){
-				MSVarMap_Obj tof_var = it.getVarMap_obj(MSVar_tp::TOF, it.pArcIn->getSegRefByIx_const(s).getID());
+				MSVarMap_Obj tof_var = it.getVarMap_obj(MSVar_tp::TOF, it.pArcIn->getSegRefByIx(s).getID());
 				it.FX[row0] += it.X[tof_var.row0];
 				it.DF_elements.push_back(Tripletd(row0, tof_var.row0, astrohelion::sign(it.X[tof_var.row0])));
 			}
@@ -1628,7 +1628,7 @@ void DynamicsModel::multShoot_targetTOF(MultShootData& it, const Constraint& con
 		{
 			// Sum all TOF for total, set partials w.r.t. integration times equal to one
 			for(unsigned int s = 0; s < it.pArcIn->getNumSegs(); s++){
-				MSVarMap_Obj tof_var = it.getVarMap_obj(MSVar_tp::TOF, it.pArcIn->getSegRefByIx_const(s).getID());
+				MSVarMap_Obj tof_var = it.getVarMap_obj(MSVar_tp::TOF, it.pArcIn->getSegRefByIx(s).getID());
 				it.FX[row0] += astrohelion::sign(it.pArcIn->getTOFByIx(s)) * it.X[tof_var.row0] * it.X[tof_var.row0];
 				it.DF_elements.push_back(Tripletd(row0, tof_var.row0, 2*it.X[tof_var.row0] * astrohelion::sign(it.pArcIn->getTOFByIx(s))));
 			}
@@ -1710,7 +1710,7 @@ void DynamicsModel::multShoot_targetApse_endSeg(MultShootData& it, const Constra
 	int segIx = it.pArcIn->getSegIx(con.getID());
 
 	// Get object representing origin of segment
-	MSVarMap_Obj prevNode_var = it.getVarMap_obj(MSVar_tp::STATE, it.pArcIn->getSegRef_const(con.getID()).getOrigin());
+	MSVarMap_Obj prevNode_var = it.getVarMap_obj(MSVar_tp::STATE, it.pArcIn->getSegRef(con.getID()).getOrigin());
 
 	MSVarMap_Obj tof_var;
 	double timeCoeff = 1;
@@ -1873,9 +1873,9 @@ void DynamicsModel::multShoot_createOutput(const MultShootData& it) const{
         newSeg.setVelCon(seg.getVelCon());
         newSeg.setSTM(it.propSegs[s].getSTMByIx(-1));
         newSeg.setCtrlLaw(seg.getCtrlLaw());
-        newSeg.setStateVector(it.propSegs[s].getSegRef_const(0).getStateVector());
-        newSeg.setStateWidth(it.propSegs[s].getSegRef_const(0).getStateWidth());
-        newSeg.setTimeVector(it.propSegs[s].getSegRef_const(0).getTimeVector());
+        newSeg.setStateVector(it.propSegs[s].getSegRef(0).getStateVector());
+        newSeg.setStateWidth(it.propSegs[s].getSegRef(0).getStateWidth());
+        newSeg.setTimeVector(it.propSegs[s].getSegRef(0).getTimeVector());
         it.pArcOut->addSeg(newSeg);
     }
 
@@ -1898,9 +1898,9 @@ void DynamicsModel::multShoot_createOutput(const MultShootData& it) const{
         }
         if(order[i].type == ArcPiece::Piece_tp::SEG){
         	// Retrieve the first time in a chronological sense
-        	double firstTime = it.pArcOut->getSegRef_const(order[i].id).getTOF() > 0 ? 
-        		it.pArcOut->getSegRef_const(order[i].id).getTimeByIx(0) :
-        		it.pArcOut->getSegRef_const(order[i].id).getTimeByIx(-1);
+        	double firstTime = it.pArcOut->getSegRef(order[i].id).getTOF() > 0 ? 
+        		it.pArcOut->getSegRef(order[i].id).getTimeByIx(0) :
+        		it.pArcOut->getSegRef(order[i].id).getTimeByIx(-1);
 
         	// If arcset begins with a segment, epoch will be NAN at first
         	if(std::isnan(epoch))

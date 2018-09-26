@@ -87,7 +87,7 @@ public:
 	std::map<std::string, std::vector<double> > getExtraParamVec() const;
 	unsigned int getNumCons() const;
 	std::vector<double> getState() const;
-	const std::vector<double>& getStateRef_const() const;
+	const std::vector<double>& getStateRef() const;
 	Event_tp getTriggerEvent() const;
 	
 	void setConstraints(std::vector<Constraint>);

@@ -329,7 +329,7 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int localNodeID,
 	const Node &localNode = nodes[nodeIDMap[localNodeID]];
 
 	// Will do its own index checks
-	const Node &appendNode = pAppendArc->getNodeRef_const(appendNodeID);
+	const Node &appendNode = pAppendArc->getNodeRef(appendNodeID);
 
 	// Both nodes must have one "open port"
 	if(!localNode.isLinkedTo(Linkable::INVALID_ID) || 
@@ -400,7 +400,7 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int localNodeID,
 
 			// The node to be appended is now otherNode
 			appendNodeID = otherNodeID;
-			const Node &otherNode = pAppendArc->getNodeRef_const(otherNodeID);
+			const Node &otherNode = pAppendArc->getNodeRef(otherNodeID);
 
 			// The seg to be appended is now the segment attached to otherNode
 			int otherSegID = otherNode.getLink(0) == Linkable::INVALID_ID ?\
@@ -521,7 +521,7 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int localNodeID,
 		try{
 			// Try assigning the control vector to the values employed at the
 			// linkOrigin node
-			ctrl0 = getNodeRef_const(linkOrigin).getExtraParamVec(PARAMKEY_CTRL);
+			ctrl0 = getNodeRef(linkOrigin).getExtraParamVec(PARAMKEY_CTRL);
 		}catch(const Exception &e){}
 
 		if(ctrl0.size() != ctrlSize){
@@ -1201,13 +1201,13 @@ ControlLaw* BaseArcset::getCtrlLawByIx(int ix){
  *  @return constant control law pointer for the specified segment
  *  @throws Exception if ix is out of bounds.
  */
-const ControlLaw* BaseArcset::getCtrlLawByIx_const(int ix) const{
+const ControlLaw* BaseArcset::getCtrlLawByIx(int ix) const{
 	if(ix < 0)
 		ix += segs.size();
 
 	if(ix < 0 || ix >= static_cast<int>(segs.size())){
 		char msg[128];
-		sprintf(msg, "BaseArcset::getCtrlLawIDByIx_const: Index %d out of range", ix);
+		sprintf(msg, "BaseArcset::getCtrlLawIDByIx (const): Index %d out of range", ix);
 		throw Exception(msg);
 	}
 
@@ -1428,13 +1428,13 @@ Node& BaseArcset::getNodeRef(int id){
  *  @return a reference to a node at the specified index
  *  @throws Exception if `ix` is out of bounds
  */
-const Node& BaseArcset::getNodeRefByIx_const(int ix) const{
+const Node& BaseArcset::getNodeRefByIx(int ix) const{
 	while(ix < 0)
 		ix += nodes.size();
 
 	if(ix < 0 || ix >= static_cast<int>(nodes.size())){
 		char msg[128];
-		sprintf(msg, "BaseArcset::getNodeRefByIx_const: Index %d out of bounds", ix);
+		sprintf(msg, "BaseArcset::getNodeRefByIx (const): Index %d out of bounds", ix);
 		throw Exception(msg);
 	}
 
@@ -1449,7 +1449,7 @@ const Node& BaseArcset::getNodeRefByIx_const(int ix) const{
  *  @return the node located with the specified ID
  *  @throws Exception if `id` is out of bounds or if no node exists with the specified ID
  */
-const Node& BaseArcset::getNodeRef_const(int id) const{
+const Node& BaseArcset::getNodeRef(int id) const{
 	if(nodeIDMap.count(id) == 0)
 		throw Exception("BaseArcset::getNodeRef: Invalid ID (out of bounds)");
 
@@ -1458,7 +1458,7 @@ const Node& BaseArcset::getNodeRef_const(int id) const{
 		return nodes[ix];
 	}else{
 		char msg[128];
-		sprintf(msg, "BaseArcset::getNodeRef_const: ID %d not found", id);
+		sprintf(msg, "BaseArcset::getNodeRef (const): ID %d not found", id);
 		throw Exception(msg);
 	}
 }//====================================================
@@ -1598,7 +1598,7 @@ Segment& BaseArcset::getSegRefByIx(int ix){
  *  @return the segment located with the specified ID
  *  @throws Exception if `id` is out of bounds or if no segment exists with the specified ID
  */
-const Segment& BaseArcset::getSegRef_const(int id) const{
+const Segment& BaseArcset::getSegRef(int id) const{
 	if(segIDMap.count(id) == 0)
 		throw Exception("BaseArcset::getSegRef: Invalid ID (out of bounds)");
 
@@ -1607,7 +1607,7 @@ const Segment& BaseArcset::getSegRef_const(int id) const{
 		return segs[ix];
 	}else{
 		char msg[128];
-		sprintf(msg, "BaseArcset::getSegRef_const: ID %d not found", id);
+		sprintf(msg, "BaseArcset::getSegRef (const): ID %d not found", id);
 		throw Exception(msg);
 	}
 }//====================================================
@@ -1620,13 +1620,13 @@ const Segment& BaseArcset::getSegRef_const(int id) const{
  *  @return a reference to a segment at the specified index
  *  @throws Exception if `ix` is out of bounds
  */
-const Segment& BaseArcset::getSegRefByIx_const(int ix) const{
+const Segment& BaseArcset::getSegRefByIx(int ix) const{
 	while(ix < 0)
 		ix += segs.size();
 
 	if(ix < 0 || ix >= static_cast<int>(segs.size())){
 		char msg[128];
-		sprintf(msg, "BaseArcset::getSegRefByIx_const: Index %d out of bounds", ix);
+		sprintf(msg, "BaseArcset::getSegRefByIx (const): Index %d out of bounds", ix);
 		throw Exception(msg);
 	}
 

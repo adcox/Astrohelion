@@ -788,7 +788,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_ForForBegin){
 	BOOST_CHECK_CLOSE(forSet1.getNode(0).getEpoch(), 0, 1e-4);
 	
 	for(unsigned int s = 0; s < forSet1.getNumSegs(); s++){
-		const Segment& seg = forSet1.getSegRefByIx_const(s);
+		const Segment& seg = forSet1.getSegRefByIx(s);
 
 		double termEpoch = forSet1.getNode(seg.getTerminus()).getEpoch();
 		double origEpoch = forSet1.getNode(seg.getOrigin()).getEpoch();
@@ -829,7 +829,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_ForForEnd){
 	BOOST_CHECK_CLOSE(forSet1.getNode(3).getEpoch(), 4.6, 1e-4);
 
 	for(unsigned int s = 0; s < forSet1.getNumSegs(); s++){
-		const Segment& seg = forSet1.getSegRefByIx_const(s);
+		const Segment& seg = forSet1.getSegRefByIx(s);
 
 		double termEpoch = forSet1.getNode(seg.getTerminus()).getEpoch();
 		double origEpoch = forSet1.getNode(seg.getOrigin()).getEpoch();
@@ -867,7 +867,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_ForForBegin_ZeroTOF){
 	BOOST_CHECK_CLOSE(forSet1.getNode(0).getEpoch(), 0, 1e-4);
 
 	for(unsigned int s = 0; s < forSet1.getNumSegs(); s++){
-		const Segment& seg = forSet1.getSegRefByIx_const(s);
+		const Segment& seg = forSet1.getSegRefByIx(s);
 
 		double termEpoch = forSet1.getNode(seg.getTerminus()).getEpoch();
 		double origEpoch = forSet1.getNode(seg.getOrigin()).getEpoch();
@@ -906,7 +906,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_ForForEnd_ZeroTOF){
 	BOOST_CHECK_CLOSE(forSet1.getNode(3).getEpoch(), 3.3, 1e-4);
 
 	for(unsigned int s = 0; s < forSet1.getNumSegs(); s++){
-		const Segment& seg = forSet1.getSegRefByIx_const(s);
+		const Segment& seg = forSet1.getSegRefByIx(s);
 
 		double termEpoch = forSet1.getNode(seg.getTerminus()).getEpoch();
 		double origEpoch = forSet1.getNode(seg.getOrigin()).getEpoch();
@@ -947,7 +947,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegBegin){
 	BOOST_CHECK_CLOSE(revSet1.getNode(3).getEpoch(), -4.6, 1e-4);
 
 	for(unsigned int s = 0; s < revSet1.getNumSegs(); s++){
-		const Segment& seg = revSet1.getSegRefByIx_const(s);
+		const Segment& seg = revSet1.getSegRefByIx(s);
 
 		double termEpoch = revSet1.getNode(seg.getTerminus()).getEpoch();
 		double origEpoch = revSet1.getNode(seg.getOrigin()).getEpoch();
@@ -988,7 +988,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegEnd){
 	BOOST_CHECK_CLOSE(revSet1.getNode(5).getEpoch(), 1.3, 1e-4);
 
 	for(unsigned int s = 0; s < revSet1.getNumSegs(); s++){
-		const Segment& seg = revSet1.getSegRefByIx_const(s);
+		const Segment& seg = revSet1.getSegRefByIx(s);
 
 		double termEpoch = revSet1.getNode(seg.getTerminus()).getEpoch();
 		double origEpoch = revSet1.getNode(seg.getOrigin()).getEpoch();
@@ -1027,7 +1027,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegBegin_ZeroTOF){
 	BOOST_CHECK_CLOSE(revSet1.getNode(3).getEpoch(), -3.3, 1e-4);
 
 	for(unsigned int s = 0; s < revSet1.getNumSegs(); s++){
-		const Segment& seg = revSet1.getSegRefByIx_const(s);
+		const Segment& seg = revSet1.getSegRefByIx(s);
 
 		double termEpoch = revSet1.getNode(seg.getTerminus()).getEpoch();
 		double origEpoch = revSet1.getNode(seg.getOrigin()).getEpoch();
@@ -1066,7 +1066,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegEnd_ZeroTOF){
 	BOOST_CHECK_CLOSE(revSet1.getNode(4).getEpoch(), 2.2, 1e-4);
 
 	for(unsigned int s = 0; s < revSet1.getNumSegs(); s++){
-		const Segment& seg = revSet1.getSegRefByIx_const(s);
+		const Segment& seg = revSet1.getSegRefByIx(s);
 
 		double termEpoch = revSet1.getNode(seg.getTerminus()).getEpoch();
 		double origEpoch = revSet1.getNode(seg.getOrigin()).getEpoch();
@@ -1109,7 +1109,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_PosTOF){
 	BOOST_CHECK_CLOSE(forSet1.getNode(3).getEpoch(), -1.3, 1e-4);
 
 	for(unsigned int s = 0; s < forSet1.getNumSegs(); s++){
-		const Segment& seg = forSet1.getSegRefByIx_const(s);
+		const Segment& seg = forSet1.getSegRefByIx(s);
 
 		double termEpoch = forSet1.getNode(seg.getTerminus()).getEpoch();
 		double origEpoch = forSet1.getNode(seg.getOrigin()).getEpoch();
@@ -1151,7 +1151,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_NegTOF){
 	BOOST_CHECK_EQUAL(forSet1.getSeg(segID).getTOF(), -1.3);
 
 	for(unsigned int s = 0; s < forSet1.getNumSegs(); s++){
-		const Segment& seg = forSet1.getSegRefByIx_const(s);
+		const Segment& seg = forSet1.getSegRefByIx(s);
 
 		double termEpoch = forSet1.getNode(seg.getTerminus()).getEpoch();
 		double origEpoch = forSet1.getNode(seg.getOrigin()).getEpoch();
@@ -1190,7 +1190,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_ZeroTOF){
 	BOOST_CHECK_EQUAL(forSet1.getSeg(segID).getTOF(), revSet1.getSegByIx(0).getTOF());
 
 	for(unsigned int s = 0; s < forSet1.getNumSegs(); s++){
-		const Segment& seg = forSet1.getSegRefByIx_const(s);
+		const Segment& seg = forSet1.getSegRefByIx(s);
 
 		double termEpoch = forSet1.getNode(seg.getTerminus()).getEpoch();
 		double origEpoch = forSet1.getNode(seg.getOrigin()).getEpoch();
@@ -1242,7 +1242,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_ZeroTOF_Short){
 	BOOST_CHECK(forSet1.getSeg(segID).getTOF() == revSet1.getSegByIx(0).getTOF());
 
 	for(unsigned int s = 0; s < forSet1.getNumSegs(); s++){
-		const Segment& seg = forSet1.getSegRefByIx_const(s);
+		const Segment& seg = forSet1.getSegRefByIx(s);
 
 		double termEpoch = forSet1.getNode(seg.getTerminus()).getEpoch();
 		double origEpoch = forSet1.getNode(seg.getOrigin()).getEpoch();

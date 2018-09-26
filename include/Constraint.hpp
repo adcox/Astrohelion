@@ -352,7 +352,7 @@ class Constraint : public Core{
 		static const char* getAppTypeStr(ConstraintApp_tp);
 		static const char* getConTypeStr(Constraint_tp);
 		std::vector<double> getData() const;
-		const std::vector<double>& getDataRef_const() const;
+		const std::vector<double>& getDataRef() const;
 		bool dataStoresID() const;
 		int getID() const;
 		double getFirstDataValue() const;

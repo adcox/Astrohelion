@@ -127,7 +127,7 @@ double Arcset_cr3bp::getJacobi(int id){
  *  @return the Jacobi constant value
  *  @throw Exception if `id` is out of bounds
  */
-double Arcset_cr3bp::getJacobi_const(int id) const{
+double Arcset_cr3bp::getJacobi(int id) const{
 	if(nodeIDMap.count(id) == 0)
 		throw Exception("Arcset_cr3bp::getJacobi: Node ID out of range");
 
@@ -182,7 +182,7 @@ double Arcset_cr3bp::getJacobiByIx(int ix){
  *	@return Jacobi at the specified step
  *	@throws Exception if `ix` is out of bounds
  */
-double Arcset_cr3bp::getJacobiByIx_const(int ix) const{
+double Arcset_cr3bp::getJacobiByIx(int ix) const{
 	if(ix < 0)
 		ix += nodes.size();
 

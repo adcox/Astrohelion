@@ -286,7 +286,7 @@ void DynamicsModel_cr3bp::multShoot_targetAngle_endSeg(MultShootData &it, const 
     int segIx = it.pArcIn->getSegIx(con.getID());
 
     // Get object representing origin of segment
-    MSVarMap_Obj prevNode_var = it.getVarMap_obj(MSVar_tp::STATE, it.pArcIn->getSegRef_const(con.getID()).getOrigin());
+    MSVarMap_Obj prevNode_var = it.getVarMap_obj(MSVar_tp::STATE, it.pArcIn->getSegRef(con.getID()).getOrigin());
 
     MSVarMap_Obj tof_var;
     double timeCoeff = 1;
@@ -411,7 +411,7 @@ void DynamicsModel_cr3bp::multShoot_targetJC_endSeg(MultShootData& it, const Con
     int segIx = it.pArcIn->getSegIx(con.getID());
 
     // Get object representing origin of segment
-    MSVarMap_Obj prevNode_var = it.getVarMap_obj(MSVar_tp::STATE, it.pArcIn->getSegRef_const(con.getID()).getOrigin());
+    MSVarMap_Obj prevNode_var = it.getVarMap_obj(MSVar_tp::STATE, it.pArcIn->getSegRef(con.getID()).getOrigin());
 
     MSVarMap_Obj tof_var;
     double timeCoeff = 1;

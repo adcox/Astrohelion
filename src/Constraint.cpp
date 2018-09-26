@@ -188,7 +188,7 @@ std::vector<double> Constraint::getData() const { return data; }
  * @details This method avoids a potentially expensive copy operation
  * @return a reference to the data vector
  */
-const std::vector<double>& Constraint::getDataRef_const() const{ return data; }
+const std::vector<double>& Constraint::getDataRef() const{ return data; }
 
 /**
  *  @brief Retrieve the first data value that is not an NAN

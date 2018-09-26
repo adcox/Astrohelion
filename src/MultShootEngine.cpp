@@ -339,14 +339,14 @@ void MultShootEngine::multShoot(const Arcset *pArcIn, Arcset *pArcOut,
 	// Add all node constraints
 	for(unsigned int n = 0; n < pArcIn->getNumNodes(); n++){
 		std::vector<Constraint> nodeCons = 
-			pArcIn->getNodeRefByIx_const(n).getConstraints();
+			pArcIn->getNodeRefByIx(n).getConstraints();
 		pData->allCons.insert(pData->allCons.end(), nodeCons.begin(), nodeCons.end());
 	}
 
 	// Add all segment constraints
 	for(unsigned int s = 0; s < pArcIn->getNumSegs(); s++){
 		std::vector<Constraint> segCons = 
-			pArcIn->getSegRefByIx_const(s).getConstraints();
+			pArcIn->getSegRefByIx(s).getConstraints();
 		pData->allCons.insert(pData->allCons.end(), segCons.begin(), segCons.end());
 	}
 
@@ -716,14 +716,14 @@ void MultShootEngine::propSegsFromFreeVars(MultShootData& it, SimEngine &sim,
 		double t0 = 0, tof = 0;
 		std::vector<double> ic(coreStateSize, 0);
 
-		ControlLaw *pLaw = it.pArcIn->getSegRefByIx_const(s).getCtrlLaw();
+		ControlLaw *pLaw = it.pArcIn->getSegRefByIx(s).getCtrlLaw();
 		std::vector<double> ctrl0;
 		if(pLaw){
 			ctrl0.assign(pLaw->getNumStates(), 0);
 		}
 
 		it.pArcIn->getSysData()->getDynamicsModel()->multShoot_getSimICs(it, 
-			it.pArcIn->getSegRefByIx_const(s).getID(),
+			it.pArcIn->getSegRefByIx(s).getID(),
 			&(ic.front()), &(ctrl0.front()), &t0, &tof);
 
 		sim.setRevTime(tof < 0);
@@ -754,7 +754,7 @@ void MultShootEngine::propSegsFromFreeVars(MultShootData& it, SimEngine &sim,
 		// }
 
 		std::vector<double> lastState = it.propSegs[s].getStateByIx(-1);
-		int termID = it.pArcIn->getSegRefByIx_const(s).getTerminus();
+		int termID = it.pArcIn->getSegRefByIx(s).getTerminus();
 		if(termID != Linkable::INVALID_ID){
 
 			// Get the state of the terminal node
@@ -770,7 +770,7 @@ void MultShootEngine::propSegsFromFreeVars(MultShootData& it, SimEngine &sim,
 			// velCon has false for a velocity state if there is a 
 			// discontinuity between the terminus of the segment and the 
 			// terminal node
-			std::vector<bool> velCon = it.pArcIn->getSegRefByIx_const(s).getVelCon();
+			std::vector<bool> velCon = it.pArcIn->getSegRefByIx(s).getVelCon();
 			for(int i = 3; i < 6; i++){
 				// Compute difference in velocity; if velCon[i-3] is true, 
 				// then velocity should be continuous and any difference is 

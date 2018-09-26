@@ -285,7 +285,7 @@ std::vector<double> Node::getState() const { return state; }
  *  @details This accessor is useful when computation time is important
  *  @return a constant reference to the state vector
  */
-const std::vector<double>& Node::getStateRef_const() const{ return state; }
+const std::vector<double>& Node::getStateRef() const{ return state; }
 
 /**
  *  @brief Set the epoch associated with this node

@@ -67,9 +67,9 @@ public:
 	 *  \{
 	 */
 	double getJacobi(int);
-	double getJacobi_const(int) const;
+	double getJacobi(int) const;
 	double getJacobiByIx(int);
-	double getJacobiByIx_const(int) const;
+	double getJacobiByIx(int) const;
 
 	void setJacobi(int, double);
 	void setJacobiByIx(int, double);

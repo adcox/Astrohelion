@@ -159,7 +159,7 @@ std::vector<double> ControlLaw::getParams() const { return params; }
  *  performance-sensitive operations
  *  @return a constant reference to the parameter vector
  */
-const std::vector<double>& ControlLaw::getParamsRef_const() const {
+const std::vector<double>& ControlLaw::getParamsRef() const {
 	return params;
 }
 

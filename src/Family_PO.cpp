@@ -658,7 +658,7 @@ void Family_PO::replaceMirrorCond(Arcset_periodic *pArc) const{
 	// the constraints that fix y and vx to zero
 	for(unsigned int c = 0; c < allCons.size(); c++){
 		if(allCons[c].getType() == Constraint_tp::STATE){
-			const std::vector<double>& data = allCons[c].getDataRef_const();
+			const std::vector<double>& data = allCons[c].getDataRef();
 			if(data.size() < 4)
 				continue;
 

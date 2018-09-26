@@ -81,7 +81,7 @@ std::vector<Arcset_periodic> Family_PO_cr3bp_lt::getMemberBy2DThrustAngle(
 	unsigned int ctrl_dim = 0, ctrl_tp = ControlLaw::NO_CTRL;
 	for(unsigned int n = 0; n < members.size(); n++){
 		ControlLaw_cr3bp_lt *pLaw = static_cast<ControlLaw_cr3bp_lt *>(
-			members[n].getSegRefByIx_const(0).getCtrlLaw());
+			members[n].getSegRefByIx(0).getCtrlLaw());
 
 		if(pLaw){
 			if(n == 0){
@@ -99,8 +99,8 @@ std::vector<Arcset_periodic> Family_PO_cr3bp_lt::getMemberBy2DThrustAngle(
 			const SysData_cr3bp_lt *pSys = 
 				static_cast<const SysData_cr3bp_lt *>(pSysData);
 			std::vector<double> q = 
-				members[n].getSegRefByIx_const(0).getStateByRow(0);
-			double t = members[n].getSegRefByIx_const(0).getTimeByIx(0);
+				members[n].getSegRefByIx(0).getStateByRow(0);
+			double t = members[n].getSegRefByIx(0).getTimeByIx(0);
 			double a[3] = {0};
 			pLaw->getOutput(t, &(q[0]), pSys, a, 3);
 

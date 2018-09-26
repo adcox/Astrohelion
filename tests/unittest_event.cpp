@@ -75,7 +75,7 @@ BOOST_DATA_TEST_CASE(CR3BP_APSE, data::make(PIx), p){
 	sys.getDynamicsModel()->getPrimPos(0, &sys, apseData[0], primPos);
 
 	for(unsigned int n = 0; n < traj.getNumNodes(); n++){
-		if(traj.getNodeRefByIx_const(n).getTriggerEvent() == evt.getType()){
+		if(traj.getNodeRefByIx(n).getTriggerEvent() == evt.getType()){
 			std::vector<double> q = traj.getStateByIx(n);
 			double relPos[3] = {q[0] - primPos[0], q[1] - primPos[1], q[2] - primPos[2]};
 			double relVel[3] = {q[3], q[4], q[5]};
@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_ANGLE){
 	sys.getDynamicsModel()->getPrimPos(0, &sys, 0, primPos);
 
 	for(unsigned int n = 0; n < traj.getNumNodes(); n++){
-		if(traj.getNodeRefByIx_const(n).getTriggerEvent() == evt.getType()){
+		if(traj.getNodeRefByIx(n).getTriggerEvent() == evt.getType()){
 			std::vector<double> q = traj.getStateByIx(n);
 			double diff = atan( (q[1] - primPos[1])/(q[0] - primPos[0]) ) - data[0];
 			// double dist = -sin(data[0])*(q[0] - primPos[0]) + cos(data[0])*(q[1] - primPos[1]);

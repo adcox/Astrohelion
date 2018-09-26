@@ -125,7 +125,7 @@ public:
 	std::vector<ArcPiece> getChronoOrder() const;
 	std::vector<double> getCoord(unsigned int) const;
 	ControlLaw* getCtrlLawByIx(int);
-	const ControlLaw* getCtrlLawByIx_const(int) const;
+	const ControlLaw* getCtrlLawByIx(int) const;
 	double getEpoch(int) const;
 	double getEpochByIx(int) const;
 	std::vector<double> getEpochs() const;
@@ -136,9 +136,9 @@ public:
 	Node getNode(int) const;
 	Node getNodeByIx(int) const;
 	Node& getNodeRef(int);
+	const Node& getNodeRef(int) const;
 	Node& getNodeRefByIx(int);
-	const Node& getNodeRef_const(int) const;
-	const Node& getNodeRefByIx_const(int) const;
+	const Node& getNodeRefByIx(int) const;
 	int getNodeIx(int) const;
 	unsigned int getNumCons() const;
 	unsigned int getNumNodes() const;
@@ -146,9 +146,9 @@ public:
 	Segment getSeg(int) const;
 	Segment getSegByIx(int) const;
 	Segment& getSegRef(int);
+	const Segment& getSegRef(int) const;
 	Segment& getSegRefByIx(int);
-	const Segment& getSegRef_const(int) const;
-	const Segment& getSegRefByIx_const(int) const;
+	const Segment& getSegRefByIx(int) const;
 	int getSegIx(int) const;
 	std::vector<double> getState(int) const;
 	std::vector<double> getStateByIx(int) const;

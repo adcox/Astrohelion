@@ -14,7 +14,7 @@ INSTALL_DIR="/usr/local"
 CONFIG_DIR="$HOME/.config/astrohelion"
 
 # SPICE data lives in this directory
-SPICE_DIR="$HOME/.config/astrohelion/spice"
+SPICE_DIR="$HOME/.config/astrohelion/data/data_SPICE"
 SPK="de430.bsp"		# Planetary body ephemeris SPICE kernel
 TLS="naif0012.tls"	# Time (leap second) SPICE kernel
 

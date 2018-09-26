@@ -68,6 +68,6 @@ The following steps describe a general installation process.
 ## Documentation
 
 Astrohelion documentation is available at 
-[http://adcox.gitlab.io/Astrohelion/](http://adcox.gitlab.io/Astrohelion/). To 
-build the latest documentation (which is stored in `docs/html`), run the command 
+[http://adcox.github.io/astrohelion/](http://adcox.github.io/astrohelion/). To 
+build the latest documentation (which is stored in `docs/api/html`), run the command 
 `make docs`. Document generation requires the `doxygen` package.

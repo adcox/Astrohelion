@@ -64,6 +64,8 @@ const double G_GRAV_0 = 9.80665/1000;
 /** Pi */
 const double PI = 3.14159265358979323846264338327950;
 
+static const unsigned int BUFFER_SIZE = 256;
+
 // Matlab File Name Variables, Administrative
 static const char VARNAME_TIMESTAMP[] = "timestamp";		//!< Matlab file variable name for a timestamp that indicates the veresion
 

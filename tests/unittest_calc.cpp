@@ -102,8 +102,8 @@ BOOST_AUTO_TEST_CASE(Date2EphemerisTime){
 // 	cout << "Least Squares Test: " << (check1 && check2 ? PASS : FAIL) << endl;
 
 // 	if(!(check1 && check2)){
-// 		printf("  Element 0 should be NAN, is actually %f\n", nextData[0]);
-// 		printf("  Element 4 should be -0.20112499789815, is actually %.14f\n", nextData[4]);
+// 		astrohelion::printf("  Element 0 should be NAN, is actually %f\n", nextData[0]);
+// 		astrohelion::printf("  Element 4 should be -0.20112499789815, is actually %.14f\n", nextData[4]);
 // 	}
 // }//=========================================
 
@@ -152,11 +152,11 @@ BOOST_AUTO_TEST_CASE(SP_pos){
 
 // 		// cout << "Epoch " << i << ": Position: " << (samePos ? PASS : FAIL) << " Velocity: " << (sameVel ? PASS : FAIL) << endl;
 // 		// if(!samePos){
-// 		// 	printf("P1 Pos1 = [%.4f, %.4f, %.4f], P1 Pos 2 (shifted epoch) = [%.4f, %.4f, %.4f]\n", primPos1[0],
+// 		// 	astrohelion::printf("P1 Pos1 = [%.4f, %.4f, %.4f], P1 Pos 2 (shifted epoch) = [%.4f, %.4f, %.4f]\n", primPos1[0],
 // 		// 		primPos1[1], primPos1[2], primPos2[0], primPos2[1], primPos2[2]);
-// 		// 	printf("P2 Pos1 = [%.4f, %.4f, %.4f], P2 Pos 2 (shifted epoch) = [%.4f, %.4f, %.4f]\n", primPos1[3],
+// 		// 	astrohelion::printf("P2 Pos1 = [%.4f, %.4f, %.4f], P2 Pos 2 (shifted epoch) = [%.4f, %.4f, %.4f]\n", primPos1[3],
 // 		// 		primPos1[4], primPos1[5], primPos2[3], primPos2[4], primPos2[5]);
-// 		// 	printf("P3 Pos1 = [%.4f, %.4f, %.4f], P3 Pos 2 (shifted epoch) = [%.4f, %.4f, %.4f]\n", primPos1[6],
+// 		// 	astrohelion::printf("P3 Pos1 = [%.4f, %.4f, %.4f], P3 Pos 2 (shifted epoch) = [%.4f, %.4f, %.4f]\n", primPos1[6],
 // 		// 		primPos1[7], primPos1[8], primPos2[6], primPos2[7], primPos2[8]);
 // 		// }
 // 	}

@@ -10,12 +10,13 @@
  *  * Develop 1B, 1H, and 2H test cases for Lambert Solver
  */
 
+#include "Arcset_2bp.hpp"
 #include "AsciiOutput.hpp"
 #include "LambertArcEngine.hpp"
 #include "Node.hpp"
 #include "SimEngine.hpp"
 #include "SysData_2bp.hpp"
-#include "Arcset_2bp.hpp"
+#include "Utilities.hpp"
 
 #include <cmath>
 #include <iostream>
@@ -58,7 +59,7 @@ BOOST_AUTO_TEST_CASE(TYPE_1A){
 							finalState[3] - node2.getState()[3],
 							finalState[4] - node2.getState()[4],
 							finalState[5] - node2.getState()[5]};
-	// printf("State Diff = [%.2e, %.2e, %.2e, %.2e, %.2e, %.2e]\n", stateDiff[0], stateDiff[1], stateDiff[2],
+	// astrohelion::printf("State Diff = [%.2e, %.2e, %.2e, %.2e, %.2e, %.2e]\n", stateDiff[0], stateDiff[1], stateDiff[2],
 	// 	stateDiff[3], stateDiff[4], stateDiff[5]);
 
 	BOOST_CHECK(std::abs(stateDiff[0]) < 1e-3);
@@ -105,7 +106,7 @@ BOOST_AUTO_TEST_CASE(TYPE_2A){
 							finalState[3] - node2.getState()[3],
 							finalState[4] - node2.getState()[4],
 							finalState[5] - node2.getState()[5]};
-	printf("State Diff = [%.2e, %.2e, %.2e, %.2e, %.2e, %.2e]\n", stateDiff[0], stateDiff[1], stateDiff[2],
+	astrohelion::printf("State Diff = [%.2e, %.2e, %.2e, %.2e, %.2e, %.2e]\n", stateDiff[0], stateDiff[1], stateDiff[2],
 		stateDiff[3], stateDiff[4], stateDiff[5]);
 
 	BOOST_CHECK(std::abs(stateDiff[0]) < 1e-3);

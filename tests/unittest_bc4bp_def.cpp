@@ -116,10 +116,10 @@ BOOST_AUTO_TEST_CASE(PrimaryPositions){
 	// double epoch = SysData_bc4bp::REF_EPOCH + 4*24*3600;
 	DynamicsModel_bc4bp::orientAtEpoch(epoch, &bcSys);
 	// double epoch = bcSys.getEpoch0();
-	printf("Epoch0 = %.4f sec ET\n", epoch);
-	printf("Theta0 = %.4f deg\n", bcSys.getTheta0()*180/PI);
-	printf("Phi0 = %.4f deg\n", bcSys.getPhi0()*180/PI);
-	printf("Gamma = %.4f deg\n", bcSys.getGamma()*180/PI);
+	astrohelion::printf("Epoch0 = %.4f sec ET\n", epoch);
+	astrohelion::printf("Theta0 = %.4f deg\n", bcSys.getTheta0()*180/PI);
+	astrohelion::printf("Phi0 = %.4f deg\n", bcSys.getPhi0()*180/PI);
+	astrohelion::printf("Gamma = %.4f deg\n", bcSys.getGamma()*180/PI);
 
 	std::vector<double> moonPos_myConversion;
 	std::vector<double> moonPos_spice;

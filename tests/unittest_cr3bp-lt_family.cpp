@@ -10,6 +10,15 @@
 
 using namespace astrohelion;
 
+void freeLaws(std::vector<ControlLaw*>&);
+
+void freeLaws(std::vector<ControlLaw*>& laws){
+	for(auto p : laws){
+		delete p;
+		p = nullptr;
+	}
+}//====================================================
+
 /*	
  *	Find orbits with the specified alpha angle
  */
@@ -29,6 +38,8 @@ BOOST_AUTO_TEST_CASE(FIND_2D_ANGLE){
 
 		BOOST_CHECK_SMALL(ctrl0[0] - alpha, 1e-9);
 	}
+
+	freeLaws(laws);
 }//====================================================
 
 /*
@@ -48,4 +59,6 @@ BOOST_AUTO_TEST_CASE(FIND_HLT){
 		Arcset_cr3bp_lt temp(matches[i]);
 		BOOST_CHECK_SMALL(temp.getHltByIx(0) - H, 1e-9);
 	}
+
+	freeLaws(laws);
 }//====================================================

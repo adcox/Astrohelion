@@ -156,6 +156,7 @@ public:
 	std::vector<double> getStateDerivByIx(int);
 	MatrixXRd getSTM(int) const;
 	MatrixXRd getSTMByIx(int) const;
+	std::vector<double> getSTMElementsByIx(int) const;
 	const SysData* getSysData() const;
 	double getTOF(int) const;
 	double getTOFByIx(int) const;

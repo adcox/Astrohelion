@@ -71,14 +71,14 @@ BOOST_AUTO_TEST_CASE(Permute){
 	std::vector<int> perms2 = astrohelion::generatePerms<int>(values2);
 	std::vector<int> sol2 = {1,2,3, 1,3,2, 2,1,3, 2,3,1, 3,1,2, 3,2,1};
 
-	// printf("permutations:\n%03d: ", 0);
+	// astrohelion::printf("permutations:\n%03d: ", 0);
 	// int row = 0;
 	// for(unsigned int i = 0; i < perms2.size(); i++){
 	// 	if((i+1) % numSpots == 0){
 	// 		row++;
-	// 		printf("%3d\n%03d: ", perms2[i], row);
+	// 		astrohelion::printf("%3d\n%03d: ", perms2[i], row);
 	// 	}else
-	// 		printf("%3d", perms2[i]);
+	// 		astrohelion::printf("%3d", perms2[i]);
 	// }
 
 	BOOST_CHECK(perms == sol);

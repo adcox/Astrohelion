@@ -41,16 +41,24 @@ void freeMem(std::vector<ControlLaw*>& laws){
 
 int main(){
 	
-	SysData_cr3bp sys("../../data/families/cr3bp_earth-moon/L1_Lyap.mat");
-	Family_PO_cr3bp fam(&sys);
+	char filename[] = "../../data/families/cr3bp-lt_earth-moon/"
+		"E2_Lyap_f7.0e-02_alph000.00_law2112.mat";
+	SysData_cr3bp_lt sys(filename);
+	Family_PO_cr3bp_lt fam(&sys);
 	std::vector<ControlLaw*> laws;
-	fam.readFromMat("../../data/families/cr3bp_earth-moon/L1_Lyap.mat", laws);
+	fam.readFromMat(filename, laws);
 
-	printf("Checing Match State: X\n");
-	double matchX = 0.9;
-	std::vector<Arcset_periodic> matches = fam.getMemberByState(matchX, 0);
-
-	matches[0].print();
+	double H = -1.55;
+	std::vector<Arcset_periodic> matches = fam.getMemberByH_lt(H);
+	for(unsigned int i = 0; i < matches.size(); i++){
+		Arcset_cr3bp_lt temp(matches[i]);
+		if(std::abs(temp.getHltByIx(0) - H) > 1e-9)
+			printErr("Hlt is not close to desired value");
+	}
+	
+	std::vector<double> elem = matches[0].getSTMElementsByIx(0);
+	std::cout << elem.size() << std::endl;
+	std::cout << std::sqrt(elem.size()) << std::endl;
 	
 	freeMem(laws);
 	return EXIT_SUCCESS;

@@ -1,5 +1,6 @@
 #define BOOST_TEST_MODULE CR3BP_Family
 
+#include <iostream>
 #include <boost/test/unit_test.hpp>
 
 /**
@@ -22,14 +23,14 @@ BOOST_AUTO_TEST_CASE(FAMILY_OPERATIONS){
 	// fam.sortEigs();
 	// std::vector<unsigned int> bifs = fam.findBifurcations();
 	// if(bifs.size() > 0){
-	// 	printf("Found bifurcations at:\n");
+	// 	astrohelion::printf("Found bifurcations at:\n");
 	// 	for(unsigned int i = 0; i < bifs.size(); i++){
-	// 		printf("  Ix = %04d\n", bifs[i]);
+	// 		astrohelion::printf("  Ix = %04d\n", bifs[i]);
 	// 	}
 	// }
 	// fam.saveToMat("data/LoadedButterflyFam.mat");	// Check to see if data was re-loaded correctly
 
-	printf("Checing Match State: X\n");
+	std::cout << "Checing Match State: X" << std::endl;
 	double matchX = 0.9;
 	std::vector<Arcset_periodic> matches = fam.getMemberByState(matchX, 0);
 	for(unsigned int i = 0; i < matches.size(); i++){
@@ -38,7 +39,7 @@ BOOST_AUTO_TEST_CASE(FAMILY_OPERATIONS){
 		BOOST_CHECK_SMALL(matches[i].getStateByIx(0)[0] - matchX, 1e-9);
 	}
 
-	printf("Checking Match Jacobi:\n");
+	std::cout << "Checking Match Jacobi:" << std::endl;
 	double matchJC = 3;
 	matches.clear();
 	matches = fam.getMemberByJacobi(matchJC);
@@ -50,7 +51,7 @@ BOOST_AUTO_TEST_CASE(FAMILY_OPERATIONS){
 		BOOST_CHECK_SMALL(temp.getJacobiByIx(0) - matchJC, 1e-9);
 	}
 
-	printf("Checking Match TOF:\n");
+	std::cout << "Checking Match TOF:" << std::endl;
 	double matchTOF = 4.5;
 	matches.clear();
 	matches = fam.getMemberByTOF(matchTOF);

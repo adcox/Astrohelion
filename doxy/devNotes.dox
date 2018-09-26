@@ -10,9 +10,7 @@ This software has been tested on (and <i>should</i> work on) the following syste
 
 <h2>Software Dependencies</h2>
 <p>
-	This software is dependent on several libraries. My goal is to package these libraries with Astrohelion, but
-	that task is not yet complete. Stay tuned. In the mean time, here is a list of dependencies with some (hopefully helpful)
-	installation tips:
+	This software is dependent on several libraries. I've created a script that automates this process on Unix system (Apple OS, Linux); see <code>installDeps.sh</code> in the <code>build</code> directory. Additionally, here are a few notes about the dependencies that may prove useful if you have to troubleshoot the installation script.
 </p>
 <ul>
 	<li>
@@ -35,7 +33,7 @@ This software has been tested on (and <i>should</i> work on) the following syste
 				<pre>sudo ./bootstrap.sh</pre>
 				to initialize the system</li>
 			<li>Next, we need to compile a few libraries and install all the headers. On MacOS, I'm using g++-6 to compile the software. I'm avoiding clang++ because it doesn't support openMP. To tell the Boost builder to use the compiler I want, I specify an additional flag, <code>toolset=gcc-6</code>. Astrohelion only needs a few Boost libraries, and they are specified with an additional flag. The full install command is
-				<pre>sudo ./b2 toolset=gcc-6 install --with-fileystem --with-system --with-test</pre>
+				<pre>sudo ./b2 toolset=gcc-6 install --with-test</pre>
 			</li>
 		</ol>
 		Following these steps installs boost in the default location (<tt>/usr/local/</tt> for me). If you want to specifiy a different install directory, you'll have to add the <code>--prefix</code> tag and update the makefiles to locate the headers and libraries. Other useful build instructions are listed <a href="http://www.boost.org/doc/libs/1_60_0/more/getting_started/unix-variants.html#prepare-to-use-a-boost-library-binary">here</a>. On Linux, you'll need to specify a custom LD path, <code>LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/</code>.
@@ -76,7 +74,11 @@ Run
 <pre>
 	oTool -L path/to/bin
 </pre>
-to retrieve a list of all the dynamic libraries linked to the executable binary, as well as the locations of those libraries. Note that static libraries are not included in this listing.
+on Apple OS or
+<pre>
+	ldd path/to/bin
+</pre>
+on Linux to retrieve a list of all the dynamic libraries linked to the executable binary, as well as the locations of those libraries. Note that static libraries are not included in this listing.
 
 <h3>Checking for Dependency Issues</h3>
 Run doxygen with the inheritance/dependency plots turned on (this is already set for this project).
@@ -86,13 +88,7 @@ Use valgrind to check for leaks:
 <pre>
 	valgrind --tool=memcheck --leak-check=yes simEngineTest
 </pre>
-On my Macbook, I've created a file at <code>~/.valgrindrc</code> which specifies arguments for valgrind so I don't have to type out the lengthy code above, I just type <code>valgrind simEngineTest</code>. I've also created a file called <code>valgrindIgnore.supp</code> with code to tell valgrind to suppress memory leaks that come from system libraries that I have no control over.
-
-<h2>Coding Practice Notes</h2>
-<h3>Do's and Dont's</h3>
-<ul>
-	<li><b>Do</b> check that an index is valid before accessing via square brackets</li>
-</ul>
+On my system, I've created a file at <code>~/.valgrindrc</code> which specifies arguments for valgrind so I don't have to type out the lengthy code above, I just type <code>valgrind simEngineTest</code>. I've also created a file called <code>valgrindIgnore.supp</code> with code to tell valgrind to suppress memory leaks that come from system libraries that I have no control over.
 
 <h2>Code Style Choices</h2>
 <h3>Naming conventions</h3>
@@ -121,13 +117,13 @@ Say I'm writing class A and want to know whether or not to include or forward-de
 Include Order (my convention:)
 <ol>
 	<li> Header file for this class </li>
-	<li> Local header files - ones I've written, in alphabetical order </li>
 	<li> Global header files, like string, vector, etc. </li>
+	<li> Local header files - ones I've written, in alphabetical order </li>
 </ol>
 
 <h2>Optimizing Code</h2>
 <ul>
-	<li> Check out <a href="http://stackoverflow.com/questions/11445619/profiling-c-on-mac-os-x">these</a> instructions for profiling code on OS X</li>
+	<li> Check out <a href="http://stackoverflow.com/questions/11445619/profiling-c-on-mac-os-x">these</a> instructions for profiling code on Apple OS</li>
 	<li> Creating copies of objects can be <em>very</em> expensive! Use pointers to objects whenever possible and practical!</li>
 </ul>
 

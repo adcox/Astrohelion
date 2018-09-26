@@ -67,6 +67,22 @@ std::string complexToStr(std::complex<double> num){
 }
 
 /**
+ * @brief Overload printf to pipe output to std::cout
+ * @details Functionally equivalent to the usual printf, but this output can
+ * be captured by MATLAB (or other external callers) when compiled
+ * 
+ * @param format a standard format string literal to pass to `vprintf`
+ */
+void printf(const char* format, ...){
+    va_list args;
+    va_start(args, format);
+    char buffer[BUFFER_SIZE];
+    vsnprintf(buffer, BUFFER_SIZE, format, args);
+    va_end(args);
+    std::cout << buffer;
+}//====================================================
+
+/**
  *  @brief A wrapper function to print a message
  *	@param verbose whether or not to be verbose; message is not printed if verbose is false
  *	@param format a standard format string literal to pass to `vprintf`
@@ -75,8 +91,10 @@ void printVerb(bool verbose, const char * format, ...){
     if(verbose){
         va_list args;
         va_start(args, format);
-        vprintf(format, args);
+        char buffer[BUFFER_SIZE];
+        vsnprintf(buffer, BUFFER_SIZE, format, args);
         va_end(args);
+        std::cout << buffer;
     }
 }//==========================================
 
@@ -85,12 +103,16 @@ void printVerb(bool verbose, const char * format, ...){
  *	@param format a standard format string literal to pass to `vprintf`
  */
 void printErr(const char * format, ...){
-	printf(RED);
     va_list args;
     va_start(args, format);
-    vprintf(format, args);
+    char buffer[BUFFER_SIZE];
+    vsnprintf(buffer, BUFFER_SIZE, format, args);
     va_end(args);
-    printf(RESET);
+    #ifdef ASTRO_NO_COLOR
+        std::cout << buffer;
+    #else
+        std::cout << RED << buffer << RESET;
+    #endif
 }//==========================================
 
 /**
@@ -98,12 +120,16 @@ void printErr(const char * format, ...){
  *	@param format a standard format string literal to pass to `vprintf`
  */
 void printWarn(const char * format, ...){
-    printf(YELLOW);
     va_list args;
     va_start(args, format);
-    vprintf(format, args);
+    char buffer[BUFFER_SIZE];
+    vsnprintf(buffer, BUFFER_SIZE, format, args);
     va_end(args);
-    printf(RESET);
+    #ifdef ASTRO_NO_COLOR
+        std::cout << buffer;
+    #else
+        std::cout << YELLOW << buffer << RESET;
+    #endif
 }//==========================================
 
 /**
@@ -112,12 +138,16 @@ void printWarn(const char * format, ...){
  *	@param format a standard format string literal to pass to `vprintf`
  */
 void printColor(const char* color, const char * format, ...){
-    printf("%s", color);
     va_list args;
     va_start(args, format);
-    vprintf(format, args);
+    char buffer[BUFFER_SIZE];
+    vsnprintf(buffer, BUFFER_SIZE, format, args);
     va_end(args);
-    printf(RESET);
+    #ifdef ASTRO_NO_COLOR
+        std::cout << buffer;
+    #else
+        std::cout << color << buffer << RESET;
+    #endif
 }//==========================================
 
 /**
@@ -128,12 +158,16 @@ void printColor(const char* color, const char * format, ...){
  */
 void printVerbColor(bool verbose, const char* color, const char * format, ...){
 	if(verbose){
-	    printf("%s", color);
-	    va_list args;
-	    va_start(args, format);
-	    vprintf(format, args);
-	    va_end(args);
-	    printf(RESET);
+        va_list args;
+        va_start(args, format);
+        char buffer[BUFFER_SIZE];
+        vsnprintf(buffer, BUFFER_SIZE, format, args);
+        va_end(args);
+        #ifdef ASTRO_NO_COLOR
+            std::cout << buffer;
+        #else
+            std::cout << color << buffer << RESET;
+        #endif
 	}
 }//==========================================
 

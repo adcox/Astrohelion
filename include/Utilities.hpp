@@ -416,6 +416,7 @@ namespace astrohelion{
 	 *  \name Standard Output
 	 *  \{
 	 */
+	void printf(const char*, ...);
 	void printErr(const char*, ...);
 	void printWarn(const char*, ...);
 	void printVerb(bool, const char*, ...);

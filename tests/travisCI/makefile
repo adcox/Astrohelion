@@ -15,10 +15,10 @@ ifeq ($(UNAME_S), Darwin)
 else
 	
 	ifeq ($(UNAME_S), Linux)
-		LDFLAGS += -L/usr/local/lib
+		LDFLAGS += -Wl,-rpath-link,/opt/local/lib
 	endif
 
-	CXX := g++-5
+	CXX := g++
 endif
 
 CXX += -std=c++11 -fopenmp
@@ -28,16 +28,9 @@ CFLAGS += -Wall -Wextra -Weffc++ -Wdisabled-optimization -Wold-style-cast -Wimpo
 COMP := $(CXX) $(CFLAGS)
 
 # Library names and locations
+LDFLAGS += -L../../deps/installed/lib
 LIBS = gsl gslcblas matio cspice boost_unit_test_framework boost_test_exec_monitor
 LDFLAGS += $(foreach lib, $(LIBS),-l$(lib))
-LDFLAGS += -L/opt/local/lib
-
-# Compiler specification and flags
-ifeq ($(UNAME_S), Darwin)
-	# Nothing to do here	
-else
-	LDFLAGS += -L/usr/local/lib
-endif
 
 # Get JUST the filenames, no filepaths, of the source files
 SRC_FILES := $(notdir $(shell find $(SRC)/*.cpp))
@@ -67,15 +60,16 @@ all: directories unit run
 
 unit: arcData bc4bpDef cr3bpFam lambertArc linMotion manifoldEngine\
 	multShootCons_bc4bp multShootCons_cr3bp multShootCons_cr3bp_lt multShootEngine\
-	arcset simEngine utilities
+	arcset simEngine utilities event
 
 run:
 	./arcData.bin
 	./bc4bpDef.bin
 	#./cr3bpFam.bin		# Requires family data...
+	#./ltFam.bin 		# Requires family data...
 	#./lambertArc.bin	# Fails right now
 	./linMotion.bin
-	#./manifoldEngine.bin
+	./manifoldEngine.bin
 	./multShootCons_bc4bp.bin
 	./multShootCons_cr3bp.bin
 	./multShootCons_cr3bp_lt.bin
@@ -83,6 +77,7 @@ run:
 	./arcset.bin
 	./simEngine.bin
 	./utilities.bin
+	./event.bin
 	
 ############################################################
 ## UNIT TESTS
@@ -99,6 +94,12 @@ bc4bpDef: $(OBJECTS)
 
 cr3bpFam: $(OBJECTS)
 	$(COMP) -I $(INC) $(INC_EXT) $^  ../unittest_cr3bpFamily.cpp $(LDFLAGS) -o $@.bin	
+
+ltFam: $(OBJECTS)
+	$(COMP) -I $(INC) $(INC_EXT) $^  ../unittest_cr3bp-lt_family.cpp $(LDFLAGS) -o $@.bin	
+
+event: $(OBJECTS)
+	$(COMP) -I $(INC) $(INC_EXT) $^  ../unittest_event.cpp $(LDFLAGS) -o $@.bin
 
 lambertArc: $(OBJECTS)
 	$(COMP) -I $(INC) $(INC_EXT) $^  ../unittest_lambertArc.cpp $(LDFLAGS) -o $@.bin	
@@ -136,4 +137,4 @@ directories:
 	$(MKDIR_P) data
 
 $(OBJ)/%.o: $(SRC)/%.cpp $(HEADER_DEPS)
-	$(COMP) -I $(INC) -isystem $(INC_EXT) -c $< -o $@
+	$(COMP) -I $(INC) $(INC_EXT) -c $< -o $@

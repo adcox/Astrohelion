@@ -1,0 +1,9 @@
+<map id="include/DynamicsModel_bc4bp.hpp" name="include/DynamicsModel_bc4bp.hpp">
+<area shape="rect" id="node2" href="$_dynamics_model__bc4bp_8cpp.html" title="Derivative of DynamicsModel, specific to BCR4BPR. " alt="" coords="5,169,211,196"/>
+<area shape="rect" id="node3" href="$_sys_data__bc4bp_8hpp.html" title="include/SysData_bc4bp.hpp" alt="" coords="386,95,571,121"/>
+<area shape="rect" id="node4" href="$_arcset__bc4bp_8cpp.html" title="src/Arcset_bc4bp.cpp" alt="" coords="235,169,384,196"/>
+<area shape="rect" id="node5" href="$_calculations_8cpp.html" title="Contains non&#45;member calculation functions. " alt="" coords="408,169,549,196"/>
+<area shape="rect" id="node6" href="$_event_8cpp.html" title="Data object that stores information about a simulation event. " alt="" coords="574,169,677,196"/>
+<area shape="rect" id="node7" href="$_sys_data__bc4bp_8cpp.html" title="Derivative of SysData, specific to BCR4BPR. " alt="" coords="701,169,864,196"/>
+<area shape="rect" id="node8" href="$_all_includes_8hpp.html" title="Provides easy include for all headers in the Core library. " alt="" coords="889,169,1045,196"/>
+</map>

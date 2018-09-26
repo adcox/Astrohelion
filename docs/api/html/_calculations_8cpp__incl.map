@@ -1,0 +1,29 @@
+<map id="src/Calculations.cpp" name="src/Calculations.cpp">
+<area shape="rect" id="node2" href="$_calculations_8hpp.html" title="Includes miscellaneous calculation functions. " alt="" coords="991,304,1110,331"/>
+<area shape="rect" id="node3" href="$_common_8hpp.html" title="Contains values for physical constants like pi, G, etc. and custom data wrappers. ..." alt="" coords="1427,379,1527,405"/>
+<area shape="rect" id="node14" href="$_ascii_output_8hpp.html" title="This class contains macros for fancy ASCII outputs. " alt="" coords="1084,80,1199,107"/>
+<area shape="rect" id="node15" href="$_arcset_8hpp.html" title="Arcset.hpp" alt="" coords="869,229,955,256"/>
+<area shape="rect" id="node16" href="$_base_arcset_8hpp.html" title="Basic arcset class (abstract) " alt="" coords="656,304,771,331"/>
+<area shape="rect" id="node20" href="$_node_8hpp.html" title="Node.hpp" alt="" coords="437,379,515,405"/>
+<area shape="rect" id="node26" href="$_arcset__2bp_8hpp.html" title="Arcset_2bp.hpp" alt="" coords="534,155,647,181"/>
+<area shape="rect" id="node27" href="$_arcset__bc4bp_8hpp.html" title="Arcset_bc4bp.hpp" alt="" coords="671,155,798,181"/>
+<area shape="rect" id="node28" href="$_arcset__cr3bp_8hpp.html" title="Arcset_cr3bp.hpp" alt="" coords="1727,155,1851,181"/>
+<area shape="rect" id="node29" href="$_arcset__periodic_8hpp.html" title="Arcset_periodic.hpp" alt="" coords="1978,155,2115,181"/>
+<area shape="rect" id="node30" href="$_body_data_8hpp.html" title="Stores information about a celestial body. " alt="" coords="2577,453,2682,480"/>
+<area shape="rect" id="node31" href="$_mult_shoot_engine_8hpp.html" title="Performs corrections on a nodeset subject to a set of constraints. " alt="" coords="1375,80,1521,107"/>
+<area shape="rect" id="node37" href="$_mult_shoot_data_8hpp.html" title="MultShootData.hpp" alt="" coords="925,155,1059,181"/>
+<area shape="rect" id="node38" href="$_exceptions_8hpp.html" title="Defines several custom exception classes. " alt="" coords="1904,229,2016,256"/>
+<area shape="rect" id="node41" href="$_sim_engine_8hpp.html" title="SimEngine.hpp" alt="" coords="297,155,407,181"/>
+<area shape="rect" id="node42" href="$_sys_data__2bp_8hpp.html" title="SysData_2bp.hpp" alt="" coords="2459,304,2586,331"/>
+<area shape="rect" id="node43" href="$_sys_data__bc4bp_8hpp.html" title="SysData_bc4bp.hpp" alt="" coords="2142,304,2282,331"/>
+<area shape="rect" id="node44" href="$_sys_data__cr3bp_8hpp.html" title="SysData_cr3bp.hpp" alt="" coords="2610,304,2747,331"/>
+<area shape="rect" id="node45" href="$_sys_data__cr3bp__lt_8hpp.html" title="SysData_cr3bp_lt.hpp" alt="" coords="2546,229,2697,256"/>
+<area shape="rect" id="node46" href="$_utilities_8hpp.html" title="Contains miscellaneous utility functions that make coding in C++ easier. " alt="" coords="1617,304,1708,331"/>
+<area shape="rect" id="node5" href="$_eigen_defs_8hpp.html" title="Definitions for matrices, vectors, and other objects from the Eigen library. " alt="" coords="1070,453,1178,480"/>
+<area shape="rect" id="node17" href="$_core_8hpp.html" title="Contains functions and variables that are global for the entire library. " alt="" coords="532,528,607,555"/>
+<area shape="rect" id="node19" href="$_constraint_8hpp.html" title="Contains information about a constraint on a nodeset, node, or segment. " alt="" coords="863,453,969,480"/>
+<area shape="rect" id="node22" href="$_segment_8hpp.html" title="Segment.hpp" alt="" coords="735,379,833,405"/>
+<area shape="rect" id="node23" href="$_sys_data_8hpp.html" title="SysData.hpp" alt="" coords="2251,379,2349,405"/>
+<area shape="rect" id="node21" href="$_linkable_8hpp.html" title="Linkable.hpp" alt="" coords="522,453,617,480"/>
+<area shape="rect" id="node36" href="$_engine_8hpp.html" title="Contains the base behavior for engine objects. " alt="" coords="1354,229,1441,256"/>
+</map>

@@ -1,0 +1,89 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Astrohelion by adcox</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-light.css">
+    <meta name="viewport" content="width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Astrohelion</h1>
+        <p>An open source multi-body astrodynamics toolkit</p>
+
+        <p class="view"><a href="https://github.com/adcox/Astrohelion">View the Project on GitHub <small>adcox/Astrohelion</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/adcox/Astrohelion/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/adcox/Astrohelion/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/adcox/Astrohelion">View On <strong>GitHub</strong></a></li>
+        </ul>
+
+        <ul>
+          <li><a href="docs/html/index.html">View <strong>API</strong></a></li>
+          <li><a href="https://github.com/adcox/Astrohelion/wiki">View <strong>Wiki</strong></a></li>
+          <li><a href="https://github.com/adcox/Astrohelion/issues">Submit <strong> An Issue</strong></a></li>
+        </ul>
+
+      </header>
+      <section>
+        <h2>Welcome!</h2>
+        <p>
+          Astrohelion (Astro - heel - eon) is a set of C++ tools that facilitate multi-body trajectory design. Specifically,
+          analysis in the circular restricted three-body problem (CR3BP) and bi-circular restricted four-body problem (BC4BP)
+          is supported.
+        </p>
+
+        <h2>Capabilities</h2>
+        <p>
+          So, what can Astrohelion do? There are several key functionalities:
+        </p>
+        <ul>
+          <li>
+            <strong>Numerical Integration</strong> Astrohelion leverages the ordinary differential equation (ODE) solvers in the GSL 
+            library to numerically integrate the equations of motion associated with a few common multi-body astrodynamical systems.
+            This propagation is controlled by a <code>SimEngine</code> object that possesses many of the same features as Matlab's
+            ODE solvers, such as event detection. The engine creates a trajectory object that can then be operated on for further analysis.
+          </li>
+          <li>
+            <strong>Differential Corrections</strong> Continuous trajectories may be discretized into a series of nodes, and constraints
+            can be applied to the nodes, segments between nodes, and the trajectory as a whole. A multiple shooting differential corrections
+            algorithm is then applied to the constrained "nodeset" with the goal of satisfying all constraints. The algorithm itself is 
+            problem independent and can be applied to CR3BP simulations, BC4BP simulations, or any other type of dynamical problem that is
+            included in the Astrohelion system.
+          </li>
+          <li>
+            <strong>Continuation</strong> Once a desirable trajectory has been computed (and possibly corrected to meet certain constraints),
+            continuation algorithms can be applied to generate a continuous family of similar solutions. Both natural parameter continuation
+            and psuedo-arclength continuation are avaiable, both of which are agnostic to dynamical model.
+          </li>
+          <li>
+          <strong>Export to File</strong> Trajectories are easily saved to file in MATLAB binary format for further analysis or visualization.
+          </li>
+        </ul>
+
+        <h2>Limitations</h2>
+        <p>
+          I developed this software in the process of completing my master's degree, and though the tools are fully operational, 
+          they are not as flexible and extensible as they could be. My goal is to remedy this situation; if you're a brave soul 
+          that wants to try Astrohelion out, please don't be shy about submitting issues and communicating with me about any 
+          questions you have.
+        </p>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/adcox">adcox</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>

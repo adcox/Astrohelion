@@ -1,0 +1,10 @@
+<map id="include/BodyData.hpp" name="include/BodyData.hpp">
+<area shape="rect" id="node2" href="$_body_data_8cpp.html" title="Data class that holds data about orbitRad body. " alt="" coords="5,80,132,107"/>
+<area shape="rect" id="node3" href="$_calculations_8cpp.html" title="Contains non&#45;member calculation functions. " alt="" coords="157,80,298,107"/>
+<area shape="rect" id="node4" href="$_event_8cpp.html" title="Data object that stores information about a simulation event. " alt="" coords="323,80,425,107"/>
+<area shape="rect" id="node5" href="$_sim_engine_8cpp.html" title="Performs numerical integration on a set of initial conditions in any dynamic model and system..." alt="" coords="449,80,581,107"/>
+<area shape="rect" id="node6" href="$_sys_data__2bp_8cpp.html" title="Derivative of SysData, specific to 2BP. " alt="" coords="605,80,753,107"/>
+<area shape="rect" id="node7" href="$_sys_data__bc4bp_8cpp.html" title="Derivative of SysData, specific to BCR4BPR. " alt="" coords="778,80,941,107"/>
+<area shape="rect" id="node8" href="$_sys_data__cr3bp_8cpp.html" title="Derivative of SysData, specific to CR3BP. " alt="" coords="965,80,1124,107"/>
+<area shape="rect" id="node9" href="$_all_includes_8hpp.html" title="Provides easy include for all headers in the Core library. " alt="" coords="1148,80,1304,107"/>
+</map>

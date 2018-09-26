@@ -1,0 +1,7 @@
+<map id="astrohelion::SysData" name="astrohelion::SysData">
+<area shape="rect" id="node3" href="$classastrohelion_1_1_sys_data__2bp.html" title="A derivative class of the SysData object which contains information specific to the 2BP..." alt="" coords="5,162,177,189"/>
+<area shape="rect" id="node4" href="$classastrohelion_1_1_sys_data__bc4bp.html" title="This derivative class of the SysData super&#45;class contains information specific to the BCR4BPR..." alt="" coords="202,155,346,196"/>
+<area shape="rect" id="node5" href="$classastrohelion_1_1_sys_data__cr3bp.html" title="A derivative class of the SysData object which contains information specific to the CR3BP..." alt="" coords="370,155,514,196"/>
+<area shape="rect" id="node2" href="$classastrohelion_1_1_core.html" title="An object that serves as a parent to all Core objects. " alt="" coords="213,5,335,32"/>
+<area shape="rect" id="node6" href="$classastrohelion_1_1_sys_data__cr3bp__lt.html" title="System data object for the CR3BP Low Thrust, Velocity&#45;Pointing system. " alt="" coords="370,244,514,285"/>
+</map>

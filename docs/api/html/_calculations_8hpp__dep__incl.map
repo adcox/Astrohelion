@@ -1,0 +1,16 @@
+<map id="include/Calculations.hpp" name="include/Calculations.hpp">
+<area shape="rect" id="node2" href="$_arcset__periodic_8cpp.html" title="src/Arcset_periodic.cpp" alt="" coords="5,87,164,114"/>
+<area shape="rect" id="node3" href="$_calculations_8cpp.html" title="Contains non&#45;member calculation functions. " alt="" coords="189,87,330,114"/>
+<area shape="rect" id="node4" href="$_dynamics_model__2bp_8cpp.html" title="Derivative of DynamicsModel, specific to 2BP. " alt="" coords="355,87,545,114"/>
+<area shape="rect" id="node5" href="$_dynamics_model__bc4bp_8cpp.html" title="Derivative of DynamicsModel, specific to BCR4BPR. " alt="" coords="570,87,775,114"/>
+<area shape="rect" id="node6" href="$_dynamics_model__cr3bp_8cpp.html" title="Derivative of DynamicsModel, specific to CR3BP. " alt="" coords="799,87,1002,114"/>
+<area shape="rect" id="node7" href="$_dynamics_model__cr3bp__lt_8cpp.html" title="Derivative of DynamicsModel, specific to CR3BP&#45;LTVP. " alt="" coords="1027,80,1204,121"/>
+<area shape="rect" id="node8" href="$_event_8cpp.html" title="Data object that stores information about a simulation event. " alt="" coords="1228,87,1331,114"/>
+<area shape="rect" id="node9" href="$_family___p_o_8cpp.html" title="src/Family_PO.cpp" alt="" coords="1355,87,1489,114"/>
+<area shape="rect" id="node10" href="$_manifold_engine_8cpp.html" title="src/ManifoldEngine.cpp" alt="" coords="1513,87,1672,114"/>
+<area shape="rect" id="node11" href="$_mult_shoot_engine_8cpp.html" title="Engine object that applies differential corrections to arcsets. " alt="" coords="1697,87,1865,114"/>
+<area shape="rect" id="node12" href="$_nat_param_engine_8cpp.html" title="src/NatParamEngine.cpp" alt="" coords="1889,87,2057,114"/>
+<area shape="rect" id="node13" href="$_pseudo_arc_engine_8cpp.html" title="src/PseudoArcEngine.cpp" alt="" coords="2081,87,2254,114"/>
+<area shape="rect" id="node14" href="$_sim_engine_8cpp.html" title="Performs numerical integration on a set of initial conditions in any dynamic model and system..." alt="" coords="2279,87,2411,114"/>
+<area shape="rect" id="node15" href="$_all_includes_8hpp.html" title="Provides easy include for all headers in the Core library. " alt="" coords="2435,87,2591,114"/>
+</map>

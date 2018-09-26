@@ -1,0 +1,20 @@
+<map id="src/Arcset_bc4bp.cpp" name="src/Arcset_bc4bp.cpp">
+<area shape="rect" id="node2" href="$_arcset__bc4bp_8hpp.html" title="Arcset_bc4bp.hpp" alt="" coords="1307,80,1434,107"/>
+<area shape="rect" id="node24" href="$_exceptions_8hpp.html" title="Defines several custom exception classes. " alt="" coords="2321,80,2433,107"/>
+<area shape="rect" id="node27" href="$_sys_data__bc4bp_8hpp.html" title="SysData_bc4bp.hpp" alt="" coords="1319,155,1459,181"/>
+<area shape="rect" id="node30" href="$_utilities_8hpp.html" title="Contains miscellaneous utility functions that make coding in C++ easier. " alt="" coords="1672,304,1763,331"/>
+<area shape="rect" id="node3" href="$_arcset_8hpp.html" title="Arcset.hpp" alt="" coords="1037,155,1123,181"/>
+<area shape="rect" id="node5" href="$_base_arcset_8hpp.html" title="Basic arcset class (abstract) " alt="" coords="813,229,928,256"/>
+<area shape="rect" id="node6" href="$_core_8hpp.html" title="Contains functions and variables that are global for the entire library. " alt="" coords="413,528,488,555"/>
+<area shape="rect" id="node9" href="$_common_8hpp.html" title="Contains values for physical constants like pi, G, etc. and custom data wrappers. ..." alt="" coords="1225,379,1325,405"/>
+<area shape="rect" id="node11" href="$_constraint_8hpp.html" title="Contains information about a constraint on a nodeset, node, or segment. " alt="" coords="397,453,504,480"/>
+<area shape="rect" id="node12" href="$_node_8hpp.html" title="Node.hpp" alt="" coords="385,304,463,331"/>
+<area shape="rect" id="node16" href="$_sys_data_8hpp.html" title="SysData.hpp" alt="" coords="1021,453,1120,480"/>
+<area shape="rect" id="node18" href="$_segment_8hpp.html" title="Segment.hpp" alt="" coords="539,379,637,405"/>
+<area shape="rect" id="node14" href="$_linkable_8hpp.html" title="Linkable.hpp" alt="" coords="145,453,239,480"/>
+<area shape="rect" id="node15" href="$_event_8hpp.html" title="Class that contains information about a simulation event. " alt="" coords="763,379,845,405"/>
+<area shape="rect" id="node19" href="$_control_law_8hpp.html" title="Control Law header file. " alt="" coords="579,453,693,480"/>
+<area shape="rect" id="node20" href="$_eigen_defs_8hpp.html" title="Definitions for matrices, vectors, and other objects from the Eigen library. " alt="" coords="1603,453,1711,480"/>
+<area shape="rect" id="node28" href="$_dynamics_model__bc4bp_8hpp.html" title="DynamicsModel_bc4bp.hpp" alt="" coords="1010,229,1193,256"/>
+<area shape="rect" id="node29" href="$_dynamics_model_8hpp.html" title="DynamicsModel.hpp" alt="" coords="957,304,1099,331"/>
+</map>

@@ -1,0 +1,14 @@
+<map id="include/Arcset_periodic.hpp" name="include/Arcset_periodic.hpp">
+<area shape="rect" id="node2" href="$_arcset_8hpp.html" title="Arcset.hpp" alt="" coords="828,80,913,107"/>
+<area shape="rect" id="node15" href="$_sys_data_8hpp.html" title="SysData.hpp" alt="" coords="920,379,1019,405"/>
+<area shape="rect" id="node19" href="$_eigen_defs_8hpp.html" title="Definitions for matrices, vectors, and other objects from the Eigen library. " alt="" coords="1185,379,1293,405"/>
+<area shape="rect" id="node4" href="$_base_arcset_8hpp.html" title="Basic arcset class (abstract) " alt="" coords="668,155,783,181"/>
+<area shape="rect" id="node5" href="$_core_8hpp.html" title="Contains functions and variables that are global for the entire library. " alt="" coords="673,453,748,480"/>
+<area shape="rect" id="node8" href="$_common_8hpp.html" title="Contains values for physical constants like pi, G, etc. and custom data wrappers. ..." alt="" coords="958,229,1058,256"/>
+<area shape="rect" id="node10" href="$_constraint_8hpp.html" title="Contains information about a constraint on a nodeset, node, or segment. " alt="" coords="328,379,435,405"/>
+<area shape="rect" id="node11" href="$_node_8hpp.html" title="Node.hpp" alt="" coords="297,229,375,256"/>
+<area shape="rect" id="node17" href="$_segment_8hpp.html" title="Segment.hpp" alt="" coords="501,304,600,331"/>
+<area shape="rect" id="node13" href="$_linkable_8hpp.html" title="Linkable.hpp" alt="" coords="510,379,605,405"/>
+<area shape="rect" id="node14" href="$_event_8hpp.html" title="Class that contains information about a simulation event. " alt="" coords="625,304,706,331"/>
+<area shape="rect" id="node18" href="$_control_law_8hpp.html" title="Control Law header file. " alt="" coords="782,379,895,405"/>
+</map>

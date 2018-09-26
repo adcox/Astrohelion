@@ -1,0 +1,5 @@
+<map id="astrohelion::Exception" name="astrohelion::Exception">
+<area shape="rect" id="node3" href="$classastrohelion_1_1_diverge_exception.html" title="Exception class for numerical methods that attempt to converge on a solution. " alt="" coords="356,5,552,32"/>
+<area shape="rect" id="node4" href="$classastrohelion_1_1_lin_alg_exception.html" title="Exception class for linear algebra errors. " alt="" coords="361,56,547,83"/>
+<area shape="rect" id="node5" href="$classastrohelion_1_1_size_mismatch_exception.html" title="Exception class for matrices, fired when the dimension of matrices makes a function impossible..." alt="" coords="366,107,542,149"/>
+</map>

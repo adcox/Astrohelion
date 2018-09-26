@@ -1,0 +1,54 @@
+\form#0:$\mu$
+\form#1:$\nu$
+\form#2:$k$
+\form#3:$\pi$
+\form#4:$ \dot{m} $
+\form#5:\[ \vec{F}(\vec{X}) = D\vec{F}(\vec{X}) \left( \vec{X}_{n+1} - \vec{X}_n \right) \]
+\form#6:$ \vec{X}_n $
+\form#7:$ \vec{F}(\vec{X}) $
+\form#8:$ D\vec{F}(\vec{X}) $
+\form#9:$ \vec{X}_{n+1} $
+\form#10:\begin{eqnarray*} JJ^T \vec{w} &=& \vec{F}(\vec{X}) \\ \vec{X}^* &=& J^T \vec{w} \end{eqnarray*}
+\form#11:$ J $
+\form#12:$ JJ^T $
+\form#13:$ \vec{X}^* $
+\form#14:$ \vec{X}_{n+1} = \vec{X}_n $
+\form#15:\begin{align*} \vec{a} &= \mathbf{K_v} \vec{f} + \dpd{\Omega}{\vec{r}} + \vec{a}_{lt}, \qquad \vec{a}_lt = \frac{f}{m} \hat{u}\\ \dot{m} &= \dod{m}{\tau}\\ \dot{\vec{\gamma}} &= \dod{\vec{\gamma}}{\tau} \end{align*}
+\form#16:$ \vec{a} = \{\ddot{x}\,\, \ddot{y}\,\, \ddot{z} \}$
+\form#17:$ \vec{v} = \{\dot{x}\,\, \dot{y}\,\, \dot{z} \} $
+\form#18:$ \vec{r} = \{x\,\, y\,\, z \} $
+\form#19:$ \Omega $
+\form#20:$ f $
+\form#21:$ m \in [0,1] $
+\form#22:$ \hat{u} $
+\form#23:$ \vec{a} $
+\form#24:$ \vec{a}_{lt} $
+\form#25:$ \vec{s} = \begin{Bmatrix} \vec{q} & \vec{\gamma} & \phi_1 & \dots & \phi_n & \vec{q}_{\text{extra}} \end{Bmatrix} $
+\form#26:\[ \vec{q} = \begin{Bmatrix} \vec{r} \,\, \vec{v} \,\, m \end{Bmatrix}^T,\qquad \vec{\gamma} \in \mathbb{R}^{n\times 1}, \]
+\form#27:$ \phi_i $
+\form#28:$ \vec{q}_{\text{extra}} $
+\form#29:$ \mathbf{A} $
+\form#30:\[ \mathbf{A} = \begin{bmatrix} \mathbf{0}_{3\times 3} & \mathbf{I}_3 & \vec{0}_{3\times 1} & \vec{0}_{3 \times n}\\[1em] \mathbf{D_{a,r}} & \mathbf{D_{a,v}} & \dpd{\vec{a}}{m} & \mathbf{D_{a,\gamma}}\\[1em] \vec{0}_{1\times 3} & \vec{0}_{1\times 3} & 0 & \dpd{\dot{m}}{\vec{\gamma}}\\[1em] \dpd{\dot{\vec{\gamma}}}{\vec{r}} & \dpd{\dot{\vec{\gamma}}}{\vec{v}} & \dpd{\dot{\vec{\gamma}}}{m} & \dpd{\dot{\vec{\gamma}}}{\vec{\gamma}} \end{bmatrix}\,, \]
+\form#31:\begin{align*} \mathbf{D_{a,r}} &= \dpd{\vec{a}}{\vec{r}} = \dpd[2]{\Omega}{\vec{r}} + \dpd{\vec{a}_{lt}}{\vec{r}},\\ \mathbf{D_{a,v}} &= \dpd{\vec{a}}{\vec{v}} = \mathbf{K_v} + \dpd{\vec{a}_{lt}}{\vec{v}},\\ \mathbf{D_{a,\gamma}} &= \dpd{\vec{a}}{\vec{\gamma}} = \dmd{\Omega}{2}{\vec{r}}{}{\vec{\gamma}}{} + \dpd{\vec{a}_{lt}}{\vec{\gamma}} = \dpd{\vec{a}_{lt}}{\vec{\gamma}}\,. \end{align*}
+\form#32:$ \partial \vec{a}_{lt}/\partial \vec{q}$
+\form#33:\[ \dpd{\vec{a}_{lt}}{\vec{q}} = \begin{bmatrix} \dpd{\vec{a}_{lt}}{\vec{r}} & \dpd{\vec{a}_{lt}}{\vec{v}} & \dpd{\vec{a}_{lt}}{m} \end{bmatrix}\,. \]
+\form#34:$ 7 \times n $
+\form#35:$ \partial \vec{q}/\partial \vec{\gamma} $
+\form#36:\[ \dpd{\vec{q}}{\vec{\gamma}} = \begin{bmatrix} \vec{0}_{3\times n} \\ \mathbf{D_{a,v}} \\[0.5em] \dpd{\dot{m}}{\vec{\gamma}} \end{bmatrix} \]
+\form#37:$ \dot{\vec{r}} = \vec{v} $
+\form#38:$ \delta \vec{X} $
+\form#39:\[ f(\vec{X}_{n+1}) \leq f(\vec{X}_n) + \alpha \vec{\nabla} f(\vec{X}_n) \cdot (\vec{X}_{n+1} - \vec{X}_n)\,, \]
+\form#40:$ f = \frac{1}{2} \vec{F}^T \vec{F} $
+\form#41:$ \vec{X} $
+\form#42:\[ \vec{q} = \begin{Bmatrix} \vec{r} \,\, \vec{v} \,\, m \end{Bmatrix}^T, \qquad \vec{\gamma} \in \mathbb{R}^{n\times 1}, \]
+\form#43:\[ f = \frac{1}{2} f_{\text{max}} \left( sin\psi + 1 \right) \]
+\form#44:\[ f = \frac{1}{2} f_{\text{max}} \left( \sin\psi + 1 \right) \]
+\form#45:$\psi$
+\form#46:$\psi = -\pi/2 + \epsilon$
+\form#47:$\psi = -\frac{\pi}{2} \pm 2n\pi,~n=0,1,2,\dots$
+\form#48:$\psi = +\frac{\pi}{2} \pm 2n\pi,~n=0,1,2,\dots$
+\form#49:\[ f = \frac{1}{2} f_{\text{max}} \left( \sin\psi + 1 \right)\,, \]
+\form#50:\[ f = 10^{4 g}\,, \]
+\form#51:\[ \dot{m} = \frac{-f}{I_{sp} g_0}\,, \]
+\form#52:\[ \dot{m} = 0 \]
+\form#53:\[ f = f_{\text{max}} g^2\,, \]

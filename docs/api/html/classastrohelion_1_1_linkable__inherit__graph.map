@@ -1,0 +1,5 @@
+<map id="astrohelion::Linkable" name="astrohelion::Linkable">
+<area shape="rect" id="node3" href="$classastrohelion_1_1_node.html" title="A single point or state on an arc. " alt="" coords="5,155,129,181"/>
+<area shape="rect" id="node4" href="$classastrohelion_1_1_segment.html" title="Links nodes together to describe the flow of a trajectory. " alt="" coords="153,155,299,181"/>
+<area shape="rect" id="node2" href="$classastrohelion_1_1_core.html" title="An object that serves as a parent to all Core objects. " alt="" coords="85,5,207,32"/>
+</map>

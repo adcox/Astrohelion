@@ -1,0 +1,41 @@
+<map id="astrohelion::Core" name="astrohelion::Core">
+<area shape="rect" id="node2" href="$classastrohelion_1_1_base_arcset.html" title="Abstract class that provides the framework for trajectories and nodesets. " alt="" coords="194,100,355,127"/>
+<area shape="rect" id="node9" href="$classastrohelion_1_1_body_data.html" title="The body data object provides a way to store and retrieve information about different celestial bodie..." alt="" coords="199,155,350,181"/>
+<area shape="rect" id="node10" href="$classastrohelion_1_1_constraint.html" title="Contains information about how a particular node, segment, or arcset should be constrained during a c..." alt="" coords="198,205,351,232"/>
+<area shape="rect" id="node11" href="$classastrohelion_1_1_continuation_engine.html" title="An engine object that runs continuation processes. " alt="" coords="191,257,358,298"/>
+<area shape="rect" id="node14" href="$classastrohelion_1_1_control_law.html" title="Stores control law equations and derivatives for flexible applications throughout the astrohelion fra..." alt="" coords="195,323,354,349"/>
+<area shape="rect" id="node16" href="$classastrohelion_1_1_dynamics_model.html" title="A base class that defines the behavior of a dynamical model and provides functions used in simulation..." alt="" coords="181,373,368,400"/>
+<area shape="rect" id="node21" href="$classastrohelion_1_1_event.html" title="A data object containing information about an event that may occur during simulation. " alt="" coords="211,424,338,451"/>
+<area shape="rect" id="node22" href="$classastrohelion_1_1_family.html" title="[brief description] " alt="" coords="209,475,341,501"/>
+<area shape="rect" id="node26" href="$classastrohelion_1_1_lambert_arc_engine.html" title="Generate Lambert Arcs in the 2BP. " alt="" coords="175,525,375,552"/>
+<area shape="rect" id="node27" href="$classastrohelion_1_1_linkable.html" title="A basic object that encapsulates the behavior of nodes and segments that hold information about how t..." alt="" coords="204,576,345,603"/>
+<area shape="rect" id="node30" href="$classastrohelion_1_1_lin_motion_engine.html" title="An engine that will generate a trajectory in the linearized EOMs. " alt="" coords="180,627,369,653"/>
+<area shape="rect" id="node33" href="$classastrohelion_1_1_manifold_engine.html" title="Compute manifolds. " alt="" coords="183,677,366,704"/>
+<area shape="rect" id="node34" href="$classastrohelion_1_1_mult_shoot_engine.html" title="An engine object to perform corrections, such as multiple shooting. " alt="" coords="179,728,371,755"/>
+<area shape="rect" id="node35" href="$classastrohelion_1_1_sim_engine.html" title="Performs numerical integration on any system type and produces an Arcset object. " alt="" coords="197,779,353,805"/>
+<area shape="rect" id="node36" href="$classastrohelion_1_1_sys_data.html" title="Contains information about a system, like mass ratio, primary names, etc. " alt="" coords="203,835,347,861"/>
+<area shape="rect" id="node3" href="$classastrohelion_1_1_arcset.html" title="Extends BaseArcset in a few areas. " alt="" coords="465,96,595,123"/>
+<area shape="rect" id="node4" href="$classastrohelion_1_1_arcset__2bp.html" title="Supplies functions specific to 2BP arcsets. " alt="" coords="699,5,858,32"/>
+<area shape="rect" id="node5" href="$classastrohelion_1_1_arcset__bc4bp.html" title="Supplies functions specific to BC4BP arcsets. " alt="" coords="713,57,844,98"/>
+<area shape="rect" id="node6" href="$classastrohelion_1_1_arcset__cr3bp.html" title="Supplies functions specific to CR3BP arcsets. " alt="" coords="713,122,844,163"/>
+<area shape="rect" id="node8" href="$classastrohelion_1_1_arcset__periodic.html" title="[brief description] " alt="" coords="713,187,844,229"/>
+<area shape="rect" id="node7" href="$classastrohelion_1_1_arcset__cr3bp__lt.html" title="Supplies functions specific to low&#45;thrust CR3BP arcsets. " alt="" coords="921,122,1051,163"/>
+<area shape="rect" id="node12" href="$classastrohelion_1_1_nat_param_engine.html" title="Perform natural parameter continuation on various types of structures in different models..." alt="" coords="434,147,626,173"/>
+<area shape="rect" id="node13" href="$classastrohelion_1_1_pseudo_arc_engine.html" title="Pseudo&#45;Arclength Continuation Engine. " alt="" coords="431,197,629,224"/>
+<area shape="rect" id="node15" href="$classastrohelion_1_1_control_law__cr3bp__lt.html" title="Includes control laws specific to the CR3BP&#45;LT problem. " alt="" coords="451,249,609,290"/>
+<area shape="rect" id="node17" href="$classastrohelion_1_1_dynamics_model__2bp.html" title="Derivative of DynamicsModel, specific to the 2BP. " alt="" coords="423,315,637,341"/>
+<area shape="rect" id="node18" href="$classastrohelion_1_1_dynamics_model__bc4bp.html" title="A derivative of the DynamicsModel class, specific to the BCR4BPR. " alt="" coords="437,366,623,407"/>
+<area shape="rect" id="node19" href="$classastrohelion_1_1_dynamics_model__cr3bp.html" title="Derivative of DynamicsModel, specific to the CR3BP. " alt="" coords="437,431,623,473"/>
+<area shape="rect" id="node20" href="$classastrohelion_1_1_dynamics_model__cr3bp__lt.html" title="Derivative of DynamicsModel, specific to the low&#45;thrust CR3BP. " alt="" coords="685,427,872,469"/>
+<area shape="rect" id="node23" href="$classastrohelion_1_1_family___p_o.html" title="[brief description] " alt="" coords="451,497,609,524"/>
+<area shape="rect" id="node24" href="$classastrohelion_1_1_family___p_o__cr3bp.html" title="Families of orbits specifically in the CR3BP. " alt="" coords="713,493,845,534"/>
+<area shape="rect" id="node25" href="$classastrohelion_1_1_family___p_o__cr3bp__lt.html" title="[brief description] " alt="" coords="920,493,1052,534"/>
+<area shape="rect" id="node28" href="$classastrohelion_1_1_node.html" title="A single point or state on an arc. " alt="" coords="468,548,592,575"/>
+<area shape="rect" id="node29" href="$classastrohelion_1_1_segment.html" title="Links nodes together to describe the flow of a trajectory. " alt="" coords="457,599,603,625"/>
+<area shape="rect" id="node31" href="$classastrohelion_1_1_lin_motion_engine__cr3bp.html" title="Construct trajectories in the linearized dynamics of the CR3BP. " alt="" coords="435,650,625,691"/>
+<area shape="rect" id="node32" href="$classastrohelion_1_1_lin_motion_engine__cr3bp__lt.html" title="Linear motion engine for the CR3BP&#45;LT. " alt="" coords="435,715,625,757"/>
+<area shape="rect" id="node37" href="$classastrohelion_1_1_sys_data__2bp.html" title="A derivative class of the SysData object which contains information specific to the 2BP..." alt="" coords="444,781,616,808"/>
+<area shape="rect" id="node38" href="$classastrohelion_1_1_sys_data__bc4bp.html" title="This derivative class of the SysData super&#45;class contains information specific to the BCR4BPR..." alt="" coords="458,833,602,874"/>
+<area shape="rect" id="node39" href="$classastrohelion_1_1_sys_data__cr3bp.html" title="A derivative class of the SysData object which contains information specific to the CR3BP..." alt="" coords="458,898,602,939"/>
+<area shape="rect" id="node40" href="$classastrohelion_1_1_sys_data__cr3bp__lt.html" title="System data object for the CR3BP Low Thrust, Velocity&#45;Pointing system. " alt="" coords="707,898,851,939"/>
+</map>

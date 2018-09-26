@@ -1,0 +1,6 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node2" href="$classastrohelion_1_1_exception.html" title="Base Exception class for all my exceptions. " alt="" coords="132,31,283,57"/>
+<area shape="rect" id="node3" href="$classastrohelion_1_1_diverge_exception.html" title="Exception class for numerical methods that attempt to converge on a solution. " alt="" coords="331,5,527,32"/>
+<area shape="rect" id="node4" href="$classastrohelion_1_1_lin_alg_exception.html" title="Exception class for linear algebra errors. " alt="" coords="335,56,522,83"/>
+<area shape="rect" id="node5" href="$classastrohelion_1_1_size_mismatch_exception.html" title="Exception class for matrices, fired when the dimension of matrices makes a function impossible..." alt="" coords="341,107,517,149"/>
+</map>

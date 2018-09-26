@@ -1,0 +1,6 @@
+<map id="astrohelion::Arcset_periodic" name="astrohelion::Arcset_periodic">
+<area shape="rect" id="node2" href="$classastrohelion_1_1_arcset.html" title="Extends BaseArcset in a few areas. " alt="" coords="21,247,151,273"/>
+<area shape="rect" id="node3" href="$classastrohelion_1_1_base_arcset.html" title="Abstract class that provides the framework for trajectories and nodesets. " alt="" coords="5,171,167,197"/>
+<area shape="rect" id="node4" href="$classastrohelion_1_1_core.html" title="An object that serves as a parent to all Core objects. " alt="" coords="39,5,160,32"/>
+<area shape="rect" id="node5" href="$classastrohelion_1_1_sys_data.html" title="Contains information about a system, like mass ratio, primary names, etc. " alt="" coords="102,81,246,108"/>
+</map>

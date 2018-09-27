@@ -24,7 +24,7 @@ void freeLaws(std::vector<ControlLaw*>& laws){
  */
 BOOST_AUTO_TEST_CASE(FIND_2D_ANGLE){
 	char filename[] = "../../data/families/cr3bp-lt_earth-moon/"
-		"E1_Lyap_f7.0e-02_Hlt-1.558_law2112.mat";
+		"E1_f7.0e-02_Hlt-1.558_law2112.mat";
 	SysData_cr3bp_lt sys(filename);
 	Family_PO_cr3bp_lt fam(&sys);
 	std::vector<ControlLaw*> laws;
@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_CASE(FIND_2D_ANGLE){
  */
 BOOST_AUTO_TEST_CASE(FIND_HLT){
 	char filename[] = "../../data/families/cr3bp-lt_earth-moon/"
-		"E1_Lyap_f7.0e-02_alph000.00_law2112.mat";
+		"E1_f7.0e-02_alph000.00_law2112.mat";
 	SysData_cr3bp_lt sys(filename);
 	Family_PO_cr3bp_lt fam(&sys);
 	std::vector<ControlLaw*> laws;

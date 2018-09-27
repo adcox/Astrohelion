@@ -1468,7 +1468,7 @@ bool SimEngine::locateEvents(const double *y, double t, Arcset *pArcset, int pro
                 "  Event %d detected on segment %d; searching for exact crossing\n", ev, pArcset->getNumSegs());
             events[ev].incrementCount();  // Update the counter for the event
 
-            if(verbosity >= Verbosity_tp::ALL_MSG){ events[ev].printStatus(); }
+            if(verbosity >= Verbosity_tp::ALL_MSG){ events[ev].print(); }
 
             // Use correction to locate the event very accurately
             if(locateEvent_multShoot(y, t, ev, pArcset)){

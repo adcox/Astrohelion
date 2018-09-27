@@ -42,32 +42,14 @@ void freeMem(std::vector<ControlLaw*>& laws){
 
 int main(){
 	
-	char filename[] = "../../data/families/cr3bp-lt_earth-moon/"
-		"E2_Lyap_f7.0e-02_alph000.00_law2112.mat";
-	SysData_cr3bp_lt sys(filename);
-	
-	if(isColorOn())
-		std::printf("COLOR ON\n");
-	else
-		std::printf("COLOR OFF\n");
+	SysData_cr3bp sys("earth", "moon");
 
-
-	Family_PO_cr3bp_lt fam(&sys);
-	std::vector<ControlLaw*> laws;
-	fam.readFromMat(filename, laws);
-
-	double H = -1.55;
-	std::vector<Arcset_periodic> matches = fam.getMemberByH_lt(H);
-	for(unsigned int i = 0; i < matches.size(); i++){
-		Arcset_cr3bp_lt temp(matches[i]);
-		if(std::abs(temp.getHltByIx(0) - H) > 1e-9)
-			printErr("Hlt is not close to desired value");
-	}
+	std::vector<double> params {0.1};
+	Event evt(Event_tp::XZ_PLANE, 0, true, params);
+	evt.setStopCount(3);
+	evt.initialize(&sys);
 	
-	std::vector<double> elem = matches[0].getSTMElementsByIx(0);
-	std::cout << elem.size() << std::endl;
-	std::cout << std::sqrt(elem.size()) << std::endl;
-	
-	freeMem(laws);
+	evt.print();
+
 	return EXIT_SUCCESS;
 }

@@ -158,24 +158,24 @@ void SysData_cr3bp_lt::saveToMat(mat_t *matFile) const{
 	char p1_str[64];
 	std::strcpy(p1_str, primaries.at(0).c_str());
 	dims[1] = primaries.at(0).length();
-	matvar_t *p1_var = Mat_VarCreate("P1", MAT_C_CHAR, MAT_T_UINT8, 2, dims, &(p1_str[0]), MAT_F_DONT_COPY_DATA);
-	saveVar(matFile, p1_var, "P1", MAT_COMPRESSION_NONE);
+	matvar_t *p1_var = Mat_VarCreate(VARNAME_P1, MAT_C_CHAR, MAT_T_UINT8, 2, dims, &(p1_str[0]), MAT_F_DONT_COPY_DATA);
+	saveVar(matFile, p1_var, VARNAME_P1, MAT_COMPRESSION_NONE);
 
 	char p2_str[64];
 	std::strcpy(p2_str, primaries.at(1).c_str());
 	dims[1] = primaries.at(1).length();
-	matvar_t *p2_var = Mat_VarCreate("P2", MAT_C_CHAR, MAT_T_UINT8, 2, dims, &(p2_str[0]), MAT_F_DONT_COPY_DATA);
-	saveVar(matFile, p2_var, "P2", MAT_COMPRESSION_NONE);
+	matvar_t *p2_var = Mat_VarCreate(VARNAME_P2, MAT_C_CHAR, MAT_T_UINT8, 2, dims, &(p2_str[0]), MAT_F_DONT_COPY_DATA);
+	saveVar(matFile, p2_var, VARNAME_P2, MAT_COMPRESSION_NONE);
 
 	dims[1] = 1;	
 	double mu = otherParams[0];
-	matvar_t *mu_var = Mat_VarCreate("Mu", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &mu, MAT_F_DONT_COPY_DATA);
-	saveVar(matFile, mu_var, "Mu", MAT_COMPRESSION_NONE);
+	matvar_t *mu_var = Mat_VarCreate(VARNAME_MU, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &mu, MAT_F_DONT_COPY_DATA);
+	saveVar(matFile, mu_var, VARNAME_MU, MAT_COMPRESSION_NONE);
 
 	// Save mass in dimensional units
 	double m = getRefMass();
-	matvar_t *mass_var = Mat_VarCreate("Mass0", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &m, MAT_F_DONT_COPY_DATA);
-	saveVar(matFile, mass_var, "Mass0", MAT_COMPRESSION_NONE);
+	matvar_t *mass_var = Mat_VarCreate(VARNAME_M0, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &m, MAT_F_DONT_COPY_DATA);
+	saveVar(matFile, mass_var, VARNAME_M0, MAT_COMPRESSION_NONE);
 }//===================================================
 
 /**
@@ -184,14 +184,14 @@ void SysData_cr3bp_lt::saveToMat(mat_t *matFile) const{
  *	@param matFile a pointer to the Mat file in question
  */
 void SysData_cr3bp_lt::readFromMat(mat_t *matFile){
-	std::string P1 = astrohelion::readStringFromMat(matFile, "P1", MAT_T_UINT8, MAT_C_CHAR);
-	std::string P2 = astrohelion::readStringFromMat(matFile, "P2", MAT_T_UINT8, MAT_C_CHAR);
+	std::string P1 = astrohelion::readStringFromMat(matFile, VARNAME_P1, MAT_T_UINT8, MAT_C_CHAR);
+	std::string P2 = astrohelion::readStringFromMat(matFile, VARNAME_P2, MAT_T_UINT8, MAT_C_CHAR);
 
 	type = SysData_tp::CR3BP_LT_SYS;
 	otherParams.assign(4,0);
 	initFromPrimNames(P1, P2);
 
-	setRefMass(readDoubleFromMat(matFile, "Mass0"));
+	setRefMass(readDoubleFromMat(matFile, VARNAME_M0));
 }//===================================================
 
 

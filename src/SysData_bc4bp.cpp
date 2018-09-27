@@ -272,25 +272,25 @@ void SysData_bc4bp::saveToMat(mat_t *matFile) const{
 	char p1_str[64];
 	strcpy(p1_str, primaries.at(0).c_str());
 	dims[1] = primaries.at(0).length();
-	matvar_t *p1_var = Mat_VarCreate("P1", MAT_C_CHAR, MAT_T_UINT8, 2, dims, p1_str, MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(matFile, p1_var, "P1", MAT_COMPRESSION_NONE);
+	matvar_t *p1_var = Mat_VarCreate(VARNAME_P1, MAT_C_CHAR, MAT_T_UINT8, 2, dims, p1_str, MAT_F_DONT_COPY_DATA);
+	astrohelion::saveVar(matFile, p1_var, VARNAME_P1, MAT_COMPRESSION_NONE);
 
 	char p2_str[64];
 	strcpy(p2_str, primaries.at(1).c_str());
 	dims[1] = primaries.at(1).length();
-	matvar_t *p2_var = Mat_VarCreate("P2", MAT_C_CHAR, MAT_T_UINT8, 2, dims, &(p2_str[0]), MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(matFile, p2_var, "P2", MAT_COMPRESSION_NONE);
+	matvar_t *p2_var = Mat_VarCreate(VARNAME_P2, MAT_C_CHAR, MAT_T_UINT8, 2, dims, &(p2_str[0]), MAT_F_DONT_COPY_DATA);
+	astrohelion::saveVar(matFile, p2_var, VARNAME_P2, MAT_COMPRESSION_NONE);
 
 	char p3_str[64];
 	strcpy(p3_str, primaries.at(2).c_str());
 	dims[1] = primaries.at(2).length();
-	matvar_t *p3_var = Mat_VarCreate("P3", MAT_C_CHAR, MAT_T_UINT8, 2, dims, &(p3_str[0]), MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(matFile, p3_var, "P3", MAT_COMPRESSION_NONE);
+	matvar_t *p3_var = Mat_VarCreate(VARNAME_P3, MAT_C_CHAR, MAT_T_UINT8, 2, dims, &(p3_str[0]), MAT_F_DONT_COPY_DATA);
+	astrohelion::saveVar(matFile, p3_var, VARNAME_P3, MAT_COMPRESSION_NONE);
 
 	dims[1] = 1;
 	double mu = otherParams[0];
-	matvar_t *mu_var = Mat_VarCreate("Mu", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &mu, MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(matFile, mu_var, "Mu", MAT_COMPRESSION_NONE);
+	matvar_t *mu_var = Mat_VarCreate(VARNAME_P3, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &mu, MAT_F_DONT_COPY_DATA);
+	astrohelion::saveVar(matFile, mu_var, VARNAME_P3, MAT_COMPRESSION_NONE);
 
 	double nu = otherParams[1];
 	matvar_t *nu_var = Mat_VarCreate("Nu", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &nu, MAT_F_DONT_COPY_DATA);
@@ -326,9 +326,9 @@ void SysData_bc4bp::saveToMat(mat_t *matFile) const{
  *	@param matFile a pointer to the mat file in question
  */
 void SysData_bc4bp::readFromMat(mat_t *matFile){
-	std::string P1 = astrohelion::readStringFromMat(matFile, "P1", MAT_T_UINT8, MAT_C_CHAR);
-	std::string P2 = astrohelion::readStringFromMat(matFile, "P2", MAT_T_UINT8, MAT_C_CHAR);
-	std::string P3 = astrohelion::readStringFromMat(matFile, "P3", MAT_T_UINT8, MAT_C_CHAR);
+	std::string P1 = astrohelion::readStringFromMat(matFile, VARNAME_P1, MAT_T_UINT8, MAT_C_CHAR);
+	std::string P2 = astrohelion::readStringFromMat(matFile, VARNAME_P2, MAT_T_UINT8, MAT_C_CHAR);
+	std::string P3 = astrohelion::readStringFromMat(matFile, VARNAME_P3, MAT_T_UINT8, MAT_C_CHAR);
 	
 	numPrimaries = 3;
 	type = SysData_tp::BCR4BPR_SYS;

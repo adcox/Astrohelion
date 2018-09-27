@@ -74,6 +74,16 @@ static const char VARNAME_2BP_ENERGY[] = "energy";			//!< Matlab file variable n
 static const char VARNAME_ANGMOM[] = "angMom";				//!< Matlab file variable name for angular momentum data
 static const char VARNAME_ECC[] = "ecc";					//!< Matlab file variable name for eccentricity data
 static const char VARNAME_SMA[] = "sma";					//!< Matlab file variable name for semimajor axis data
+static const char VARNAME_GM[] = "GM";
+
+// Matlab File Name Variables for CR3BP
+static const char VARNAME_P1[] = "P1";
+static const char VARNAME_P2[] = "P2";
+static const char VARNAME_P3[] = "P3";
+static const char VARNAME_MU[] = "Mu";
+
+// Matlab File Name Variables for CR3BP-LT
+static const char VARNAME_M0[] = "Mass0";
 
 // Matlab File Name Variables for General Arcset
 static const char VARNAME_LINKTABLE[] = "LinkTable";		//!< Matlab file variable name for the segment link table
@@ -84,7 +94,6 @@ static const char VARNAME_NODETIME[] = "NodeTime";			//!< Matlab file variable n
 static const char VARNAME_SEGCTRL[] = "SegCtrl";			//!< Matlab file variable name for Segment control structure
 static const char VARNAME_SEGSTATE[] = "SegState";			//!< Matlab file variable name for segment state vectors
 static const char VARNAME_SEGTIME[] = "SegTime";			//!< Matlab file variable name for segment time vectors
-static const char VARNAME_SEGTOF[] = "SegTOF";				//!< Matlab file variable name for segment time-of-flight values
 
 static const char VARNAME_STATE_DERIV[] = "qdot";			//!< Matlab file variable name for state derivative data
 static const char VARNAME_STM[] = "STM";					//!< Matlab file variable name for state transition matrix data
@@ -94,6 +103,18 @@ static const char VARNAME_TOF[] = "TOF";					//!< Matlab file variable name for 
 static const char VARNAME_CTRL_LAW[] = "CtrlLaw";			//!< Matlab file variable name for control law data
 static const char VARNAME_JACOBI[] = "Jacobi";				//!< Matlab file variable name for Jacobi constant data
 static const char VARNAME_STATE_EPOCH_DERIV[] = "dqdT";		//!< Matlab file variable name for state derivative w.r.t. epoch
+
+// Matlab File Name Variables for Events
+static const char VARNAME_EVT_TP[] = "Type";
+static const char VARNAME_EVT_DIR[] = "TriggerDir";
+static const char VARNAME_EVT_STOP[] = "StopProp";
+static const char VARNAME_EVT_PARAM[] = "Params";
+static const char VARNAME_EVT_STOPCOUNT[] = "StopCount";
+
+// Matlab File Name Variables for Control Law
+static const char VARNAME_CTRL_TP[] = "Type";
+static const char VARNAME_CTRL_NSTATE[] = "NumStates";
+static const char VARNAME_CTRL_PARAM[] = "Params";
 
 // Deprecated Matlab file variable names
 static const char VARNAME_DEP_EPOCH[] = "Epoch";			//!< Matlab file variable name for epoch data
@@ -110,7 +131,6 @@ static const char PARAMKEY_JACOBI[] = "J";					//!< ExtraParam map key for Jacob
 static const char PARAMKEY_SMA[] = "sma";					//!< ExtraParam map key for semimajor axis data
 static const char PARAMKEY_STATE_DERIV[] = "qdot";			//!< ExtraParam map key for state derivative data
 static const char PARAMKEY_STATE_EPOCH_DERIV[] = "dqdT";	//!< ExtraParam map key for state derivative w.r.t. epoch 
-
 
 // Timestamps for file versioning
 static const char T_V1_9[] = "19:15:00UTC 02/02/2018";		// Switch all low-thrust magnitudes to store as sqrt(f)

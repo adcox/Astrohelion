@@ -2234,9 +2234,139 @@ void BaseArcset::printSegIDMap() const{
 	}
 }//====================================================
 
-//-------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+//      Data Parsing Functions
+//------------------------------------------------------------------------------
+
+/**
+ * @brief Construct the link table representation of this arcset
+ * 
+ * @param linkTable Reference to a vector that will be populated with link table
+ * data in row-major order
+ */
+void BaseArcset::getLinkTable(std::vector<int> &linkTable) const{
+	unsigned int numSegs = segs.size();
+	linkTable = std::vector<int>(numSegs*4, Linkable::INVALID_ID);
+
+	// Store data in column-major order
+	for(unsigned int s = 0; s < numSegs; s++){
+		linkTable[0*numSegs + s] = segs[s].getID();
+
+		if(segs[s].getOrigin() != Linkable::INVALID_ID)
+			linkTable[1*numSegs + s] = nodeIDMap.at(segs[s].getOrigin());
+
+		if(segs[s].getTerminus() != Linkable::INVALID_ID)
+			linkTable[2*numSegs + s] = nodeIDMap.at(segs[s].getTerminus());
+
+		linkTable[3*numSegs + s] = astrohelion::sign(segs[s].getTOF());
+	}
+}//====================================================
+
+/**
+ * @brief Extract node states for entire arcset into a vector
+ * 
+ * @param nodeStates Reference to a vector that will be populated with the node 
+ * state data. The data is stored in column-major order (i.e., each column
+ * is a node state) and the nodes are retrieved in order of their index.
+ */
+void BaseArcset::getNodeStates(std::vector<double>& nodeStates) const{
+	unsigned int nStates = pSysData->getDynamicsModel()->getCoreStateSize();
+	unsigned int nNodes = nodes.size();
+	nodeStates = std::vector<double>(nStates*nNodes, NAN);
+
+	unsigned int r = 0, c = 0;
+	for(r = 0; r < nNodes; r++){
+		std::vector<double> state = nodes[r].getState();
+
+		if(state.size() < nStates){
+			char msg[256];
+			sprintf(msg, "BaseArcset::createVar_NodeStates: "
+				"State vector, length %zu, is less than core state size: %u",
+				state.size(), nStates);
+			throw Exception(msg);
+		}
+
+		for(c = 0; c < nStates; c++){
+			nodeStates[c*nNodes + r] = state[c];
+		}
+	}
+}//====================================================
+
+/**
+ * @brief Extract node epochs for entire arcset into a vector
+ * 
+ * @param epochs Reference to a vector that will be populated with the node
+ * epochs
+ */
+void BaseArcset::getNodeEpochs(std::vector<double>& epochs) const{
+	epochs = std::vector<double>(nodes.size());
+
+	for(unsigned int n = 0; n < nodes.size(); n++){
+		epochs[n] = nodes[n].getEpoch();
+	}
+}//====================================================
+
+void BaseArcset::getNodeStateDeriv(std::vector<double>& allDeriv) const{
+	unsigned int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
+	allDeriv = std::vector<double>(stateSize*nodes.size());
+
+	for(unsigned int r = 0; r < nodes.size(); r++){
+		std::vector<double> deriv(stateSize, NAN);
+		try{
+			deriv = nodes[r].getExtraParamVec(PARAMKEY_STATE_DERIV);
+		}catch(const Exception &e){
+			// printErr("Unable to get acceleration vector for node %u\n", r);
+		}
+
+		for(unsigned int c = 0; c < deriv.size(); c++){
+			allDeriv[c*nodes.size() + r] = deriv[c];
+		}
+	}
+}//====================================================
+
+void BaseArcset::getNodeExtraParamVec(std::string varKey, size_t len,
+	std::vector<double>& param) const{
+
+	// Get the specified coordinate
+	param = std::vector<double>(nodes.size()*len);
+	for(unsigned int r = 0; r < nodes.size(); r++){
+		// Save NAN (rather than un-allocated memory) if the node does not have 
+		// the specified parameter
+		std::vector<double> vec(len, NAN);
+
+		try{
+			vec = nodes[r].getExtraParamVec(varKey);
+			for(unsigned int c = 0; c < vec.size(); c++){
+				if(c >= len)
+					break;
+
+				param[c*nodes.size() + r] = vec[c];
+			}
+		}catch(const Exception &e){
+			// Save NAN (rather than un-allocated memory) if the node does not 
+			// have the specified parameter
+			for(unsigned int c = 0; c < len; c++)
+				param[c*nodes.size() + r] = vec[c];
+		}
+	}
+}//====================================================
+
+void BaseArcset::getNodeExtraParam(std::string varKey, std::vector<double> &param) const{
+	// Get the specified coordinate
+	param = std::vector<double>(nodes.size());
+	for(unsigned int r = 0; r < nodes.size(); r++){
+		try{
+			param[r] = nodes[r].getExtraParam(varKey);
+		}catch(const Exception &e){
+			// Save NAN (rather than un-allocated memory) if the node does not have the specified parameter
+			param[r] = NAN;
+		}
+	}
+}//====================================================
+
+//------------------------------------------------------------------------------
 //      File I/O Utility Functions
-//-------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 /**
  *  @brief Create a matio variable for the link table
@@ -2248,25 +2378,14 @@ void BaseArcset::printSegIDMap() const{
  */
 matvar_t* BaseArcset::createVar_LinkTable(const char *pVarName) const{
 	unsigned int numSegs = segs.size();
-	std::vector<int> segTable(numSegs*4, Linkable::INVALID_ID);
 
-	// Store data in column-major order
-	for(unsigned int s = 0; s < numSegs; s++){
-		segTable[0*numSegs + s] = segs[s].getID();
-
-		if(segs[s].getOrigin() != Linkable::INVALID_ID)
-			segTable[1*numSegs + s] = nodeIDMap.at(segs[s].getOrigin());
-
-		if(segs[s].getTerminus() != Linkable::INVALID_ID)
-			segTable[2*numSegs + s] = nodeIDMap.at(segs[s].getTerminus());
-
-		segTable[3*numSegs + s] = astrohelion::sign(segs[s].getTOF());
-	}
+	std::vector<int> linkTable {};
+	getLinkTable(linkTable);
 
 	// DO copy the data (it is freed at the end of the function!)
 	size_t dims[2] = {numSegs, 4};
 	return Mat_VarCreate(pVarName, MAT_C_INT32, MAT_T_INT32, 2, dims, 
-		&(segTable.front()), 0);
+		&(linkTable.front()), 0);
 }//====================================================
 
 /**
@@ -2347,23 +2466,8 @@ matvar_t* BaseArcset::createVar_NodeState(Save_tp saveTp, const char *pVarName) 
 	// in column-major order, so we transpose our vector and split it into two smaller ones
 	unsigned int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
 	unsigned int numNodes = nodes.size();
-	std::vector<double> posVel(stateSize*numNodes, NAN);
-
-	for(unsigned int r = 0; r < numNodes; r++){
-		std::vector<double> state = nodes[r].getState();
-
-		if(state.size() < stateSize){
-			char msg[256];
-			sprintf(msg, "BaseArcset::createVar_NodeStates: "
-				"State vector, length %zu, is less than core state size: %u",
-				state.size(), stateSize);
-			throw Exception(msg);
-		}
-
-		for(unsigned int c = 0; c < stateSize; c++){
-			posVel[c*numNodes + r] = state[c];
-		}
-	}
+	std::vector<double> posVel {};
+	getNodeStates(posVel);
 
 	// Next, create a matlab variable for the state and save it to the file
 	/*	Create a matlab variable. Arguments are:
@@ -2384,7 +2488,8 @@ matvar_t* BaseArcset::createVar_NodeState(Save_tp saveTp, const char *pVarName) 
 	 *							MAT_F_LOGICAL: this variable is a logical variable
 	 */
 	size_t dims[2] = {numNodes, stateSize};
-	return Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(posVel.front()), 0);	// Do copy the data (it is freed at the end of the function!)
+	return Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, 
+		&(posVel.front()), 0);	// Do copy the data (it is freed at the end of the function!)
 }//====================================================
 
 /**
@@ -2398,14 +2503,12 @@ matvar_t* BaseArcset::createVar_NodeState(Save_tp saveTp, const char *pVarName) 
  */
 matvar_t* BaseArcset::createVar_NodeEpoch(Save_tp saveTp, const char *pVarName) const{
 	(void) saveTp;
-	std::vector<double> allEpochs(nodes.size());
-
-	for(unsigned int n = 0; n < nodes.size(); n++){
-		allEpochs[n] = nodes[n].getEpoch();
-	}
+	std::vector<double> allEpochs {};
+	getNodeEpochs(allEpochs);
 	
 	size_t dims[2] = {allEpochs.size(), 1};
-	return Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(allEpochs[0]), 0);	// Do copy the data (it is freed at the end of the function!)
+	return Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, 
+		&(allEpochs[0]), 0);	// Do copy the data (it is freed at the end of the function!)
 }//====================================================
 
 /**
@@ -2420,26 +2523,12 @@ matvar_t* BaseArcset::createVar_NodeEpoch(Save_tp saveTp, const char *pVarName) 
 matvar_t* BaseArcset::createVar_NodeStateDeriv(Save_tp saveTp, const char *pVarName) const{
 	(void) saveTp;
 	unsigned int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
-
-	// We store data in row-major order, but the Matlab file-writing algorithm takes data
-	// in column-major order, so we transpose our vector and split it into two smaller ones
-	std::vector<double> deriv_colMaj(stateSize*nodes.size());
-
-	for(unsigned int r = 0; r < nodes.size(); r++){
-		std::vector<double> deriv(stateSize, NAN);
-		try{
-			deriv = nodes[r].getExtraParamVec(PARAMKEY_STATE_DERIV);
-		}catch(const Exception &e){
-			// printErr("Unable to get acceleration vector for node %u\n", r);
-		}
-
-		for(unsigned int c = 0; c < deriv.size(); c++){
-			deriv_colMaj[c*nodes.size() + r] = deriv[c];
-		}
-	}
+	std::vector<double> deriv_colMaj {};
+	getNodeStateDeriv(deriv_colMaj);
 	
 	size_t dims[2] = {nodes.size(), stateSize};
-	return Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(deriv_colMaj[0]), 0);	// Do copy the data (it is freed at the end of the function!)
+	return Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims,
+		&(deriv_colMaj[0]), 0);	// Do copy the data (it is freed at the end of the function!)
 }//====================================================
 
 /**
@@ -2458,28 +2547,12 @@ matvar_t* BaseArcset::createVar_NodeExtraParamVec(std::string varKey, size_t len
 
 	(void) saveTp;
 	// Get the specified coordinate
-	std::vector<double> param(nodes.size()*len);
-	for(unsigned int r = 0; r < nodes.size(); r++){
-		// Save NAN (rather than un-allocated memory) if the node does not have the specified parameter
-		std::vector<double> vec(len, NAN);
-
-		try{
-			vec = nodes[r].getExtraParamVec(varKey);
-			for(unsigned int c = 0; c < vec.size(); c++){
-				if(c >= len)
-					break;
-
-				param[c*nodes.size() + r] = vec[c];
-			}
-		}catch(const Exception &e){
-			// Save NAN (rather than un-allocated memory) if the node does not have the specified parameter
-			for(unsigned int c = 0; c < len; c++)
-				param[c*nodes.size() + r] = vec[c];
-		}
-	}
+	std::vector<double> param {};
+	getNodeExtraParamVec(varKey, len, param);
 
 	size_t dims[2] = {nodes.size(), len};
-	return Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(param[0]), 0);	// Do copy the data (it is freed at the end of the function!)
+	return Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, 
+		&(param[0]), 0);	// Do copy the data (it is freed at the end of the function!)
 }//====================================================
 
 /**
@@ -2497,15 +2570,8 @@ matvar_t* BaseArcset::createVar_NodeExtraParam(std::string varKey,
 
 	(void) saveTp;
 	// Get the specified coordinate
-	std::vector<double> param(nodes.size());
-	for(unsigned int r = 0; r < nodes.size(); r++){
-		try{
-			param[r] = nodes[r].getExtraParam(varKey);
-		}catch(const Exception &e){
-			// Save NAN (rather than un-allocated memory) if the node does not have the specified parameter
-			param[r] = NAN;
-		}
-	}
+	std::vector<double> param {};
+	getNodeExtraParam(varKey, param);
 
 	size_t dims[2] = {nodes.size(), 1};
 	return Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(param[0]), 0);	// Do copy the data (it is freed at the end of the function!)
@@ -2756,7 +2822,8 @@ matvar_t* BaseArcset::createVar_SegCtrlLaw(Save_tp saveTp, const char *pVarName)
 	size_t struct_dims[] = {segs.size(),1};
 	
 	unsigned int nfields = 3;
-	const char *fieldnames[3] = {"Type", "NumStates", "Params"};
+	const char *fieldnames[3] = {VARNAME_CTRL_TP, VARNAME_CTRL_NSTATE, 
+		VARNAME_CTRL_PARAM};
 
 	matvar_t *pMatVar = Mat_VarCreateStruct(pVarName, 2, struct_dims, fieldnames, nfields);
 	if(pMatVar == nullptr){
@@ -2811,53 +2878,9 @@ bool BaseArcset::readVar_LinkTable(matvar_t *pVar){
 		}
 
 		if(pVar->class_type == MAT_C_INT32 && pVar->data_type == MAT_T_INT32){
-			int *data = static_cast<int *>(pVar->data);
+			int *pData = static_cast<int *>(pVar->data);
 
-			if(data != nullptr){
-				// Step 0: Clear all variables
-				nodes.clear();
-				segs.clear();
-				nodeIDMap.clear();
-				segIDMap.clear();
-				nextNodeID = 0;
-				nextSegID = 0;
-
-				// Step 1: Count the unique node indices to get a count of the number of nodes
-				std::vector<int> nodeIxs;
-				for(unsigned int s = 0; s < numSegs; s++){
-					int oldOriginIx = data[1*numSegs + s];
-					int oldTerminusIx = data[2*numSegs + s];
-
-					if(oldOriginIx != Linkable::INVALID_ID && std::find(nodeIxs.begin(), nodeIxs.end(), oldOriginIx) == nodeIxs.end())
-						nodeIxs.push_back(oldOriginIx);
-
-					if(oldTerminusIx != Linkable::INVALID_ID && std::find(nodeIxs.begin(), nodeIxs.end(), oldTerminusIx) == nodeIxs.end())
-						nodeIxs.push_back(oldTerminusIx);
-				}
-
-				if(nodeIxs.size() == 0)
-					throw Exception("BaseArcset::readVar_LinkTable: No nodes linked from segments... not built to handle this");
-
-				unsigned int numNodes = *std::max_element(nodeIxs.begin(), nodeIxs.end()) + 1;
-
-				// Step 2: Create the nodes; index = id in this case
-				for(unsigned int n = 0; n < numNodes; n++){
-					addNode(Node());	// updates the nextNodeID counter and the nodeIDMap
-				}
-
-				// Step 3: Create the segments: Use the link indices from the link table to get
-				// the correct link network.
-				for(unsigned int s = 0; s < numSegs; s++){
-					// The fourth column lists +1 for forward-time and -1 for reverse-time
-					// Updates the nextSegID counter and the segIDMap
-					addSeg(Segment(data[1*numSegs + s], data[2*numSegs + s], data[3*numSegs + s]));
-				}
-
-				// std::cout << "tempNodeIDMap:\n";
-				// for(auto it = tempNodeIDMap.cbegin(); it != tempNodeIDMap.cend(); ++ it){
-				// 	std::cout << it->first << " -> " << it->second << std::endl;
-				// }
-			}
+			initFromLinktable(pData, numSegs);
 		}
 	}
 	return true;
@@ -3667,5 +3690,61 @@ void BaseArcset::initNodesSegsFromMat(mat_t *pMatFile, const char* pVarName){
 	}
 	Mat_VarFree(pStateMat);
 }//======================================================
+
+/**
+ * @brief Initialize the arcset from a link table
+ * @details This function creates Nodes and Segments to satisfy the link table
+ * but does not populate them with data
+ * 
+ * @param pData pointer to the link table data, stored in row-major order
+ * @param nSegs numer of rows in the link table, i.e., the number of segments
+ */
+void BaseArcset::initFromLinktable(const int *pData, unsigned int nSegs){
+	if(pData != nullptr){
+		// Step 0: Clear all variables
+		nodes.clear();
+		segs.clear();
+		nodeIDMap.clear();
+		segIDMap.clear();
+		nextNodeID = 0;
+		nextSegID = 0;
+
+		// Step 1: Count the unique node indices to get a count of the number of nodes
+		std::vector<int> nodeIxs;
+		for(unsigned int s = 0; s < nSegs; s++){
+			int oldOriginIx = pData[1*nSegs + s];
+			int oldTerminusIx = pData[2*nSegs + s];
+
+			if(oldOriginIx != Linkable::INVALID_ID && std::find(nodeIxs.begin(), nodeIxs.end(), oldOriginIx) == nodeIxs.end())
+				nodeIxs.push_back(oldOriginIx);
+
+			if(oldTerminusIx != Linkable::INVALID_ID && std::find(nodeIxs.begin(), nodeIxs.end(), oldTerminusIx) == nodeIxs.end())
+				nodeIxs.push_back(oldTerminusIx);
+		}
+
+		if(nodeIxs.size() == 0)
+			throw Exception("BaseArcset::initFromLinktable: No nodes linked from segments... not built to handle this");
+
+		unsigned int numNodes = *std::max_element(nodeIxs.begin(), nodeIxs.end()) + 1;
+
+		// Step 2: Create the nodes; index = id in this case
+		for(unsigned int n = 0; n < numNodes; n++){
+			addNode(Node());	// updates the nextNodeID counter and the nodeIDMap
+		}
+
+		// Step 3: Create the segments: Use the link indices from the link table to get
+		// the correct link network.
+		for(unsigned int s = 0; s < nSegs; s++){
+			// The fourth column lists +1 for forward-time and -1 for reverse-time
+			// Updates the nextSegID counter and the segIDMap
+			addSeg(Segment(pData[1*nSegs + s], pData[2*nSegs + s], pData[3*nSegs + s]));
+		}
+
+		// std::cout << "tempNodeIDMap:\n";
+		// for(auto it = tempNodeIDMap.cbegin(); it != tempNodeIDMap.cend(); ++ it){
+		// 	std::cout << it->first << " -> " << it->second << std::endl;
+		// }
+	}
+}//====================================================
 
 }// END of Astrohelion namespace

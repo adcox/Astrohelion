@@ -639,9 +639,19 @@ const char* Event::getEventTpStr(Event_tp t){
 /**
  *	@brief Print out a discription of the event
  */
-void Event::printStatus() const{
+void Event::print() const{
 	printf("Event: Type = %s, Trigger Dir = %d, KillSim = %s\n", getTypeStr(), triggerDir, 
 		bStop ? "YES" : "NO");
+	printf("  Constraint type = %s\n", Constraint::getConTypeStr(conType));
+	printf("   * data = [");
+	for(unsigned int i = 0; i < conData.size(); i++){
+		if(i < conData.size()-1)
+			printf("%.4f, ", conData[i]);
+		else
+			printf("%.4f", conData[i]);
+	}
+	printf("]\n");
+	printf("  Trigger Count: %d/%d\n", triggerCount, stopCount);
 	printf("  Dist: %e Last Dist: %e\n", dist, lastDist);
 }//====================================================
 

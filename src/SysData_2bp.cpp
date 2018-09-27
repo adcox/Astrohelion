@@ -155,13 +155,13 @@ void SysData_2bp::saveToMat(mat_t *matFile) const{
 	char p1_str[64];
 	strcpy(p1_str, primaries.at(0).c_str());
 	dims[1] = primaries.at(0).length();
-	matvar_t *p1_var = Mat_VarCreate("P1", MAT_C_CHAR, MAT_T_UINT8, 2, dims, &(p1_str[0]), MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(matFile, p1_var, "P1", MAT_COMPRESSION_NONE);
+	matvar_t *p1_var = Mat_VarCreate(VARNAME_P1, MAT_C_CHAR, MAT_T_UINT8, 2, dims, &(p1_str[0]), MAT_F_DONT_COPY_DATA);
+	astrohelion::saveVar(matFile, p1_var, VARNAME_P1, MAT_COMPRESSION_NONE);
 
 	dims[1] = 1;
 	double mu = otherParams[0];
-	matvar_t *mu_var = Mat_VarCreate("Mu", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &mu, MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(matFile, mu_var, "Mu", MAT_COMPRESSION_NONE);
+	matvar_t *mu_var = Mat_VarCreate(VARNAME_GM, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &mu, MAT_F_DONT_COPY_DATA);
+	astrohelion::saveVar(matFile, mu_var, VARNAME_GM, MAT_COMPRESSION_NONE);
 }//===================================================
 
 /**
@@ -170,7 +170,7 @@ void SysData_2bp::saveToMat(mat_t *matFile) const{
  *	@param matFile a pointer to the Mat file in question
  */
 void SysData_2bp::readFromMat(mat_t *matFile){
-	std::string P1 = astrohelion::readStringFromMat(matFile, "P1", MAT_T_UINT8, MAT_C_CHAR);
+	std::string P1 = astrohelion::readStringFromMat(matFile, VARNAME_P1, MAT_T_UINT8, MAT_C_CHAR);
 
 	numPrimaries = 1;
 	type = SysData_tp::R2BP_SYS;

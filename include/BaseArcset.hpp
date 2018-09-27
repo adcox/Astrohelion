@@ -201,6 +201,7 @@ public:
 	 *  \name Utility Functions
 	 *  \{
 	 */
+	void initFromLinktable(const int*, unsigned int);
 	void reset();
 	void printInChrono() const;
 	void printNodeIDMap() const;
@@ -210,6 +211,18 @@ public:
 	 *	@brief Displays a useful messages about the object
 	 */
 	virtual void print() const = 0;
+	//\}
+
+	/**
+	 *  \name Data Parsing Functions
+	 *  \{
+	 */
+	void getLinkTable(std::vector<int>&) const;
+	void getNodeStates(std::vector<double>&) const;
+	void getNodeEpochs(std::vector<double>&) const;
+	void getNodeStateDeriv(std::vector<double>&) const;
+	void getNodeExtraParamVec(std::string, size_t, std::vector<double>&) const;
+	void getNodeExtraParam(std::string, std::vector<double>&) const;
 	//\}
 
 	/**

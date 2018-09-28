@@ -141,7 +141,7 @@ std::vector<Event> SimEngine::getEvents() const { return events; }
  *  @return the index of the event within the events vector; returns -1 
  *  if the event is a duplicate and has not been added to the vector.
  */
-int SimEngine::addEvent(Event evt){
+int SimEngine::addEvent(const Event &evt){
     // Make sure this event hasn't been added before
     for(unsigned int e = 0; e < events.size(); e++){
         if(events[e] == evt){

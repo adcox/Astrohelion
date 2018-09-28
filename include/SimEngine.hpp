@@ -139,6 +139,7 @@ class SimEngine : public Core, public Engine{
 		bool usesRevTime() const;
 		bool usesVarStepSize() const;
 		
+		int addEvent(const Event&);
 		void setAbsTol(double);
 		void setFixStepInteg(Integ_tp);
 		void setMakeDefaultEvents(bool);
@@ -155,7 +156,6 @@ class SimEngine : public Core, public Engine{
 		 *  \name Analysis Functions
 		 *  \{
 		 */
-		int addEvent(Event);
 
 		// Assume t0, ctrl0, stm0
 		void runSim(const std::vector<double> &ic, double tof, Arcset *arcset, 

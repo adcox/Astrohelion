@@ -135,6 +135,8 @@ public:
 	 * \{
 	 */
 	void reset();
+	static const char* manType2Str(Manifold_tp);
+	static const char* stepType2Str(Manifold_StepOff_tp);
 	//\}
 private:
 

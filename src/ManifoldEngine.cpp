@@ -745,4 +745,27 @@ bool ManifoldEngine::compareCDouble(cdouble lhs, cdouble rhs){
 	return std::abs(lhs) < std::abs(rhs);
 }//====================================================
 
+const char* ManifoldEngine::manType2Str(Manifold_tp tp){
+    switch(tp){
+        case Manifold_tp::MAN_ALL: return "All Manifolds";
+        case Manifold_tp::MAN_U: return "Unstable Manifolds";
+        case Manifold_tp::MAN_U_RIGHT: return "Unstable Manifolds (+x)";
+        case Manifold_tp::MAN_U_LEFT: return "Unstable Manifolds (-x)";
+        case Manifold_tp::MAN_S: return "Stable Manifolds";
+        case Manifold_tp::MAN_S_RIGHT: return "Stable Manifolds (+x)";
+        case Manifold_tp::MAN_S_LEFT: return "Stable Manifolds (-x)";
+    }
+    return "UNKNOWN VALUE";
+}//====================================================
+
+const char* ManifoldEngine::stepType2Str(Manifold_StepOff_tp tp){
+    switch(tp){
+        case Manifold_StepOff_tp::STEP_MATCH_JC: return "Match Jacobi";
+        case Manifold_StepOff_tp::STEP_VEC_NORMPOS: return "Normalize by Position";
+        case Manifold_StepOff_tp::STEP_VEC_NORMFULL: return "Normalize by Full Vector";
+    }
+    return "UNKOWN VALUE";
+}//====================================================
+
+
 }// End of Astrohelion Namespace

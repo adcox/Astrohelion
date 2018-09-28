@@ -561,7 +561,7 @@ void DynamicsModel_cr3bp_lt::getEquilibPt(const SysData_cr3bp_lt *pSys, int L, d
                         initSol[2] = r13*sin(sgn*theta);
                     }else{
                         char msg[128];
-                        sprintf(msg, "DynamicsModel_cr3bp_lt::getEquilibPt: "
+                        snprintf(msg, 128, "DynamicsModel_cr3bp_lt::getEquilibPt: "
                             "Did not catch imaginary number in L%d at "
                             "alpha = 0", L);
                         throw Exception(msg);
@@ -582,14 +582,14 @@ void DynamicsModel_cr3bp_lt::getEquilibPt(const SysData_cr3bp_lt *pSys, int L, d
                         initSol[2] = r13*sin(sgn*theta);
                     }else{
                         char msg[128];
-                        sprintf(msg, "DynamicsModel_cr3bp_lt::getEquilibPt: "
+                        snprintf(msg, 128, "DynamicsModel_cr3bp_lt::getEquilibPt: "
                             "Could not compute initial value for L%d", L);
                         throw Exception(msg);
                     }
                 }else{
                     // This shouldn't happen for "reasonable" values of f
                     char msg[128];
-                    sprintf(msg, "DynamicsModel_cr3bp_lt::getEquilibPt: "
+                    snprintf(msg, 128, "DynamicsModel_cr3bp_lt::getEquilibPt: "
                         "f = %e is too large for analytical solution for L4/5",
                         f);
                     throw Exception(msg);
@@ -630,7 +630,7 @@ void DynamicsModel_cr3bp_lt::getEquilibPt(const SysData_cr3bp_lt *pSys, int L, d
                     default:
                     {
                         char msg[128];
-                        sprintf(msg, "DynamicsModel_cr3bp_lt::getEquilibPt:"
+                        snprintf(msg, 128, "DynamicsModel_cr3bp_lt::getEquilibPt:"
                             " Invalid L = %d in Newton-Raphson process", L);
                         throw Exception(msg);
                     }
@@ -639,7 +639,7 @@ void DynamicsModel_cr3bp_lt::getEquilibPt(const SysData_cr3bp_lt *pSys, int L, d
 
             if(std::abs(gamma - gamma_prev) > tol){
                 char msg[128];
-                sprintf(msg, "DynamicsModel_cr3bp_lt::getEquilibPt: "
+                snprintf(msg, 128, "DynamicsModel_cr3bp_lt::getEquilibPt: "
                     "L%d Newton process did not converge for alpha = 0", L);
                 throw Exception(msg);
             }
@@ -890,10 +890,13 @@ void DynamicsModel_cr3bp_lt::getEquilibPt(const SysData_cr3bp_lt *pSys, int L, d
             outerCount++;
         }// End of loop
 
-        if(reachedEnd)
-            printVerb(verb >= Verbosity_tp::SOME_MSG, "L%d loop ended because reachedEnd = true\n", L);
-        else if(outerCount < maxOuterCount)
-            printVerb(verb >= Verbosity_tp::SOME_MSG, "L%d loop ended due to iteration max-out\n", L);
+        if(reachedEnd){
+            printVerb(verb >= Verbosity_tp::SOME_MSG, "L%d loop ended because "
+                "reachedEnd = true\n", L);
+        }else if(outerCount < maxOuterCount){
+            printVerb(verb >= Verbosity_tp::SOME_MSG, "L%d loop ended due to "
+                "iteration max-out\n", L);
+        }
 
         
         if(L <= 3){

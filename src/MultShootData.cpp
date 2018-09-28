@@ -285,7 +285,8 @@ void MSVarMap_Obj::init(){
 		default: 
 		{
 			char msg[128];
-			sprintf(msg, "MSVarMap_Obj::init: Unrecognized type: %s", MSVarMap_Key::type2str(key.type));
+			snprintf(msg, 128, "MSVarMap_Obj::init: Unrecognized type: %s", 
+				MSVarMap_Key::type2str(key.type));
 			throw Exception(msg);
 		}
 	}
@@ -378,7 +379,7 @@ MSVarMap_Obj MultShootData::getVarMap_obj(MSVar_tp type, int refID) const{
 		// printf("}\n");
 		
 		char msg[128];
-		sprintf(msg, "MultShootData::getVarMap_obj: Attempted to access "
+		snprintf(msg, 128, "MultShootData::getVarMap_obj: Attempted to access "
 			"MSVar_tp %s, refID %d\n"
 			"This object does not exist", MSVarMap_Key::type2str(type), refID);
 		throw Exception(msg);

@@ -403,12 +403,14 @@ void exchange(unsigned int ix, unsigned int ix_move, std::vector<double>& perms,
 
     char msg[128];
     if(ix >= A.cols() || ix >= n){
-        sprintf(msg, "Calculations:exchange: ix = %u is out of range for A (%ux%ld)", ix, n, A.cols());
+        snprintf(msg, 128, "Calculations:exchange: ix = %u is out of range "
+            "for A (%ux%ld)", ix, n, A.cols());
         throw Exception(msg);
     }
 
     if(ix_move >= A.cols() || ix_move >= n){
-        sprintf(msg, "Calculations:exchange: ix_move = %u is out of range for A (%ux%ld)", ix_move, n, A.cols());
+        snprintf(msg, 128, "Calculations:exchange: ix_move = %u is out of "
+            "range for A (%ux%ld)", ix_move, n, A.cols());
         throw Exception (msg);
     }
 

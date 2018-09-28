@@ -164,7 +164,7 @@ void Core_Initializer::runInit(){
 
 	// Set settings SPICE filepath to the default location in the user's home directory
 	char spiceFilepath[256];
-	sprintf(spiceFilepath, "%s%s", pw->pw_dir, "/.config/astrohelion/spice/");
+	snprintf(spiceFilepath, 256, "%s%s", pw->pw_dir, "/.config/astrohelion/spice/");
 	settings.spice_data_filepath = std::string(spiceFilepath);
 
 	// Define names of settings files
@@ -183,7 +183,8 @@ void Core_Initializer::runInit(){
 		case OS_tp::apple:
 		case OS_tp::linux:
 		default:
-			sprintf(settingsFilepath, "%s%s", pw->pw_dir, "/.config/astrohelion/");
+			snprintf(settingsFilepath, 256, "%s%s", pw->pw_dir, 
+				"/.config/astrohelion/");
 			break;
 	}
 
@@ -216,9 +217,9 @@ void Core_Initializer::runInit(){
 	}
 	
 	// Construct full paths to the settings files
-	sprintf(defaultSettingsFilepath, "%s%s", settingsFilepath, defaultSettingsFile);
-	sprintf(userSettingsFilepath, "%s%s", settingsFilepath, userSettingsFile);
-	sprintf(bodyDataFilepath, "%s%s", settingsFilepath, bodyDataFile);
+	snprintf(defaultSettingsFilepath, 256, "%s%s", settingsFilepath, defaultSettingsFile);
+	snprintf(userSettingsFilepath, 256, "%s%s", settingsFilepath, userSettingsFile);
+	snprintf(bodyDataFilepath, 256, "%s%s", settingsFilepath, bodyDataFile);
 
 	// Save settings filepath to a variable for later
 	settings.settings_filepath = std::string(settingsFilepath);
@@ -259,8 +260,8 @@ void Core_Initializer::runInit(){
 	    std::string spk_kernel = settings.spice_spk_kernel;
 
 	    char timeKernel[512], deKernel[512];
-	    sprintf(timeKernel, "%s%s", spice_path.c_str(), time_kernel.c_str());
-	    sprintf(deKernel, "%s%s", spice_path.c_str(), spk_kernel.c_str());
+	    snprintf(timeKernel, 512, "%s%s", spice_path.c_str(), time_kernel.c_str());
+	    snprintf(deKernel, 512, "%s%s", spice_path.c_str(), spk_kernel.c_str());
 
 	    furnsh_c(timeKernel);
 	    checkAndReThrowSpiceErr("Core_Initializer::runInit furnsh_c error");

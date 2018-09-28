@@ -88,7 +88,7 @@ std::vector<Arcset_periodic> Family_PO_cr3bp_lt::getMemberBy2DThrustAngle(
 				ctrl_tp = pLaw->getType();
 				ctrl_dim = pLaw->getNumStates();
 			}else if(pLaw->getType() != ctrl_tp){
-				sprintf(msg, "Family_PO_cr3bp_lt::getMemberBy2DThrustAngle: "
+				snprintf(msg, 238, "Family_PO_cr3bp_lt::getMemberBy2DThrustAngle: "
 					"Member %u, Segment 0 has thrust type %s, but previous"
 					" members had type %s; cannot get consistent thrust"
 					" angle.", n, pLaw->getTypeString().c_str(),
@@ -108,13 +108,13 @@ std::vector<Arcset_periodic> Family_PO_cr3bp_lt::getMemberBy2DThrustAngle(
 			if(a[0]*a[0] + a[1]*a[1] + a[2]*a[2] > 1e-12){
 				allAlpha[n] = atan2(a[1], a[0]);
 			}else{
-				sprintf(msg, "Family_PO_cr3bp_lt::getMemberBy2DThrustAngle: "
+				snprintf(msg, 238, "Family_PO_cr3bp_lt::getMemberBy2DThrustAngle: "
 					"Member %u, Segment 0  has thrust with zero magnitude;"
 					" cannot get thrust angle.", n);
 				throw Exception(msg);
 			}
 		}else{
-			sprintf(msg, "Family_PO_cr3bp_lt::getMemberBy2DThrustAngle: "
+			snprintf(msg, 238, "Family_PO_cr3bp_lt::getMemberBy2DThrustAngle: "
 				"Member %u, Segment 0 has a null control law; cannot"
 				" get thrust angle.", n);
 			throw Exception(msg);

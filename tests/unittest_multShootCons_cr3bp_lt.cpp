@@ -106,12 +106,12 @@ BOOST_DATA_TEST_CASE(test_continuity,
 			ControlLaw_cr3bp_lt::typeToString(lawType).c_str(),
 			MSTOF_tp_cStr(tofType), e.what());
 		char filename[128];
-		sprintf(filename, "%s_%s_input.mat", 
+		snprintf(filename, 128, "%s_%s_input.mat", 
 			ControlLaw_cr3bp_lt::typeToString(lawType).c_str(),
 			MSTOF_tp_cStr(tofType));
 		halfLyapArcset.saveToMat(filename);
 
-		sprintf(filename, "%s_%s_corrected.mat", 
+		snprintf(filename, 128, "%s_%s_corrected.mat", 
 			ControlLaw_cr3bp_lt::typeToString(lawType).c_str(),
 			MSTOF_tp_cStr(tofType));
 		correctedSet.saveToMat(filename);
@@ -648,12 +648,12 @@ BOOST_DATA_TEST_CASE(test_fullContinuity,
 			ControlLaw_cr3bp_lt::typeToString(lawType).c_str(),
 			MSTOF_tp_cStr(tofType), e.what());
 		char filename[128];
-		sprintf(filename, "%s_%s_input.mat", 
+		snprintf(filename, 128, "%s_%s_input.mat", 
 			ControlLaw_cr3bp_lt::typeToString(lawType).c_str(),
 			MSTOF_tp_cStr(tofType));
 		halfLyapArcset.saveToMat(filename);
 
-		sprintf(filename, "%s_%s_corrected.mat", 
+		snprintf(filename, 128, "%s_%s_corrected.mat", 
 			ControlLaw_cr3bp_lt::typeToString(lawType).c_str(),
 			MSTOF_tp_cStr(tofType));
 		correctedSet.saveToMat(filename);

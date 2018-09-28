@@ -62,7 +62,8 @@ double getCPUTime(){ return static_cast<double>(clock()) / CLOCKS_PER_SEC; }
  */
 std::string complexToStr(std::complex<double> num){
     char buffer[64];
-    sprintf(buffer, "%.4e%s%.4ej", std::real(num), std::imag(num) < 0 ? " - " : " + ", std::abs(std::imag(num)));
+    snprintf(buffer, 64, "%.4e%s%.4ej", std::real(num), 
+        std::imag(num) < 0 ? " - " : " + ", std::abs(std::imag(num)));
     return std::string(buffer);
 }
 
@@ -325,12 +326,13 @@ void saveTimestampToFile(mat_t *matfp, const char *varName){
     time(&timer);   // Get the current time
     struct tm now_utc = *gmtime(&timer);    // Convert current time to UTC
     char txt_now[24];
-    sprintf(txt_now, "%02d:%02d:%02dUTC %02d/%02d/%4d", now_utc.tm_hour,
+    snprintf(txt_now, 24, "%02d:%02d:%02dUTC %02d/%02d/%4d", now_utc.tm_hour,
         now_utc.tm_min, now_utc.tm_sec, now_utc.tm_mday,
         now_utc.tm_mon + 1, now_utc.tm_year + 1900);
 
     size_t dims[] {1, 22};
-    matvar_t *matvar = Mat_VarCreate(varName, MAT_C_CHAR, MAT_T_UINT8, 2, dims, txt_now, 0);
+    matvar_t *matvar = Mat_VarCreate(varName, MAT_C_CHAR, MAT_T_UINT8, 2, 
+        dims, txt_now, 0);
     saveVar(matfp, matvar, varName, MAT_COMPRESSION_NONE);
 }//====================================================
 
@@ -405,7 +407,7 @@ double readDoubleFromMat(mat_t *matFile, const char* varName){
     matvar_t *matvar = Mat_VarRead(matFile, varName);
     if(matvar == nullptr){
         char msg[256];
-        sprintf(msg, "Utilities::readDoubleFromMat: Could not read %s from %s",
+        snprintf(msg, 256, "Utilities::readDoubleFromMat: Could not read %s from %s",
             varName, Mat_GetFilename(matFile));
         throw Exception(msg);
     }else{
@@ -470,8 +472,8 @@ std::string readStringFromMat(mat_t *matFile, const char* varName, matio_types a
     matvar_t *matvar = Mat_VarRead(matFile, varName);
     char msg[256];
     if(matvar == nullptr){
-        sprintf(msg, "Utilities::readStringFromMat: Could not read variable %s from file",
-            varName);
+        snprintf(msg, 256, "Utilities::readStringFromMat: Could not read "
+            "variable %s from file", varName);
         throw Exception(msg);
     }else{
         if(matvar->class_type == aClass && matvar->data_type == aType){
@@ -480,12 +482,12 @@ std::string readStringFromMat(mat_t *matFile, const char* varName, matio_types a
             if(data != nullptr){
                 result = std::string(data, matvar->dims[1]);
             }else{
-                sprintf(msg, "Utilities::readStringFromMat: No data in variable %s",
+                snprintf(msg, 256, "Utilities::readStringFromMat: No data in variable %s",
                     varName);
                 throw Exception(msg);
             }
         }else{
-            sprintf(msg, "Utilities::readStringFromMat: Incompatible data file:"
+            snprintf(msg, 256, "Utilities::readStringFromMat: Incompatible data file:"
                 " unsupported data/type class for variable %s", varName);
             throw Exception(msg);
         }

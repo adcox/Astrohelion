@@ -206,8 +206,8 @@ int BaseArcset::addSeg(Segment s){
 
 			if(nodeIDMap.count(linkedNodeID) == 0){
 				char msg[128];
-				sprintf(msg, "BaseArcset::addSeg: Segment (ID = %d) has link to an invalid node (ID = %d)\n",
-					s.getID(), linkedNodeID);
+				snprintf(msg, 128, "BaseArcset::addSeg: Segment (ID = %d) has "
+					"link to an invalid node (ID = %d)\n", s.getID(), linkedNodeID);
 				throw Exception(msg);
 			}
 
@@ -318,7 +318,7 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int localNodeID,
 	// First, check to make sure the specified nodes are valid
 	if(nodeIDMap.count(localNodeID) == 0){
 		char msg[128];
-		sprintf(msg, "BaseArcset::appendSetAtNode: localNodeID %d is out of bounds",
+		snprintf(msg, 128, "BaseArcset::appendSetAtNode: localNodeID %d is out of bounds",
 			localNodeID);
 		throw Exception(msg);
 	}
@@ -526,7 +526,7 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int localNodeID,
 
 		if(ctrl0.size() != ctrlSize){
 			char msg[128];
-			sprintf(msg, "BaseArcset::appendSetAtNode: Control size inconsistency"
+			snprintf(msg, 128, "BaseArcset::appendSetAtNode: Control size inconsistency"
 				" when creating artificial segment between arcsets: origin"
 				" node has ctrl with %u elements, but linkSeg control law"
 				" has %u elements", ctrl0.size(), ctrlSize);
@@ -823,7 +823,7 @@ void BaseArcset::deleteNodeByIx(int ix){
 
 	if(ix < 0 || ix >= static_cast<int>(nodes.size())){
 		char msg[128];
-		sprintf(msg, "BaseArcset::deleteNodeByIx: ix = %d out of bounds", ix);
+		snprintf(msg, 128, "BaseArcset::deleteNodeByIx: ix = %d out of bounds", ix);
 		throw Exception(msg);
 	}else{
 		deleteNode(nodes[ix].getID());
@@ -891,7 +891,7 @@ void BaseArcset::deleteSegByIx(int ix){
 
 	if(ix < 0 || ix >= static_cast<int>(segs.size())){
 		char msg[128];
-		sprintf(msg, "BaseArcset::deleteSegByIx: ix = %d out of bounds", ix);
+		snprintf(msg, 128, "BaseArcset::deleteSegByIx: ix = %d out of bounds", ix);
 		throw Exception(msg);
 	}else{
 		deleteSeg(segs[ix].getID());
@@ -1184,7 +1184,7 @@ ControlLaw* BaseArcset::getCtrlLawByIx(int ix){
 
 	if(ix < 0 || ix >= static_cast<int>(segs.size())){
 		char msg[128];
-		sprintf(msg, "BaseArcset::getCtrlLawIDByIx: Index %d out of range", ix);
+		snprintf(msg, 128, "BaseArcset::getCtrlLawIDByIx: Index %d out of range", ix);
 		throw Exception(msg);
 	}
 
@@ -1207,7 +1207,7 @@ const ControlLaw* BaseArcset::getCtrlLawByIx(int ix) const{
 
 	if(ix < 0 || ix >= static_cast<int>(segs.size())){
 		char msg[128];
-		sprintf(msg, "BaseArcset::getCtrlLawIDByIx (const): Index %d out of range", ix);
+		snprintf(msg, 128, "BaseArcset::getCtrlLawIDByIx (const): Index %d out of range", ix);
 		throw Exception(msg);
 	}
 
@@ -1371,7 +1371,7 @@ Node BaseArcset::getNode(int id) const{
 		return nodes[ix];
 	}else{
 		char msg[128];
-		sprintf(msg, "BaseArcset::getNode: ID %d not found", id);
+		snprintf(msg, 128, "BaseArcset::getNode: ID %d not found", id);
 		throw Exception(msg);
 	}
 }//====================================================
@@ -1390,7 +1390,7 @@ Node BaseArcset::getNodeByIx(int ix) const{
 
 	if(ix < 0 || ix >= static_cast<int>(nodes.size())){
 		char msg[128];
-		sprintf(msg, "BaseArcset::getNodeByIx: Index %d out of bounds", ix);
+		snprintf(msg, 128, "BaseArcset::getNodeByIx: Index %d out of bounds", ix);
 		throw Exception(msg);
 	}
 
@@ -1415,7 +1415,7 @@ Node& BaseArcset::getNodeRef(int id){
 		return nodes[ix];
 	}else{
 		char msg[128];
-		sprintf(msg, "BaseArcset::getNodeRef: ID %d not found", id);
+		snprintf(msg, 128, "BaseArcset::getNodeRef: ID %d not found", id);
 		throw Exception(msg);
 	}
 }//====================================================
@@ -1434,7 +1434,7 @@ const Node& BaseArcset::getNodeRefByIx(int ix) const{
 
 	if(ix < 0 || ix >= static_cast<int>(nodes.size())){
 		char msg[128];
-		sprintf(msg, "BaseArcset::getNodeRefByIx (const): Index %d out of bounds", ix);
+		snprintf(msg, 128, "BaseArcset::getNodeRefByIx (const): Index %d out of bounds", ix);
 		throw Exception(msg);
 	}
 
@@ -1458,7 +1458,7 @@ const Node& BaseArcset::getNodeRef(int id) const{
 		return nodes[ix];
 	}else{
 		char msg[128];
-		sprintf(msg, "BaseArcset::getNodeRef (const): ID %d not found", id);
+		snprintf(msg, 128, "BaseArcset::getNodeRef (const): ID %d not found", id);
 		throw Exception(msg);
 	}
 }//====================================================
@@ -1477,7 +1477,7 @@ Node& BaseArcset::getNodeRefByIx(int ix){
 
 	if(ix < 0 || ix >= static_cast<int>(nodes.size())){
 		char msg[128];
-		sprintf(msg, "BaseArcset::getNodeRefByIx: Index %d out of bounds", ix);
+		snprintf(msg, 128, "BaseArcset::getNodeRefByIx: Index %d out of bounds", ix);
 		throw Exception(msg);
 	}
 
@@ -1495,7 +1495,7 @@ Node& BaseArcset::getNodeRefByIx(int ix){
 int BaseArcset::getNodeIx(int id) const{
 	if(nodeIDMap.count(id) == 0){
 		char msg[128];
-		sprintf(msg, "BaseArcset::getNodeIx: ID %d not found", id);
+		snprintf(msg, 128, "BaseArcset::getNodeIx: ID %d not found", id);
 		throw Exception(msg);
 	}
 
@@ -1519,7 +1519,7 @@ Segment BaseArcset::getSeg(int id) const{
 		return segs[ix];
 	}else{
 		char msg[128];
-		sprintf(msg, "BaseArcset::getSeg: ID %d not found", id);
+		snprintf(msg, 128, "BaseArcset::getSeg: ID %d not found", id);
 		throw Exception(msg);
 	}
 }//====================================================
@@ -1538,7 +1538,7 @@ Segment BaseArcset::getSegByIx(int ix) const{
 
 	if(ix < 0 || ix >= static_cast<int>(segs.size())){
 		char msg[128];
-		sprintf(msg, "BaseArcset::getSegByIx: Index %d out of bounds", ix);
+		snprintf(msg, 128, "BaseArcset::getSegByIx: Index %d out of bounds", ix);
 		throw Exception(msg);
 	}
 
@@ -1563,7 +1563,7 @@ Segment& BaseArcset::getSegRef(int id){
 		return segs[ix];
 	}else{
 		char msg[128];
-		sprintf(msg, "BaseArcset::getSegRef: ID %d not found", id);
+		snprintf(msg, 128, "BaseArcset::getSegRef: ID %d not found", id);
 		throw Exception(msg);
 	}
 }//====================================================
@@ -1582,7 +1582,7 @@ Segment& BaseArcset::getSegRefByIx(int ix){
 
 	if(ix < 0 || ix >= static_cast<int>(segs.size())){
 		char msg[128];
-		sprintf(msg, "BaseArcset::getSegRefByIx: Index %d out of bounds", ix);
+		snprintf(msg, 128, "BaseArcset::getSegRefByIx: Index %d out of bounds", ix);
 		throw Exception(msg);
 	}
 
@@ -1607,7 +1607,7 @@ const Segment& BaseArcset::getSegRef(int id) const{
 		return segs[ix];
 	}else{
 		char msg[128];
-		sprintf(msg, "BaseArcset::getSegRef (const): ID %d not found", id);
+		snprintf(msg, 128, "BaseArcset::getSegRef (const): ID %d not found", id);
 		throw Exception(msg);
 	}
 }//====================================================
@@ -1626,7 +1626,7 @@ const Segment& BaseArcset::getSegRefByIx(int ix) const{
 
 	if(ix < 0 || ix >= static_cast<int>(segs.size())){
 		char msg[128];
-		sprintf(msg, "BaseArcset::getSegRefByIx (const): Index %d out of bounds", ix);
+		snprintf(msg, 128, "BaseArcset::getSegRefByIx (const): Index %d out of bounds", ix);
 		throw Exception(msg);
 	}
 
@@ -1643,7 +1643,7 @@ const Segment& BaseArcset::getSegRefByIx(int ix) const{
 int BaseArcset::getSegIx(int id) const{
 	if(segIDMap.count(id) == 0){
 		char msg[128];
-		sprintf(msg, "BaseArcset::getSegIx: ID %d invalid", id);
+		snprintf(msg, 128, "BaseArcset::getSegIx: ID %d invalid", id);
 		throw Exception(msg);
 	}
 
@@ -1668,7 +1668,7 @@ std::vector<double> BaseArcset::getState(int id) const{
 		return nodes[ix].getState();
 	}else{
 		char msg[128];
-		sprintf(msg, "BaseArcset::getState: node ID %d not found", id);
+		snprintf(msg, 128, "BaseArcset::getState: node ID %d not found", id);
 		throw Exception(msg);
 	}
 }//====================================================
@@ -1689,7 +1689,7 @@ std::vector<double> BaseArcset::getStateByIx(int ix) const{
 
 	if(ix < 0 || ix >= static_cast<int>(nodes.size())){
 		char msg[128];
-		sprintf(msg, "BaseArcset::getStateByIx: Node index %d out of bounds", ix);
+		snprintf(msg, 128, "BaseArcset::getStateByIx: Node index %d out of bounds", ix);
 		throw Exception(msg);
 	}
 
@@ -1714,7 +1714,7 @@ MatrixXRd BaseArcset::getSTM(int id) const{
 		return segs[ix].getSTM();
 	}else{
 		char msg[128];
-		sprintf(msg, "BaseArcset::getSTM: segment ID %d not found", id);
+		snprintf(msg, 128, "BaseArcset::getSTM: segment ID %d not found", id);
 		throw Exception(msg);
 	}
 }//====================================================
@@ -1733,7 +1733,7 @@ MatrixXRd BaseArcset::getSTMByIx(int ix) const{
 
 	if(ix < 0 || ix >= static_cast<int>(segs.size())){
 		char msg[128];
-		sprintf(msg, "BaseArcset::getSTMByIx: Segment index %d out of bounds", ix);
+		snprintf(msg, 128, "BaseArcset::getSTMByIx: Segment index %d out of bounds", ix);
 		throw Exception(msg);
 	}
 
@@ -1754,7 +1754,7 @@ std::vector<double> BaseArcset::getSTMElementsByIx(int ix) const{
 
 	if(ix < 0 || ix >= static_cast<int>(segs.size())){
 		char msg[128];
-		sprintf(msg, "BaseArcset::getSTMElementsByIx: Segment index %d out of bounds", ix);
+		snprintf(msg, 128, "BaseArcset::getSTMElementsByIx: Segment index %d out of bounds", ix);
 		throw Exception(msg);
 	}
 
@@ -1787,7 +1787,7 @@ double BaseArcset::getTOF(int id) const{
 		return segs[ix].getTOF();
 	}else{
 		char msg[128];
-		sprintf(msg, "BaseArcset::getTOF: Segment ID %d not found", id);
+		snprintf(msg, 128, "BaseArcset::getTOF: Segment ID %d not found", id);
 		throw Exception(msg);
 	}
 }//====================================================
@@ -1804,7 +1804,7 @@ double BaseArcset::getTOFByIx(int ix) const {
 
 	if(ix < 0 || ix >= static_cast<int>(segs.size())){
 		char msg[128];
-		sprintf(msg, "BaseArcset::getTOFByIx: Segment index %d out of bounds", ix);
+		snprintf(msg, 128, "BaseArcset::getTOFByIx: Segment index %d out of bounds", ix);
 		throw Exception(msg);
 	}
 
@@ -2098,7 +2098,7 @@ void BaseArcset::setTol(double d){ tol = d; }
 void BaseArcset::updateEpochs(int nodeID, double epoch){
 	if(nodeIDMap.count(nodeID) == 0){
 		char msg[128];
-		sprintf(msg, "BaseArcset::updateEpochs: ID %d does not match a node",
+		snprintf(msg, 128, "BaseArcset::updateEpochs: ID %d does not match a node",
 			nodeID);
 		throw Exception(msg);
 	}
@@ -2307,7 +2307,7 @@ void BaseArcset::setSegState(unsigned int segIx, const double *pData,
 	std::vector<double> fillerStates {};
 	if(expectedWidth < cols){
 		char msg[128];
-		sprintf(msg, "BaseArcset::setSegState: expected width, %u, is "
+		snprintf(msg, 128, "BaseArcset::setSegState: expected width, %u, is "
 			"less than data width, %u. Cannot proceed", expectedWidth, cols);
 		throw Exception(msg);
 	}
@@ -2373,7 +2373,7 @@ void BaseArcset::getNodeStates(std::vector<double>& nodeStates) const{
 
 		if(state.size() < nStates){
 			char msg[256];
-			sprintf(msg, "BaseArcset::createVar_NodeStates: "
+			snprintf(msg, 256, "BaseArcset::createVar_NodeStates: "
 				"State vector, length %zu, is less than core state size: %u",
 				state.size(), nStates);
 			throw Exception(msg);
@@ -2785,7 +2785,7 @@ matvar_t* BaseArcset::createVar_SegState(Save_tp saveTp, const char *pVarName) c
 		if(segStates.size() % full_size != 0){
 			Mat_VarFree(pMatVar);
 			char msg[256];
-			sprintf(msg, "BaseArcset::saveSegState: "
+			snprintf(msg, 256, "BaseArcset::saveSegState: "
 				"segStates has length %zu; expecting full_size = %u\n"
 				"\tRemainder = %zu THUS segStates is not multiple of full_size\n"
 				"\tSegState width = %u",
@@ -2997,7 +2997,13 @@ matvar_t* BaseArcset::createVar_SegCtrlLaw(Save_tp saveTp, const char *pVarName)
 	return pMatVar;
 }//====================================================
 
-
+/**
+ * @brief Read the Link Table from a MATLAB variable
+ * @details [long description]
+ * 
+ * @param pVar Pointer to the matlab variable
+ * @return true if the parsing succeeds; false if unable to parse the data
+ */
 bool BaseArcset::readVar_LinkTable(matvar_t *pVar){
 	if(pVar == nullptr){
 		printErr("BaseArcset::readVar_LinkTable: Could not read link table from file");
@@ -3280,13 +3286,15 @@ bool BaseArcset::readVar_NodeExtraParam(matvar_t *pVar, std::string varKey, Save
 		
 		if(nodes.size() == 0){
 			Mat_VarFree(pVar);
-			throw Exception("BaseArcset::readVar_NodeExtraParam: Step vector has not been initialized!");
+			throw Exception("BaseArcset::readVar_NodeExtraParam: Step vector "
+				"has not been initialized!");
 		}
 
 		if(pVar->dims[1] != 1){
 			char message[128];
 			const char * pVarName = pVar->name ? pVar->name : "NULL";
-			sprintf(message, "BaseArcset::readVar_NodeExtraParam: Incompatible data file: %s width is not %d", pVarName, 1);
+			snprintf(message, 128, "BaseArcset::readVar_NodeExtraParam: "
+				"Incompatible data file: %s width is not %d", pVarName, 1);
 			Mat_VarFree(pVar);
 			throw Exception(message);
 		}
@@ -3300,7 +3308,8 @@ bool BaseArcset::readVar_NodeExtraParam(matvar_t *pVar, std::string varKey, Save
 			}
 		}else{
 			Mat_VarFree(pVar);
-			throw Exception("BaseArcset::readVar_NodeExtraParam: Incompatible data file: unsupported data type/class");
+			throw Exception("BaseArcset::readVar_NodeExtraParam: "
+				"Incompatible data file: unsupported data type/class");
 		}
 
 		return true;
@@ -3328,13 +3337,15 @@ bool BaseArcset::readVar_NodeExtraParamVec(matvar_t *pVar, std::string varKey, s
 		
 		if(nodes.size() == 0){
 			Mat_VarFree(pVar);
-			throw Exception("BaseArcset::readVar_NodeExtraParamVec: Step vector has not been initialized!");
+			throw Exception("BaseArcset::readVar_NodeExtraParamVec: Step "
+				"vector has not been initialized!");
 		}
 
 		if(pVar->dims[1] != len){
 			char msg[128];
 			const char *varName = pVar->name ? pVar->name : "NULL";
-			sprintf(msg, "BaseArcset::readVar_NodeExtraParamVec: Incompatible data file: %s width is not %zu", varName, len);
+			snprintf(msg, 128, "BaseArcset::readVar_NodeExtraParamVec: "
+				"Incompatible data file: %s width is not %zu", varName, len);
 			Mat_VarFree(pVar);
 			throw Exception(msg);
 		}
@@ -3346,7 +3357,8 @@ bool BaseArcset::readVar_NodeExtraParamVec(matvar_t *pVar, std::string varKey, s
 			}
 		}else{
 			Mat_VarFree(pVar);
-			throw Exception("BaseArcset::readVar_NodeExtraParamVec: Incompatible data file: unsupported data type/class");
+			throw Exception("BaseArcset::readVar_NodeExtraParamVec: "
+				"Incompatible data file: unsupported data type/class");
 		}
 		return true;
 	}
@@ -3652,25 +3664,31 @@ bool BaseArcset::readVar_SegSTM(matvar_t *pVar, Save_tp saveTp){
 		
 		if(segs.size() != numSegs){
 			Mat_VarFree(pVar);
-			throw Exception("BaseArcset::readVar_SegSTM: Segment vector has been initialized to a different size than the file has data for");
+			throw Exception("BaseArcset::readVar_SegSTM: Segment vector has "
+				"been initialized to a different size than the file has data for");
 		}
 
 		if(pVar->class_type != MAT_C_CELL || pVar->data_type != MAT_T_CELL){
 			Mat_VarFree(pVar);
-			throw Exception("BaseArcset::readVar_SegSTM: Segment STM variable is not a cell array.");
+			throw Exception("BaseArcset::readVar_SegSTM: Segment STM variable "
+				"is not a cell array.");
 		}
 
 		matvar_t **cell_elements = static_cast<matvar_t **>(pVar->data);
 
 		for(unsigned int s = 0; s < numSegs; s++){
-			if(cell_elements[s]->class_type == MAT_C_DOUBLE && cell_elements[s]->data_type == MAT_T_DOUBLE){				
+			if(cell_elements[s]->class_type == MAT_C_DOUBLE && 
+				cell_elements[s]->data_type == MAT_T_DOUBLE){				
+				
 				double *data = static_cast<double *>(cell_elements[s]->data);
 
-				MatrixXRd P = Eigen::Map<MatrixXRd>(data, cell_elements[s]->dims[1], cell_elements[s]->dims[0]);
+				MatrixXRd P = Eigen::Map<MatrixXRd>(data, 
+					cell_elements[s]->dims[1], cell_elements[s]->dims[0]);
 				segs[s].setSTM(P.transpose());
 			}else{
 				Mat_VarFree(pVar);
-				throw Exception("BaseArcset::readVar_SegSTM: Cell element is not a double array.");
+				throw Exception("BaseArcset::readVar_SegSTM: Cell element is "
+					"not a double array.");
 			}
 		}
 
@@ -3735,7 +3753,7 @@ void BaseArcset::initNodesSegsFromMat(mat_t *pMatFile, const char* pVarName){
  * @details This function creates Nodes and Segments to satisfy the link table
  * but does not populate them with data
  * 
- * @param pData pointer to the link table data, stored in row-major order
+ * @param pData pointer to the link table data, stored in column-major order
  * @param nSegs numer of rows in the link table, i.e., the number of segments
  */
 void BaseArcset::initFromLinktable(const int *pData, unsigned int nSegs){

@@ -69,7 +69,7 @@ void SysData_2bp::initFromFile(const char *filepath){
 	mat_t *matfp = Mat_Open(filepath, MAT_ACC_RDONLY);
 	if(nullptr == matfp){
 		char msg[128];
-		sprintf(msg, "SysData_2bp Could not load data from %s", 
+		snprintf(msg, 128, "SysData_2bp Could not load data from %s", 
 			filepath);
 		throw Exception(msg);
 	}

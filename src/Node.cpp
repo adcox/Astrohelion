@@ -221,7 +221,8 @@ double Node::getExtraParam(std::string key) const {
 		return extraParam.at(key);
 	}else{
 		char msg[128];
-		sprintf(msg, "Node::getExtraParam: Extra param key '%s' is invalid", key.c_str());
+		snprintf(msg, 128, "Node::getExtraParam: Extra param key '%s' "
+			"is invalid", key.c_str());
 		throw Exception(msg);
 	}
 }//====================================================
@@ -248,8 +249,8 @@ std::vector<double> Node::getExtraParamVec(std::string key) const{
 		return extraParamVecs.at(key);
 	}else{
 		char msg[128];
-		sprintf(msg, "Node::getExtraParamVec: Extra param vector key '%s' is invalid",
-			key.c_str());
+		snprintf(msg, 128, "Node::getExtraParamVec: Extra param vector "
+			"key '%s' is invalid", key.c_str());
 		throw Exception(msg);
 	}
 }//====================================================

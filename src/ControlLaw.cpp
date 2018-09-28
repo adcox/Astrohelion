@@ -139,7 +139,7 @@ double ControlLaw::getParam(int ix) const{
 
 	if(ix >= n){
 		char msg[128];
-		sprintf(msg, "ControlLaw::getParam: Index ix = %d is larger"
+		snprintf(msg, 128, "ControlLaw::getParam: Index ix = %d is larger"
 			" than params vector (size %d)", ix, n);
 		throw Exception(msg);
 	}
@@ -189,7 +189,7 @@ void ControlLaw::setParam(int ix, double val){
 
 	if(ix >= n){
 		char msg[128];
-		sprintf(msg, "ControlLaw::getParam: Index ix = %d is larger"
+		snprintf(msg, 128, "ControlLaw::getParam: Index ix = %d is larger"
 			" than params vector (size %d)", ix, n);
 		throw Exception(msg);
 	}

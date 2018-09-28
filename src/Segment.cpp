@@ -260,7 +260,7 @@ std::vector<double> Segment::getStateByRow(int row) const{
 
 	if(row < 0 || row >= static_cast<int>(states.size()/stateWidth)){
 		char msg[128];
-		sprintf(msg, "Segment::getStateByRow: Index %d out of bounds; expected "
+		snprintf(msg, 128, "Segment::getStateByRow: Index %d out of bounds; expected "
 			"between 0 and %d", row, static_cast<int>(states.size()/stateWidth) - 1);
 		throw Exception(msg);
 	}
@@ -301,7 +301,7 @@ double Segment::getTimeByIx(int ix) const{
 
 	if(ix < 0 || ix >= static_cast<int>(times.size())){
 		char msg[128];
-		sprintf(msg, "Segment::getTimeByIx: Index %d out of bounds; expected "
+		snprintf(msg, 128, "Segment::getTimeByIx: Index %d out of bounds; expected "
 			"between 0 and %zu", ix, times.size() - 1);
 		throw Exception(msg);
 	}
@@ -517,7 +517,7 @@ void Segment::setVelCon(const bool data[3]){
 void Segment::setVelCon(const std::vector<bool> &data){
 	if(data.size() < 3){
 		char msg[128];
-		sprintf(msg, "Segment::setVelCon: data size = %zu; need at least "
+		snprintf(msg, 128, "Segment::setVelCon: data size = %zu; need at least "
 			"three elements", data.size());
 		throw Exception(msg);
 	}

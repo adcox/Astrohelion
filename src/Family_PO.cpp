@@ -149,7 +149,7 @@ std::vector<cdouble> Family_PO::getEigVals(int ix) const{
 
 	if(ix > static_cast<int>(members.size())){
 		char msg[128];
-		sprintf(msg, "Family_PO::getEigVals: index %d out of bounds, "
+		snprintf(msg, 128, "Family_PO::getEigVals: index %d out of bounds, "
 			"max = %zu\n", ix, members.size());
 		throw Exception(msg);
 	}
@@ -187,7 +187,7 @@ MatrixXRcd Family_PO::getEigVecs(int ix) const{
 
 	if(ix > static_cast<int>(members.size())){
 		char msg[128];
-		sprintf(msg, "Family_PO::getEigVecs: index %d out of bounds, "
+		snprintf(msg, 128, "Family_PO::getEigVecs: index %d out of bounds, "
 			"max = %zu\n", ix, members.size());
 		throw Exception(msg);
 	}
@@ -207,7 +207,7 @@ Arcset_periodic Family_PO::getMember(int ix) const{
 
 	if(ix > static_cast<int>(members.size())){
 		char msg[128];
-		sprintf(msg, "Family_PO::getMember: index %d out of bounds, "
+		snprintf(msg, 128, "Family_PO::getMember: index %d out of bounds, "
 			"max = %zu\n", ix, members.size());
 		throw Exception(msg);
 	}
@@ -739,7 +739,7 @@ void Family_PO::readFromMat(const char *filename,
 	mat_t *pMatFile = Mat_Open(filename, MAT_ACC_RDONLY);
 	if(pMatFile == nullptr){
 		char msg[256];
-		sprintf(msg, "Family_PO::readFromMat: Could not load family from %s",
+		snprintf(msg, 256, "Family_PO::readFromMat: Could not load family from %s",
 			filename);
 		throw Exception(msg);
 	}
@@ -915,7 +915,7 @@ void Family_PO::loadMembers(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws,
 	matvar_t *pStruct = Mat_VarRead(pMatFile, VARNAME_FAM_MEMBER);
 	if(pStruct == nullptr){
 		char msg[256];
-		sprintf(msg, "Family_PO::readFromMat: "
+		snprintf(msg, 256, "Family_PO::readFromMat: "
 			"Could not read variable %s from file", VARNAME_FAM_MEMBER);
 		throw Exception(msg);
 	}else{
@@ -999,7 +999,7 @@ void Family_PO::saveEigVals(mat_t *pMatFile) const{
 
 		if(members.size() * nE != memberEigVals.size()){
 			char msg[128];
-			sprintf(msg, "Family_PO::saveEigVals: "
+			snprintf(msg, 128, "Family_PO::saveEigVals: "
 				"eigenvalue storage vector has %zu elements; "
 				"expects %u*%zu", memberEigVals.size(), nE, members.size());
 			throw Exception(msg);

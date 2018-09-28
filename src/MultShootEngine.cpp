@@ -592,7 +592,7 @@ void MultShootEngine::multShoot(MultShootData *pData){
 		if(bSaveEachIt){
 			pData->pArcIn->getSysData()->getDynamicsModel()->multShoot_createOutput(*pData);
 			char filename[24];
-			sprintf(filename, "multShoot_it%04d.mat", pData->count+1);
+			snprintf(filename, 24, "multShoot_it%04d.mat", pData->count+1);
 			try{
 				pData->pArcOut->saveToMat(filename);
 				pData->pArcOut->reset();	// Must be empty for next createOutput() call
@@ -652,10 +652,10 @@ void MultShootEngine::multShoot(MultShootData *pData){
 		if( (errF > maxErr) || (errF > tolF && errF_infty > tolF)){
 			char msg[256];
 			if(errF > maxErr){
-				sprintf(msg, "MultShootEngine: Diverged! "
+				snprintf(msg, 256, "MultShootEngine: Diverged! "
 					"Constraint Error = %e > maxErr = %e", errF, maxErr);
 			}else{
-				sprintf(msg, "MultShootEngine: Did not converge (%d its)! "
+				snprintf(msg, 256, "MultShootEngine: Did not converge (%d its)! "
 					"||F(X)||_2 = %6.4e / %4.2e : "
 					"||F(X)||_inf = %6.4e / %4.2e : ", pData->count, errF, tolF,
 					errF_infty, tolF);
@@ -999,7 +999,7 @@ void MultShootEngine::factorizeJacobian(const SparseMatXCd &J,
 		checkDFSingularities(J);
 		std::string err = eigenCompInfo2Str(info);
 		char msg[256];
-		sprintf(msg, "MultShootEngine::factorizeJacobian: "
+		snprintf(msg, 256, "MultShootEngine::factorizeJacobian: "
 			"Could not factorize Jacobian matrix.\nEigen error: %s\n",
 			err.c_str());
 		throw LinAlgException(msg);

@@ -220,7 +220,8 @@ void Event::initialize(const SysData* pSys){
 		throw Exception("Event::initialize: System data pointer has not been set!");
 
 	if(! pSys->getDynamicsModel()->supportsEvent(type)){
-		throw Exception("Event::initialize: The current dynamic model does not support this event type");
+		throw Exception("Event::initialize: The current dynamic model does "
+			"not support this event type");
 	}
 
 	if(paramsIn.size() == 0)
@@ -234,13 +235,16 @@ void Event::initialize(const SysData* pSys){
 		case Event_tp::XY_PLANE: data[2] = paramsIn[0]; break;	// z = specified value
 		case Event_tp::STATE_PLANE:
 		{
-			if(paramsIn.size() < 2)
-				throw Exception("Event::initialize: Parameter vector for STATE_PLANE event has fewer than 2 elements; cannot proceed");
+			if(paramsIn.size() < 2){
+				throw Exception("Event::initialize: Parameter vector for "
+					"STATE_PLANE event has fewer than 2 elements; cannot proceed");
+			}
 
 			int ix = static_cast<int>(paramsIn[0]);
 			if(ix < 0 || ix >= static_cast<int>(core_dim)){
 				char msg[128];
-				sprintf(msg, "Event::initialize: ix = %d is out of bounds (min = 0, max = %u)", ix, core_dim);
+				snprintf(msg, 128, "Event::initialize: ix = %d is out of "
+					"bounds (min = 0, max = %u)", ix, core_dim);
 				throw Exception(msg);
 			}
 
@@ -254,7 +258,8 @@ void Event::initialize(const SysData* pSys){
 			if(data[0] < pSysData->getNumPrimaries()){
 				// Get body data, compute crash distance
 			    BodyData primData(pSysData->getPrimID(static_cast<int>(data[0])));
-			    data[1] = (primData.getBodyRad() + primData.getMinFlyBy())/pSysData->getCharL();
+			    data[1] = (primData.getBodyRad() + 
+			    	primData.getMinFlyBy())/pSysData->getCharL();
 			}else{
 				throw Exception("Event::initialize Cannot access primary for CRASH event");
 			}
@@ -263,8 +268,10 @@ void Event::initialize(const SysData* pSys){
 		case Event_tp::JC: data[0] = paramsIn[0]; break;	// JC = specified value
 		case Event_tp::APSE: data[0] = paramsIn[0]; break; 	// primary index = specified value
 		case Event_tp::DIST:
-			if(paramsIn.size() < 2)
-				throw Exception("Event::initialize: Parameter vector for DIST event has fewer than 2 elements; cannot proceed");
+			if(paramsIn.size() < 2){
+				throw Exception("Event::initialize: Parameter vector for DIST "
+					"event has fewer than 2 elements; cannot proceed");
+			}
 			data[0] = paramsIn[0];
 			data[1] = paramsIn[1];
 			break;

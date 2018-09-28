@@ -359,7 +359,7 @@ void ControlLaw_cr3bp_lt::getAccel_ConstC_2D(double t, const double *s,
 
 	if(len < numOutputs){
 		char msg[64];
-		sprintf(msg, "ControlLaw_cr3bp_lt::getAccel_ConstC_2D: "
+		snprintf(msg, 64, "ControlLaw_cr3bp_lt::getAccel_ConstC_2D: "
 			"law data length is %u but must be at least %u", len, numOutputs);
 		throw Exception (msg);
 	}
@@ -391,7 +391,7 @@ void ControlLaw_cr3bp_lt::getAccel_AlongVel(double t, const double *s,
 
 	if(len < numOutputs){
 		char msg[64];
-		sprintf(msg, "ControlLaw_cr3bp_lt::getAccel_AlongVel: "
+		snprintf(msg, 64, "ControlLaw_cr3bp_lt::getAccel_AlongVel: "
 			"law data length is %u but must be at least %u", len, numOutputs);
 		throw Exception (msg);
 	}
@@ -422,7 +422,7 @@ void ControlLaw_cr3bp_lt::getAccel_GeneralRot(double t, const double *s,
 
 	if(len < numOutputs){
 		char msg[64];
-		sprintf(msg, "ControlLaw_cr3bp_lt::getAccel_GeneralRot: "
+		snprintf(msg, 64, "ControlLaw_cr3bp_lt::getAccel_GeneralRot: "
 			"law data length is %u but must be at least %u", len, numOutputs);
 		throw Exception (msg);
 	}
@@ -453,7 +453,7 @@ void ControlLaw_cr3bp_lt::getAccel_GeneralInert(double t, const double *s,
 
 	if(len < numOutputs){
 		char msg[64];
-		sprintf(msg, "ControlLaw_cr3bp_lt::getAccel_GeneralInert: "
+		snprintf(msg, 64, "ControlLaw_cr3bp_lt::getAccel_GeneralInert: "
 			"law data length is %u but must be at least %u", len, numOutputs);
 		throw Exception (msg);
 	}
@@ -490,7 +490,7 @@ void ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_ConstC_2D(double t, const dou
 
 	if(len != numOutputs*7){
 		char msg[128];
-		sprintf(msg, "ControlLaw_cr3bp_lt::"
+		snprintf(msg, 128, "ControlLaw_cr3bp_lt::"
 			"getPartials_AccelWRTCore_ConstC_2D: len = %u, expects len = %u",
 			len, numOutputs*7);
 		throw Exception(msg);
@@ -544,7 +544,7 @@ void ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_AlongVel(double t, const doub
 
 	if(len != numOutputs*7){
 		char msg[128];
-		sprintf(msg, "ControlLaw_cr3bp_lt::"
+		snprintf(msg, 128, "ControlLaw_cr3bp_lt::"
 			"getPartials_AccelWRTCore_AlongVel: len = %u, expects len = %u",
 			len, numOutputs*7);
 		throw Exception(msg);
@@ -608,7 +608,7 @@ void ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_GeneralRot(double t,
 
 	if(len != numOutputs*7){
 		char msg[128];
-		sprintf(msg, "ControlLaw_cr3bp_lt::"
+		snprintf(msg, 128, "ControlLaw_cr3bp_lt::"
 			"getPartials_AccelWRTCore_GeneralRot: len = %u, expects len = %u",
 			len, numOutputs*7);
 		throw Exception(msg);
@@ -659,7 +659,7 @@ void ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_GeneralInert(double t,
 
 	if(len != numOutputs*7){
 		char msg[128];
-		sprintf(msg, "ControlLaw_cr3bp_lt::"
+		snprintf(msg, 128, "ControlLaw_cr3bp_lt::"
 			"getPartials_AccelWRTCore_GeneralInert: len = %u, expects len = %u",
 			len, numOutputs*7);
 		throw Exception(msg);
@@ -716,7 +716,7 @@ void ControlLaw_cr3bp_lt::getPartials_EOMsWRTCtrl_VarF(double t, const double *s
 
 		if(len != numStates*7){
 			char msg[128];
-			sprintf(msg, "ControlLaw_cr3bp_lt::"
+			snprintf(msg, 128, "ControlLaw_cr3bp_lt::"
 				"getPartials_EOMsWRTCtrl_VarF: len = %u, expects len = %u",
 				len, numStates*7);
 			throw Exception(msg);
@@ -802,7 +802,7 @@ void ControlLaw_cr3bp_lt::getPartials_EOMsWRTCtrl_GeneralDir(double t,
 
 		if(len != numStates*7){
 			char msg[128];
-			sprintf(msg, "ControlLaw_cr3bp_lt::"
+			snprintf(msg, 128, "ControlLaw_cr3bp_lt::"
 				"getPartials_EOMsWRTCtrl_GeneralDir: len = %u, expects len = %u",
 				len, numStates*7);
 			throw Exception(msg);
@@ -933,7 +933,7 @@ void ControlLaw_cr3bp_lt::init(){
 
 	if(params.size() != numParams){
 		char msg[128];
-		sprintf(msg, "ControlLaw_cr3bp_lt::init: "
+		snprintf(msg, 128, "ControlLaw_cr3bp_lt::init: "
 			"Expect %d input params, but received %zu", numParams,
 			params.size());
 		throw Exception(msg);

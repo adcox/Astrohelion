@@ -368,10 +368,10 @@ namespace astrohelion{
 	            char buffer[64] = "";
 
 	            if(isComplex){
-	            	sprintf(buffer, "%.20f%c%.20fi", std::real(m(r,c)),
+	            	snprintf(buffer, 64, "%.20f%c%.20fi", std::real(m(r,c)),
 	            		std::imag(m(r,c)) >= 0.f ? '+':'-', std::abs(std::imag(m(r,c))));
 	            }else{
-	            	sprintf(buffer, "%.20f", m(r,c));
+	            	snprintf(buffer, 64, "%.20f", m(r,c));
 	            }
 
 	            outFile << buffer;

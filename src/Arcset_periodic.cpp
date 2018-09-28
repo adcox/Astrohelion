@@ -161,7 +161,7 @@ double Arcset_periodic::getAmp(unsigned int stateIx) const{
 
 		if(stateIx >= w){
 			char msg[128];
-			sprintf(msg, "Arcset_periodic::getAmp: stateIx = %u is out of "
+			snprintf(msg, 128, "Arcset_periodic::getAmp: stateIx = %u is out of "
 				"bounds on segment ID = %u", stateIx, segs[s].getID());
 			throw Exception(msg);
 		}

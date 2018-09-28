@@ -158,23 +158,23 @@ int main(void){
 
 					// Save the trajectory to file
 					char name[32];
-					sprintf(name, "data/LPF_QH_4B_NaturalManifolds/Arcset%03zu_SEM.mat", n);
+					snprintf(name, 32, "data/LPF_QH_4B_NaturalManifolds/Arcset%03zu_SEM.mat", n);
 					fullTraj.saveToMat(name);
 
 					Arcset_cr3bp fullTraj_SE = bcr4bpr_SEM2SE(fullTraj, &seSys);
-					// sprintf(name, "data/Arcset%03zu_SE.mat", n);
+					// snprintf(name, 32, "data/Arcset%03zu_SE.mat", n);
 					// fullTraj_SE.saveToMat(name);
 
 					Arcset_cr3bp fullTraj_EM = cr3bp_SE2EM(fullTraj_SE, &emSys, bcSys.getTheta0(), bcSys.getPhi0(), bcSys.getGamma());
-					sprintf(name, "data/LPF_QH_4B_NaturalManifolds/Arcset%03zu_EM.mat", n);
+					snprintf(name, 32, "data/LPF_QH_4B_NaturalManifolds/Arcset%03zu_EM.mat", n);
 					fullTraj_EM.saveToMat(name);
 
 					Arcset_cr3bp fullTraj_ECI = cr3bp_rot2inert(fullTraj_EM, 0);
-					sprintf(name, "data/LPF_QH_4B_NaturalManifolds/Arcset%03zu_ECI.mat", n);
+					snprintf(name, 32, "data/LPF_QH_4B_NaturalManifolds/Arcset%03zu_ECI.mat", n);
 					fullTraj_ECI.saveToMat(name);
 
 					Arcset_cr3bp fullTraj_MCI = cr3bp_rot2inert(fullTraj_EM, 1);
-					sprintf(name, "data/LPF_QH_4B_NaturalManifolds/Arcset%03zu_MCI.mat", n);
+					snprintf(name, 32, "data/LPF_QH_4B_NaturalManifolds/Arcset%03zu_MCI.mat", n);
 					fullTraj_MCI.saveToMat(name);
 
 				}catch(DivergeException &e){

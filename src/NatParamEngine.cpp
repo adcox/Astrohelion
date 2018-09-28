@@ -438,16 +438,23 @@ void NatParamEngine::continuePO(const Arcset *pInitGuess, Arcset *pInput, Arcset
 	std::vector<unsigned int> indVarIx, std::vector<unsigned int> depVarIx,
 	MultShootEngine *pEngineTemplate){
 
-	if(pInitGuess == nullptr || pInput == nullptr || pConverged == nullptr)
-		throw Exception("NatParamEngine::continuePO: cannot function with null input arcset pointers");
+	if(pInitGuess == nullptr || pInput == nullptr || pConverged == nullptr){
+		throw Exception("NatParamEngine::continuePO: cannot function with null "
+			"input arcset pointers");
+	}
 
-	const unsigned int core_dim = pInitGuess->getSysData()->getDynamicsModel()->getCoreStateSize();
+	const unsigned int core_dim = pInitGuess->getSysData()->\
+		getDynamicsModel()->getCoreStateSize();
 
-	if(indVarIx.size() < 2)
-		throw Exception("NatParamEngine::continuePO: Must specify two independent variables");
+	if(indVarIx.size() < 2){
+		throw Exception("NatParamEngine::continuePO: Must specify two "
+			"independent variables");
+	}
 
-	if(alwaysFixStateVals.size() > core_dim)
-		throw Exception("NatParamEngine::continuePO: alwaysFixStateVals vector cannot be longer than core state dimension");
+	if(alwaysFixStateVals.size() > core_dim){
+		throw Exception("NatParamEngine::continuePO: alwaysFixStateVals vector "
+			"cannot be longer than core state dimension");
+	}
 
 	// Add extra entries to fill out the full core dimension, if not already accomplished
 	std::vector<double> extraFill(core_dim - alwaysFixStateVals.size(), NAN);
@@ -457,13 +464,15 @@ void NatParamEngine::continuePO(const Arcset *pInitGuess, Arcset *pInput, Arcset
 	char msg[128];
 	for(unsigned int i = 0; i < indVarIx.size(); i++){
 		if(indVarIx[i] >= core_dim){
-			sprintf(msg, "NatParamEngine::continuePO: indVarIx[%u] = %u is outside the core state dimension", i, indVarIx[i]);
+			snprintf(msg, 128, "NatParamEngine::continuePO: indVarIx[%u] = %u "
+				"is outside the core state dimension", i, indVarIx[i]);
 			throw Exception(msg);
 		}
 	}
 	for(unsigned int i = 0; i < depVarIx.size(); i++){
 		if(depVarIx[i] >= core_dim){
-			sprintf(msg, "NatParamEngine::continuePO: depVarIx[%u] = %u is outside the core state dimension", i, depVarIx[i]);
+			snprintf(msg, 128, "NatParamEngine::continuePO: depVarIx[%u] = %u "
+				"is outside the core state dimension", i, depVarIx[i]);
 			throw Exception(msg);
 		}
 	}
@@ -509,15 +518,19 @@ void NatParamEngine::continuePO(const Arcset *pInitGuess, Arcset *pInput, Arcset
 		pInput->clearAllConstraints();		// Remove all constraints
 
 		// Re-apply the periodicity constraints
-		for(unsigned int c = 0; c < perCons.size(); c++){ pInput->addConstraint(perCons[c]); }
+		for(unsigned int c = 0; c < perCons.size(); c++){
+			pInput->addConstraint(perCons[c]);
+		}
 
 		// Fix specific initial states
 		std::vector<double> initConData(core_dim, NAN);
 		for(unsigned int i = 0; i < fixStates.size(); i++){
 			if(std::isnan(alwaysFixStateVals[fixStates[i]]))
 				initConData.at(fixStates[i]) = IC.at(fixStates[i]);
-			else
-				printWarn("Cannot fix state %u; it is permenantly constrained to be %f\n", fixStates[i], alwaysFixStateVals[fixStates[i]]);
+			else{
+				printWarn("Cannot fix state %u; it is permenantly constrained "
+					"to be %f\n", fixStates[i], alwaysFixStateVals[fixStates[i]]);
+			}
 		}
 
 		for(unsigned int i = 0; i < alwaysFixStateVals.size(); i++){
@@ -525,15 +538,20 @@ void NatParamEngine::continuePO(const Arcset *pInitGuess, Arcset *pInput, Arcset
 				initConData[i] = alwaysFixStateVals[i];
 		}		
 
-		Constraint initCon(Constraint_tp::STATE, pInput->getNodeRefByIx(0).getID(), initConData);
+		Constraint initCon(Constraint_tp::STATE, 
+			pInput->getNodeRefByIx(0).getID(), initConData);
 		pInput->addConstraint(initCon);
 
 		try{
 			printf("Guess for IC: [");
-			for(unsigned int i = 0; i < core_dim; i++){ printf(" %7.4f", IC[i]); }
+			for(unsigned int i = 0; i < core_dim; i++){
+				printf(" %7.4f", IC[i]);
+			}
 			printf("] tof = %.4f\n", tof);
 			printf("Fix States: ");
-			for(unsigned int i = 0; i < fixStates.size(); i++){ printf("%d, ", fixStates[i]); }
+			for(unsigned int i = 0; i < fixStates.size(); i++){ 
+				printf("%d, ", fixStates[i]);
+			}
 			printf("\n");
 			printf("Slope = %.3f\n", indVarSlope);
 
@@ -546,7 +564,8 @@ void NatParamEngine::continuePO(const Arcset *pInitGuess, Arcset *pInput, Arcset
 		}catch(DivergeException &de){
 			try{
 				printErr("Corrector diverged: %s\n", de.what());
-				printf("Attempting to converge orbit %03d again with a line search for the step size\n", static_cast<int>(allArcs.size()));
+				printf("Attempting to converge orbit %03d again with a line "
+					"search for the step size\n", static_cast<int>(allArcs.size()));
 				pConverged->reset();
 				msEngine.setDoLineSearch(true);
 				msEngine.setMaxIts(lineSearchMaxIts);
@@ -558,31 +577,37 @@ void NatParamEngine::continuePO(const Arcset *pInitGuess, Arcset *pInput, Arcset
 				printErr("Corrector diverged: %s\n", de2.what());
 				diverged = true;	
 			}catch(LinAlgException &lae2){
-				printErr("There was a linear algebra error during family continuation: %s\n", lae2.what());
+				printErr("There was a linear algebra error during "
+					"family continuation: %s\n", lae2.what());
 				break;
 			}
 		}catch(LinAlgException &lae){
-			printErr("There was a linear algebra error during family continuation: %s\n", lae.what());
+			printErr("There was a linear algebra error during "
+				"family continuation: %s\n", lae.what());
 			break;
 		}
 
 		// Check for large changes in period to detect leaving family
 		if(!diverged && orbitCount > 2){
 			// difference in TOF; use abs() because corrector may employ reverse time and switch to forward time
-			double dTOF = std::abs(pInput->getTotalTOF()) - std::abs(allArcs[allArcs.size()-1].getTotalTOF());
+			double dTOF = std::abs(pInput->getTotalTOF()) - 
+				std::abs(allArcs[allArcs.size()-1].getTotalTOF());
 			double percChange = std::abs(dTOF/pInput->getTotalTOF());
 			if(percChange > 0.25){
 				printWarn("percChange = %.4f\n", percChange);
-				printWarn("Period jumped (now = %.5f)! Left the family! Trying smaller step size...\n", pInput->getTotalTOF());
+				printWarn("Period jumped (now = %.5f)! Left the family! "
+					"Trying smaller step size...\n", pInput->getTotalTOF());
 				diverged = true;
 			}
 		}
 
 		if(diverged && orbitCount == 0){
-			printErr("Could not converge on the first family member; try a smaller step size\n");
+			printErr("Could not converge on the first family member; try a "
+				"smaller step size\n");
 			break;
 		}else if(diverged && orbitCount > 0){
-			*pConverged = allArcs.back();	// Use previous solution as the converged solution to get correct next guess
+			// Use previous solution as the converged solution to get correct next guess
+			*pConverged = allArcs.back();
 
 			if(!decreaseStepSize())
 				break;
@@ -619,7 +644,8 @@ void NatParamEngine::continuePO(const Arcset *pInitGuess, Arcset *pInput, Arcset
 			if(newTOF * pConverged->getTOFByIx(s) > 0){
 				pInput->getSegRefByIx(s).setTOF(newTOF);
 			}else{
-				printErr("Did not update TOF on segment %u because it would change sign\n", s);
+				printErr("Did not update TOF on segment %u because it "
+					"would change sign\n", s);
 			}
 		}
 	}

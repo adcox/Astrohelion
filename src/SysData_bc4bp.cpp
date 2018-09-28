@@ -87,7 +87,7 @@ SysData_bc4bp::SysData_bc4bp(const char *filepath){
 	mat_t *matfp = Mat_Open(filepath, MAT_ACC_RDONLY);
 	if(nullptr == matfp){
 		char msg[128];
-		sprintf(msg, "SysData_bc4bp: Could not load data from %s", 
+		snprintf(msg, 128, "SysData_bc4bp: Could not load data from %s", 
 			filepath);
 		throw Exception(msg);
 	}
@@ -110,7 +110,7 @@ void SysData_bc4bp::initFromPrimNames(std::string P1, std::string P2, std::strin
 	
 	// Information for the P2-P3 system barycenter
 	char p23SysName[128];
-	sprintf(p23SysName, "%s_barycenter", P2.c_str());
+	snprintf(p23SysName, 128, "%s_barycenter", P2.c_str());
 	BodyData p23Data(p23SysName);
 
 	primaries.clear();

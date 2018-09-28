@@ -110,7 +110,7 @@ double Arcset_cr3bp_lt::getHltByIx(int ix){
 
 	if(ix < 0 || ix > static_cast<int>(nodes.size())){
 		char msg[64];
-		sprintf(msg, "Arcset_cr3bp_lt::getHltByIx: Index %d out of range", ix);
+		snprintf(msg, 64, "Arcset_cr3bp_lt::getHltByIx: Index %d out of range", ix);
 		throw Exception(msg);
 	}
 
@@ -128,7 +128,7 @@ double Arcset_cr3bp_lt::getHltByIx(int ix){
 	}else{
 		// This node is node an origin? Supposed to be impossible
 		char msg[64];
-		sprintf(msg, "Arcset_cr3bp_lt::getHltByIx: Node %d (ix) is not the "
+		snprintf(msg, 64, "Arcset_cr3bp_lt::getHltByIx: Node %d (ix) is not the "
 			"origin of a segment; cannot get H_lt w/o a segment and associated"
 			" control law", ix);
 		throw Exception(msg);

@@ -2239,6 +2239,99 @@ void BaseArcset::printSegIDMap() const{
 //------------------------------------------------------------------------------
 
 /**
+ * @brief Set the control law for a segment
+ * @details If a law with the specified type and parameters does not already 
+ * exist, a new control law object is constructed on the stack. If the control 
+ * law does exist, the segment law is linked to the existing object. 
+ * 
+ * @param lawTp law type
+ * @param params parameters for the control law
+ * @param segIx index of the segment to assign the control law to
+ * @param refLaws vector of control law pointers; these are allocated on the 
+ * stack and should be deleted after use
+ */
+void BaseArcset::setSegCtrl(unsigned int lawTp, const std::vector<double> &params, 
+		unsigned int segIx, std::vector<ControlLaw*> &refLaws){
+
+	if(lawTp != ControlLaw::NO_CTRL){
+		if(lawTp < (1 << 11)){
+			// likely saved witih old IDs
+			ControlLaw::convertID(lawTp);
+		}
+
+		// Allocate a new control law on the stack; by using a function in 
+		// the DynamicsModel, we ensure that the system-specific derived 
+		// class is constructed rather than the base class ControlLaw.
+		ControlLaw *newLaw = pSysData->getDynamicsModel()->createControlLaw(lawTp, params);
+
+		bool foundDuplicate = false;
+		for(auto &law : refLaws){
+			if(law && *law == *newLaw){
+				delete(newLaw);
+				newLaw = law;
+				foundDuplicate = true;
+				break;
+			}
+		}
+
+		// Save the pointer to return back to the top level for further use
+		if(!foundDuplicate)
+			refLaws.push_back(newLaw);
+
+		// Assign the control law to the segment
+		segs[segIx].setCtrlLaw(newLaw);
+	}
+}//====================================================
+
+/**
+ * @brief Set the segment state
+ * @details [long description]
+ * 
+ * @param segIx index of the segment within the `segs` vector
+ * @param pData pointer to the segment state data in column-major order. It 
+ * is assumed that pData is NOT null
+ * @param rows rows of segment states
+ * @param cols width of each segment state
+ */
+void BaseArcset::setSegState(unsigned int segIx, const double *pData,
+	size_t rows, size_t cols){
+
+	unsigned int core_dim = pSysData->getDynamicsModel()->getCoreStateSize();
+	unsigned int extra_dim = pSysData->getDynamicsModel()->getExtraStateSize();
+	unsigned int ctrl_dim = segs[segIx].getCtrlLaw() ? \
+		segs[segIx].getCtrlLaw()->getNumStates() : 0;
+
+	unsigned int expectedWidth = core_dim + 
+		(core_dim + ctrl_dim)*(core_dim + ctrl_dim) + extra_dim + ctrl_dim;
+
+	std::vector<double> fillerStates {};
+	if(expectedWidth < cols){
+		char msg[128];
+		sprintf(msg, "BaseArcset::setSegState: expected width, %u, is "
+			"less than data width, %u. Cannot proceed", expectedWidth, cols);
+		throw Exception(msg);
+	}
+
+	// If some states are missing from the data file (e.g., if a conservative 
+	// save method was used) append a "filler state" full of zeros
+	if(expectedWidth - cols > 0){
+		fillerStates.assign(expectedWidth - cols, 0);
+	}
+
+	segs[segIx].setStateWidth(expectedWidth);
+	for(unsigned int i = 0; i < rows; i++){
+		std::vector<double> state(cols);
+		for(unsigned int c = 0; c < cols; c++)
+			state[c] = pData[c*rows + i];
+
+		segs[segIx].appendState(state);
+
+		if(expectedWidth - cols > 0)
+			segs[segIx].appendState(fillerStates);
+	}
+}//====================================================
+
+/**
  * @brief Construct the link table representation of this arcset
  * 
  * @param linkTable Reference to a vector that will be populated with link table
@@ -3275,8 +3368,6 @@ bool BaseArcset::readVar_SegState(matvar_t *pVar, Save_tp saveTp){
 			"Could not read state data vector");
 		return false;
 	}else{
-		unsigned int coreDim = pSysData->getDynamicsModel()->getCoreStateSize();
-		unsigned int extraDim = pSysData->getDynamicsModel()->getExtraStateSize();
 		unsigned int numSegs = pVar->dims[0];
 		
 		if(segs.size() != numSegs){
@@ -3299,47 +3390,10 @@ bool BaseArcset::readVar_SegState(matvar_t *pVar, Save_tp saveTp){
 				cell_elements[s]->class_type == MAT_C_DOUBLE && 
 				cell_elements[s]->data_type == MAT_T_DOUBLE){
 
-				unsigned int ctrlDim = segs[s].getCtrlLaw() ? \
-					segs[s].getCtrlLaw()->getNumStates() : 0;
-
-				// If all data is read, this is the expected width
-				unsigned int expectedWidth = coreDim + 
-					(coreDim+ctrlDim)*(coreDim+ctrlDim) + extraDim + ctrlDim;
-				std::vector<double> fillerStates;
-
-
-				unsigned int width = cell_elements[s]->dims[1];
-				unsigned int numSteps = cell_elements[s]->dims[0];
-				double *data = static_cast<double *>(cell_elements[s]->data);
-
-				if(expectedWidth < width){
-					char msg[128];
-					sprintf(msg, "BaseArcset::readVar_SegState: "
-						"expected width, %u, is less than data width, %u. "
-						"Cannot proceed",
-						expectedWidth, width);
-					throw Exception(msg);
-				}
-
-				// If some states are missing from the data file (e.g., if a 
-				// conservative save method was used) append a "filler state" 
-				// full of zeros
-				if(expectedWidth - width > 0){
-					fillerStates.assign(expectedWidth - width, 0);
-				}
-
-				segs[s].setStateWidth(expectedWidth);
-				if(data != nullptr){
-					for(unsigned int i = 0; i < numSteps; i++){
-						std::vector<double> state(width);
-						for(unsigned int c = 0; c < width; c++)
-							state[c] = data[c*numSteps + i];
-
-						segs[s].appendState(state);
-
-						if(expectedWidth - width > 0)
-							segs[s].appendState(fillerStates);
-					}
+				double *pData = static_cast<double*>(cell_elements[s]->data);
+				if(pData != nullptr){
+					setSegState(s, pData, cell_elements[s]->dims[0],
+						cell_elements[s]->dims[1]);
 				}
 			}else{
 				Mat_VarFree(pVar);
@@ -3445,7 +3499,7 @@ bool BaseArcset::readVar_SegCtrlLaw(matvar_t *pVar,
 				// segs (checked above)
 				for(unsigned int s = 0; s < numStructs; s++){
 					unsigned int id = 0;
-					std::vector<double> params;
+					std::vector<double> params {};
 
 					// Loop through fields within one controller structure
 					for(unsigned int f = 0; f < fieldsPerController; f++){
@@ -3515,40 +3569,7 @@ bool BaseArcset::readVar_SegCtrlLaw(matvar_t *pVar,
 						}
 					}// End of loop through controller fields
 					
-					// Only proceed if the control is nontrivial
-					if(id != ControlLaw::NO_CTRL){
-
-						if(id < (1<<11)){
-							// likely saved with old IDs
-							ControlLaw::convertID(id);
-						}
-						// Allocate a new control law on the stack; by using a 
-						// function in the DynamicsModel, we ensure that the 
-						// system-specific derived class is constructed rather 
-						// than the base class ControlLaw.
-						ControlLaw *newLaw = 
-							pSysData->getDynamicsModel()->createControlLaw(id, 
-								params);
-
-						// Check to see if the controller has been loaded already
-						bool foundDuplicate = false;
-						for(auto &law : refLaws){
-							if(law && *law == *newLaw){
-								delete(newLaw);
-								newLaw = law;
-								foundDuplicate = true;
-								break;
-							}
-						}
-
-						// Save the pointer to return back to the top level for
-						// further use
-						if(!foundDuplicate)
-							refLaws.push_back(newLaw);
-
-						// Assign the control law to the segment
-						segs[s].setCtrlLaw(newLaw);
-					}
+					setSegCtrl(id, params, s, refLaws);
 				}// End loop through structs
 			}else{
 				Mat_VarFree(pVar);

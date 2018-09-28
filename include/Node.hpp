@@ -90,15 +90,15 @@ public:
 	const std::vector<double>& getStateRef() const;
 	Event_tp getTriggerEvent() const;
 	
-	void setConstraints(std::vector<Constraint>);
+	void setConstraints(const std::vector<Constraint>&);
 	void setEpoch(double);
 	void setExtraParam(std::string, double);
-	void setExtraParamVec(std::string, std::vector<double>);
-	void setExtraParams(std::map<std::string, double>);
-	void setExtraParamVec(std::map<std::string, std::vector<double> >);
+	void setExtraParamVec(std::string, const std::vector<double>&);
+	void setExtraParams(const std::map<std::string, double>&);
+	void setExtraParamVec(const std::map<std::string, std::vector<double> >&);
 	void setID(int) override;
 	void setState(const double*, unsigned int);
-	void setState(std::vector<double>);
+	void setState(const std::vector<double>&);
 	void setTriggerEvent(Event_tp);
 	//\}
 

@@ -110,22 +110,22 @@ public:
 	double getTOF() const;
 	std::vector<bool> getVelCon() const;
 	
-	void setConstraints(std::vector<Constraint>);
+	void setConstraints(const std::vector<Constraint>&);
 	void setCtrlLaw(ControlLaw*);
 	void setID(int) override;
 	void setOrigin(int);
-	void setStateVector(std::vector<double>);
+	void setStateVector(const std::vector<double>&);
 	void setStateWidth(unsigned int);
 	void setTerminus(int);
-	void setTimeVector(std::vector<double>);
+	void setTimeVector(const std::vector<double>&);
 	void setTOF(double);
-	void setSTM(MatrixXRd);
+	void setSTM(const MatrixXRd&);
 	void setSTM(const double*, unsigned int);
 	void setSTM(std::vector<double>);
 	void setVel_AllCon();
 	void setVel_AllDiscon();
 	void setVelCon(const bool[3]);
-	void setVelCon(std::vector<bool>);
+	void setVelCon(const std::vector<bool>&);
 	void setVelCon(bool, bool, bool);
 	
 	//\}

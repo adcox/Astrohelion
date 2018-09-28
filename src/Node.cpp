@@ -185,7 +185,7 @@ void Node::removeConstraint(int ix){
  *	@brief Set the list of constraints for this node
  *	@param constraints a vector of constraints
  */
-void Node::setConstraints(std::vector<Constraint> constraints){
+void Node::setConstraints(const std::vector<Constraint>& constraints){
 	cons = constraints;
 }//====================================================
 
@@ -307,7 +307,7 @@ void Node::setExtraParam(std::string key, double val){
  *	@brief Replace the extra parameter vector for this node
  *	@param p a new extra paremeter vector
  */
-void Node::setExtraParams(std::map<std::string, double> p){
+void Node::setExtraParams(const std::map<std::string, double>& p){
 	extraParam = p;
 }//====================================================
 
@@ -317,7 +317,7 @@ void Node::setExtraParams(std::map<std::string, double> p){
  *  @param key string that identifies the extra parameter vector
  *  @param vec vector to assign to the key
  */
-void Node::setExtraParamVec(std::string key, std::vector<double> vec){
+void Node::setExtraParamVec(std::string key, const std::vector<double> &vec){
 	extraParamVecs[key] = vec;
 }//====================================================
 
@@ -325,7 +325,7 @@ void Node::setExtraParamVec(std::string key, std::vector<double> vec){
  *  @brief Assign the entire extraParamVec map
  *  @param p A map that contains keys and extra parameter vectors
  */
-void Node::setExtraParamVec(std::map<std::string, std::vector<double> > p){
+void Node::setExtraParamVec(const std::map<std::string, std::vector<double> > &p){
 	extraParamVecs = p;
 }//====================================================
 
@@ -357,7 +357,7 @@ void Node::setState(const double *s, unsigned int len){
  *	@param s a vector of non-dimensional position
  *	and velocity states
  */
-void Node::setState(std::vector<double> s){ state = s; }
+void Node::setState(const std::vector<double> &s){ state = s; }
 
 /**
  *  @brief Set the event that triggered the creation of this node

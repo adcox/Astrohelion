@@ -217,6 +217,8 @@ public:
 	 *  \name Data Parsing Functions
 	 *  \{
 	 */
+
+	
 	void getLinkTable(std::vector<int>&) const;
 	void getNodeStates(std::vector<double>&) const;
 	void getNodeEpochs(std::vector<double>&) const;
@@ -228,6 +230,9 @@ public:
 	void setNodeStateDerivs(const double*, size_t, size_t);
 	void setNodeEpochs(const double*, size_t);
 	void setNodeExtraParamVecs(const double*, size_t, std::string, size_t);
+	void setSegCtrl(unsigned int, const std::vector<double>&, 
+		unsigned int, std::vector<ControlLaw*>&);
+	void setSegState(unsigned int, const double*, size_t, size_t);
 	//\}
 
 	/**

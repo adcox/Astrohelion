@@ -143,13 +143,6 @@ bool operator != (const Segment &lhs, const Segment &rhs){
  *	@param c a new constraint
  */
 void Segment::addConstraint(const Constraint &c){
-	// for(const Constraint &con : cons){
-	// 	if(con.conflicts(c)){
-	// 		printWarn("Possible constraint conflict:\n");
-	// 		con.print();
-	// 		c.print();
-	// 	}
-	// }
 	cons.push_back(c);
 }//====================================================
 
@@ -257,19 +250,23 @@ unsigned int Segment::getStateWidth() const{ return stateWidth; }
  *  @return A vector containing the desired state values
  */
 std::vector<double> Segment::getStateByRow(int row) const{
-	if(stateWidth == 0)
-		throw Exception("Segment::getStateByRow: stateWidth is zero! Set the state width before calling this function.");
+	if(stateWidth == 0){
+		throw Exception("Segment::getStateByRow: stateWidth is zero! Set the "
+			"state width before calling this function.");
+	}
 
 	if(row < 0)
 		row += states.size()/stateWidth;
 
 	if(row < 0 || row >= static_cast<int>(states.size()/stateWidth)){
 		char msg[128];
-		sprintf(msg, "Segment::getStateByRow: Index %d out of bounds; expected between 0 and %d", row, static_cast<int>(states.size()/stateWidth) - 1);
+		sprintf(msg, "Segment::getStateByRow: Index %d out of bounds; expected "
+			"between 0 and %d", row, static_cast<int>(states.size()/stateWidth) - 1);
 		throw Exception(msg);
 	}
 
-	std::vector<double> q(states.begin()+row*stateWidth, states.begin()+(row+1)*stateWidth);
+	std::vector<double> q(states.begin()+row*stateWidth, 
+		states.begin()+(row+1)*stateWidth);
 	return q;
 }//====================================================
 
@@ -304,7 +301,8 @@ double Segment::getTimeByIx(int ix) const{
 
 	if(ix < 0 || ix >= static_cast<int>(times.size())){
 		char msg[128];
-		sprintf(msg, "Segment::getTimeByIx: Index %d out of bounds; expected between 0 and %zu", ix, times.size() - 1);
+		sprintf(msg, "Segment::getTimeByIx: Index %d out of bounds; expected "
+			"between 0 and %zu", ix, times.size() - 1);
 		throw Exception(msg);
 	}
 
@@ -334,7 +332,9 @@ MatrixXRd Segment::getSTM() const{ return stm; }
  * 
  *  @return a matrix representation of the STM
  */
-MatrixXRd Segment::getSTM_fromStates(unsigned int core_dim, unsigned int ctrl_dim) const {
+MatrixXRd Segment::getSTM_fromStates(unsigned int core_dim, 
+	unsigned int ctrl_dim) const {
+
 	if(stateWidth == 0)
 		throw Exception("Segment::getSTM_fromStates: stateWidth = 0; cannot proceed");
 
@@ -344,10 +344,13 @@ MatrixXRd Segment::getSTM_fromStates(unsigned int core_dim, unsigned int ctrl_di
 	unsigned int row = states.size()/stateWidth - 1;	// The row number of the final state vector
 
 	if(stateWidth >= elf && states.size() >= row*stateWidth + elf){
-		std::vector<double> stmData(states.begin() + row*stateWidth + el0, states.begin() + row*stateWidth + elf);
+		std::vector<double> stmData(states.begin() + row*stateWidth + el0, 
+			states.begin() + row*stateWidth + elf);
 		return Eigen::Map<MatrixXRd>(&(stmData.front()), side, side);
 	}else{
-		throw Exception("Segment::getSTM_fromStates: stateWidth is not large enough to facilitate STM extraction with the specified state dimensions");
+		throw Exception("Segment::getSTM_fromStates: stateWidth is not large "
+			"enough to facilitate STM extraction with the specified state "
+			"dimensions");
 	}
 }//====================================================
 
@@ -381,7 +384,7 @@ void Segment::removeConstraint(int ix){
  *	@brief Set the list of constraints for this arc segment
  *	@param constraints a vector of constraints
  */
-void Segment::setConstraints(std::vector<Constraint> constraints){
+void Segment::setConstraints(const std::vector<Constraint> &constraints){
 	cons = constraints;
 }//====================================================
 
@@ -415,7 +418,7 @@ void Segment::setOrigin(int o){ links[ORIG_IX] = o; }
  *  @param v the state vector associated with the propagation along this segment, 
  *  in row-major order.
  */
-void Segment::setStateVector(std::vector<double> v){ states = v; }
+void Segment::setStateVector(const std::vector<double> &v){ states = v; }
 
 /**
  *  @brief Specify the size of one state vector in the array
@@ -431,7 +434,7 @@ void Segment::setStateWidth(unsigned int w){ stateWidth = w; }
  *	@brief Set the STM for this step
  *	@param m a state transition matrix (non-dim)
  */
-void Segment::setSTM(MatrixXRd m){ stm = m; }
+void Segment::setSTM(const MatrixXRd &m){ stm = m; }
 
 /**
  *	@brief Set the STM for this step
@@ -449,7 +452,8 @@ void Segment::setSTM(const double *elements, unsigned int len){
  *	(non-dimensional) in row-major order
  */
 void Segment::setSTM(std::vector<double> elements){
-	unsigned int len = static_cast<unsigned int>(std::floor(std::sqrt(static_cast<double>(elements.size()))));
+	unsigned int len = static_cast<unsigned int>(std::floor(\
+		std::sqrt(static_cast<double>(elements.size()))));
 	stm = Eigen::Map<MatrixXRd>(&(elements[0]), len, len);
 }//====================================================
 
@@ -463,7 +467,7 @@ void Segment::setTerminus(int t){ links[TERM_IX] = t; }
  *  @brief Set the time vector associated with the propagated arc along this segment
  *  @param t he time vector associated with the propagated arc along this segment
  */
-void Segment::setTimeVector(std::vector<double> t){ times = t; }
+void Segment::setTimeVector(const std::vector<double> &t){ times = t; }
 
 /**
  *  @brief Set the TOF along this segment; 
@@ -510,10 +514,11 @@ void Segment::setVelCon(const bool data[3]){
  *	[v_x, v_y, v_z]
  *	@throw Exception if `data` has fewer than three elements
  */
-void Segment::setVelCon(std::vector<bool> data){
+void Segment::setVelCon(const std::vector<bool> &data){
 	if(data.size() < 3){
 		char msg[128];
-		sprintf(msg, "Segment::setVelCon: data size = %zu; need at least three elements", data.size());
+		sprintf(msg, "Segment::setVelCon: data size = %zu; need at least "
+			"three elements", data.size());
 		throw Exception(msg);
 	}
 
@@ -586,13 +591,16 @@ void Segment::updateTOF(){
  */
 void Segment::print() const{
 	printf("Segment | id = %d\n", ID);
-	printf("\tOrigin Node ID: %d, Terminus Node ID: %d\n", getOrigin(), getTerminus());
+	printf("\tOrigin Node ID: %d, Terminus Node ID: %d\n", getOrigin(), 
+		getTerminus());
 	printf("\tTOF = %.4f\n", tof);
-	printf("\tControl Law = %s\n", pCtrlLaw ? pCtrlLaw->typeToString(pCtrlLaw->getType()).c_str() : "NONE");
+	printf("\tControl Law = %s\n", pCtrlLaw ? pCtrlLaw->typeToString(\
+		pCtrlLaw->getType()).c_str() : "NONE");
 
 	printf("\tTime Vector: %zu x 1\n", times.size());
 	if(times.size() > 0){
-		printf("\tState Vector: %zu x %d (remainder %f)\n", times.size(), static_cast<int>(floor(states.size()/times.size())),
+		printf("\tState Vector: %zu x %d (remainder %f)\n", times.size(), 
+			static_cast<int>(floor(states.size()/times.size())),
 			states.size() - times.size()*floor(states.size()/times.size()));
 	}else{
 		printf("\tState Vector: %zu x 0\n", states.size());

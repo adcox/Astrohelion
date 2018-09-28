@@ -223,6 +223,11 @@ public:
 	void getNodeStateDeriv(std::vector<double>&) const;
 	void getNodeExtraParamVec(std::string, size_t, std::vector<double>&) const;
 	void getNodeExtraParam(std::string, std::vector<double>&) const;
+
+	void setNodeStates(const double*, size_t, size_t);
+	void setNodeStateDerivs(const double*, size_t, size_t);
+	void setNodeEpochs(const double*, size_t);
+	void setNodeExtraParamVecs(const double*, size_t, std::string, size_t);
 	//\}
 
 	/**

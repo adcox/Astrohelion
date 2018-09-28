@@ -2242,7 +2242,7 @@ void BaseArcset::printSegIDMap() const{
  * @brief Construct the link table representation of this arcset
  * 
  * @param linkTable Reference to a vector that will be populated with link table
- * data in row-major order
+ * data in column-major order
  */
 void BaseArcset::getLinkTable(std::vector<int> &linkTable) const{
 	unsigned int numSegs = segs.size();
@@ -2361,6 +2361,46 @@ void BaseArcset::getNodeExtraParam(std::string varKey, std::vector<double> &para
 			// Save NAN (rather than un-allocated memory) if the node does not have the specified parameter
 			param[r] = NAN;
 		}
+	}
+}//====================================================
+
+void BaseArcset::setNodeStates(const double* pData, size_t nNodes, size_t nStates){
+	for(unsigned int i = 0; i < nNodes; i++){
+		std::vector<double> state(nStates, NAN);
+		for(unsigned int s = 0; s < nStates; s++){
+			state[s] = pData[s*nNodes + i];
+		}
+
+		nodes[i].setState(state);
+	}
+}//====================================================
+
+void BaseArcset::setNodeStateDerivs(const double *pData, size_t nNodes, size_t nStates){
+	for(unsigned int i = 0; i < nNodes; i++){
+		std::vector<double> deriv(nStates, 0);
+
+		for(unsigned int s = 0; s < nStates; s++){
+			deriv[s] = pData[s*nNodes + i];
+		}
+		nodes[i].setExtraParamVec(PARAMKEY_STATE_DERIV, deriv);
+	}
+}//====================================================
+
+void BaseArcset::setNodeEpochs(const double *pData, size_t nNodes){
+	for(unsigned int i = 0; i < nNodes; i++){
+		nodes[i].setEpoch(pData[i]);
+	}
+}//====================================================
+
+void BaseArcset::setNodeExtraParamVecs(const double *pData, size_t nNodes,
+	std::string varKey, size_t len){
+	unsigned int i = 0, c = 0;
+	for(i = 0; i < nNodes; i++){
+		std::vector<double> vec(len,0);
+		for(c = 0; c < len; c++){
+			vec[c] = pData[c*nNodes + i];
+		}
+		nodes[i].setExtraParamVec(varKey, vec);
 	}
 }//====================================================
 
@@ -2971,14 +3011,7 @@ bool BaseArcset::readVar_NodeState(matvar_t *pVar, Save_tp saveTp){
 			double *data = static_cast<double *>(pVar->data);
 
 			if(data != nullptr){
-				for(unsigned int i = 0; i < numSteps; i++){
-					std::vector<double> state;
-					for(unsigned int s = 0; s < core_dim; s++){
-						state.push_back(data[s*numSteps + i]);
-					}
-
-					nodes[i].setState(state);
-				}
+				setNodeStates(data, numSteps, core_dim);
 			}
 		}else{
 			Mat_VarFree(pVar);
@@ -3026,14 +3059,7 @@ bool BaseArcset::readVar_NodeStateDeriv(matvar_t *pVar, Save_tp saveTp){
 			double *data = static_cast<double *>(pVar->data);
 
 			if(data != nullptr){
-				for(unsigned int i = 0; i < numSteps; i++){
-					std::vector<double> deriv(core_dim, 0);
-
-					for(unsigned int s = 0; s < core_dim; s++){
-						deriv[s] = data[s*numSteps + i];
-					}
-					nodes[i].setExtraParamVec(PARAMKEY_STATE_DERIV, deriv);
-				}
+				setNodeStateDerivs(data, numSteps, core_dim);
 			}
 		}else{
 			Mat_VarFree(pVar);
@@ -3081,9 +3107,7 @@ bool BaseArcset::readVar_NodeEpoch(matvar_t *pVar, Save_tp saveTp){
 			double *data = static_cast<double *>(pVar->data);
 
 			if(data != nullptr){
-				for(unsigned int i = 0; i < numSteps; i++){
-					nodes[i].setEpoch(data[i]);
-				}
+				setNodeEpochs(data, numSteps);
 			}
 		}else{
 			Mat_VarFree(pVar);
@@ -3225,13 +3249,7 @@ bool BaseArcset::readVar_NodeExtraParamVec(matvar_t *pVar, std::string varKey, s
 		if(pVar->class_type == MAT_C_DOUBLE && pVar->data_type == MAT_T_DOUBLE){
 			double *data = static_cast<double *>(pVar->data);
 			if(data != nullptr){
-				for(unsigned int i = 0; i < numSteps; i++){
-					std::vector<double> vec(len,0);
-					for(unsigned int c = 0; c < len; c++){
-						vec[c] = data[c*numSteps + i];
-					}
-					nodes[i].setExtraParamVec(varKey, vec);
-				}
+				setNodeExtraParamVecs(data, numSteps, varKey, len);
 			}
 		}else{
 			Mat_VarFree(pVar);

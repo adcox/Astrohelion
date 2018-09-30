@@ -62,7 +62,7 @@ class SysData_cr3bp_lt : public SysData_cr3bp{
 		 *  \name Set and Get Functions
 		 *  \{
 		 */
-		const DynamicsModel* getDynamicsModel() const;
+		const DynamicsModel* getDynamicsModel() const override;
 		double getRefMass() const;
 		void setRefMass(double);
 		//\}
@@ -72,7 +72,7 @@ class SysData_cr3bp_lt : public SysData_cr3bp{
 		 *  \{
 		 */
 		void saveToMat(const char*) const override;
-		void saveToMat(mat_t*) const;
+		void saveToMat(mat_t*) const override;
 		//\}
 	private:
 		/** The dynamic model that governs motion for this system*/
@@ -82,7 +82,7 @@ class SysData_cr3bp_lt : public SysData_cr3bp{
 		 *  \name File I/O
 		 *  \{
 		 */
-		void readFromMat(mat_t*);
+		void readFromMat(mat_t*) override;
 		//\}
 };
 

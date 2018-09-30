@@ -65,10 +65,10 @@ public:
 		std::vector<double>*, Verbosity_tp verb = Verbosity_tp::NO_MSG);
 	static double getHamiltonian(double, const double*, const SysData_cr3bp_lt*, 
 		const ControlLaw_cr3bp_lt*);
-	DynamicsModel::eom_fcn getFullEOM_fcn() const;
-	DynamicsModel::eom_fcn getSimpleEOM_fcn() const;
+	DynamicsModel::eom_fcn getFullEOM_fcn() const override;
+	DynamicsModel::eom_fcn getSimpleEOM_fcn() const override;
 	std::vector<double> getStateDeriv(double, std::vector<double>, 
-		EOM_ParamStruct*) const;
+		EOM_ParamStruct*) const override;
 	//\}
 
 	/**
@@ -83,7 +83,7 @@ public:
 	 *  \name Simulation Analysis Functions
 	 *  \{
 	 */
-	std::vector<Event> sim_makeDefaultEvents(const SysData *pSys) const;
+	std::vector<Event> sim_makeDefaultEvents(const SysData *pSys) const override;
 	//\}
 
 	/**

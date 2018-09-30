@@ -69,7 +69,7 @@ class SysData_cr3bp : public SysData{
 		 *  \name Set and Get Functions
 		 *  \{
 		 */
-		const DynamicsModel* getDynamicsModel() const;
+		const DynamicsModel* getDynamicsModel() const override;
 		double getMu() const;
 		//\}
 		
@@ -85,7 +85,7 @@ class SysData_cr3bp : public SysData{
 		 *  \{
 		 */
 		void saveToMat(const char*) const override;
-		void saveToMat(mat_t*) const;
+		void saveToMat(mat_t*) const override;
 		//\}
 	protected:
 		/**
@@ -99,7 +99,7 @@ class SysData_cr3bp : public SysData{
 		 *  \name File I/O
 		 *  \{
 		 */
-		void readFromMat(mat_t*);
+		void readFromMat(mat_t*) override;
 		//\}
 		
 	private:

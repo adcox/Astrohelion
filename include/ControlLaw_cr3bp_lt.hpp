@@ -203,7 +203,7 @@ public:
 	static double thrust_dim2nondim(double, const SysData_cr3bp_lt*);
 	static double thrust_nondim2dim(double, const SysData_cr3bp_lt*);
 	static void pointingVecToAngles(Eigen::Vector3d, double*, double*);
-	void print() const;
+	void print() const override;
 	//\}
 
 	/**	

@@ -65,14 +65,14 @@ public:
 	 *  \{
 	 */
 	static void getEquilibPt(const SysData_cr3bp*, int, double, double[3]);
-	DynamicsModel::eom_fcn getFullEOM_fcn() const;
-	DynamicsModel::eom_fcn getSimpleEOM_fcn() const;
+	DynamicsModel::eom_fcn getFullEOM_fcn() const override;
+	DynamicsModel::eom_fcn getSimpleEOM_fcn() const override;
 	static double getJacobi(const double[], double);
-	std::vector<double> getPrimPos(double, const SysData*) const;
-	void getPrimPos(double, const SysData*, int, double*) const;
-	std::vector<double> getPrimVel(double, const SysData*) const;
-	void getPrimVel(double, const SysData*, int, double*) const;
-	std::vector<double> getStateDeriv(double, std::vector<double>, EOM_ParamStruct*) const;
+	std::vector<double> getPrimPos(double, const SysData*) const override;
+	void getPrimPos(double, const SysData*, int, double*) const override;
+	std::vector<double> getPrimVel(double, const SysData*) const override;
+	void getPrimVel(double, const SysData*, int, double*) const override;
+	std::vector<double> getStateDeriv(double, std::vector<double>, EOM_ParamStruct*) const override;
 	//\}
 
 	/**

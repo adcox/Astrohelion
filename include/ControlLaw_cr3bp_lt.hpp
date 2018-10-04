@@ -173,10 +173,7 @@ public:
 	 *  \name Set and Get Functions
 	 *  \{
 	 */
-	bool isVarMass() const;
 	std::string getTypeString() const override;
-
-	void setVarMass(bool);
 	//\}
 
 	/**

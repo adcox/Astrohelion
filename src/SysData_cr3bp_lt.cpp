@@ -54,13 +54,19 @@ SysData_cr3bp_lt::SysData_cr3bp_lt() : SysData_cr3bp(){
  *	@param P1 the name of the larger primary
  *	@param P2 the name of the smaller primary; P2 must orbit P1
  *	@param refMass reference mass, kilograms
+ *	
+ *	@throws Exception if the system cannot be initialized
  */
 SysData_cr3bp_lt::SysData_cr3bp_lt(std::string P1, std::string P2, double refMass){
 	numPrimaries = 2;
 	type = SysData_tp::CR3BP_LT_SYS;
 	otherParams.assign(2,0);	// make mu = 0 and M0 = 0
 	
-	initFromPrimNames(P1, P2);
+	try{
+		initFromPrimNames(P1, P2);
+	}catch(const Exception &e){
+		throw;
+	}
 
 	if(refMass <= 0)
 		throw Exception("SysData_cr3bp_lt: Cannot use negative or zero reference mass");
@@ -182,6 +188,8 @@ void SysData_cr3bp_lt::saveToMat(mat_t *matFile) const{
  *	@brief Populate data fiels for this data object by reading the primaries'
  *	names from a Mat file
  *	@param matFile a pointer to the Mat file in question
+ *	
+ *	@throws Exception if the system cannot be initialized
  */
 void SysData_cr3bp_lt::readFromMat(mat_t *matFile){
 	std::string P1 = astrohelion::readStringFromMat(matFile, VARNAME_P1, MAT_T_UINT8, MAT_C_CHAR);
@@ -189,7 +197,11 @@ void SysData_cr3bp_lt::readFromMat(mat_t *matFile){
 
 	type = SysData_tp::CR3BP_LT_SYS;
 	otherParams.assign(4,0);
-	initFromPrimNames(P1, P2);
+	try{
+		initFromPrimNames(P1, P2);
+	}catch(const Exception &e){
+		throw;
+	}
 
 	setRefMass(readDoubleFromMat(matFile, VARNAME_M0));
 }//===================================================

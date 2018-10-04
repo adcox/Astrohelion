@@ -51,13 +51,19 @@ SysData_cr3bp::SysData_cr3bp() : SysData(){
  *	@brief Create a system data object using data from the two primaries
  *	@param P1 the name of the larger primary
  *	@param P2 the name of the smaller primary; P2 must orbit P1
+ *	
+ *	@throws Exception if the system cannot be initialized
  */
 SysData_cr3bp::SysData_cr3bp(std::string P1, std::string P2){
 	numPrimaries = 2;
 	type = SysData_tp::CR3BP_SYS;
 	otherParams.assign(1,0);	// make mu = 0
 	
-	initFromPrimNames(P1, P2);
+	try{
+		initFromPrimNames(P1, P2);
+	}catch(const Exception &e){
+		throw;
+	}
 }//===================================================
 
 /**
@@ -87,6 +93,8 @@ SysData_cr3bp::~SysData_cr3bp(){}
  *	@brief Initialize all data fields using the names of the primaries
  *	@param P1 the name of the larger primary
  *	@param P2 the name of the smaller primary
+ *	
+ *	@throws Exception if the system cannot be initialized
  */
 void SysData_cr3bp::initFromPrimNames(std::string P1, std::string P2){
 	BodyData p1Data(P1);
@@ -185,6 +193,7 @@ void SysData_cr3bp::saveToMat(mat_t *matFile) const{
  *	@brief Populate data fiels for this data object by reading the primaries'
  *	names from a Mat file
  *	@param matFile a pointer to the Mat file in question
+ *	@throws Exception if the system cannot be initialized
  */
 void SysData_cr3bp::readFromMat(mat_t *matFile){
 	std::string P1 = astrohelion::readStringFromMat(matFile, VARNAME_P1, MAT_T_UINT8, MAT_C_CHAR);
@@ -193,7 +202,11 @@ void SysData_cr3bp::readFromMat(mat_t *matFile){
 	numPrimaries = 2;
 	type = SysData_tp::CR3BP_SYS;
 	otherParams.assign(1,0);	// make mu = 0
-	initFromPrimNames(P1, P2);
+	try{
+		initFromPrimNames(P1, P2);
+	}catch(const Exception &e){
+		throw;
+	}
 }//====================================================
 
 void SysData_cr3bp::print() const{

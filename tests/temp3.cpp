@@ -74,7 +74,7 @@ int main(){
 
 		// Space nodes around the arc by running a quick propagation
 		SimEngine sim;
-		sim.setMakeDefaultEvents(false);
+		// sim.setMakeDefaultEvents(false);
 		sim.setVerbosity(Verbosity_tp::NO_MSG);
 		Arcset_cr3bp_lt multiNodeArc(&sys);
 		sim.runSim_manyNodes(arc.getStateByIx(0), ctrl0, 0, arc.getTotalTOF(),

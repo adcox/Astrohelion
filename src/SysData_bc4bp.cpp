@@ -63,13 +63,18 @@ SysData_bc4bp::SysData_bc4bp() : SysData(){
  *	@param P1 the name of the larger primary
  *	@param P2 the name of the medium primary; P2 must orbit P1
  *	@param P3 the name of the smallest primary; P3 must orbit P2
+ *	@throws Exception if the system cannot be initialized
  */
 SysData_bc4bp::SysData_bc4bp(std::string P1, std::string P2, std::string P3){
 	numPrimaries = 3;
 	type = SysData_tp::BCR4BPR_SYS;
 	otherParams.assign(8,0);
 
-	initFromPrimNames(P1, P2, P3);
+	try{
+		initFromPrimNames(P1, P2, P3);
+	}catch(const Exception &e){
+		throw;
+	}
 }//===================================================
 
 /**
@@ -324,6 +329,7 @@ void SysData_bc4bp::saveToMat(mat_t *matFile) const{
 /**
  *	@brief Load system data from a mat file
  *	@param matFile a pointer to the mat file in question
+ *	@throws Exception if the system cannot be initialized
  */
 void SysData_bc4bp::readFromMat(mat_t *matFile){
 	std::string P1 = astrohelion::readStringFromMat(matFile, VARNAME_P1, MAT_T_UINT8, MAT_C_CHAR);
@@ -333,7 +339,11 @@ void SysData_bc4bp::readFromMat(mat_t *matFile){
 	numPrimaries = 3;
 	type = SysData_tp::BCR4BPR_SYS;
 	otherParams.assign(8,0);
-	initFromPrimNames(P1, P2, P3);
+	try{
+		initFromPrimNames(P1, P2, P3);
+	}catch(const Exception &e){
+		throw;
+	}
 
 	otherParams[4] = astrohelion::readDoubleFromMat(matFile, "Theta0");
 	otherParams[5] = astrohelion::readDoubleFromMat(matFile, "Phi0");

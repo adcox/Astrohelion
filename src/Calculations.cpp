@@ -722,6 +722,20 @@ Node interpPointAtTime(const Arcset *traj, double t){
     return node2;
 }//====================================================
 
+/**
+ * @brief Propagate all segments to populate SegState, SegTime, and other data
+ * @details Arcsets may be stored as skeleton data with only initial and final
+ * states, times, etc., along each Segment. While this saves storage space, it
+ * is not a particularly useful representation of a trajectory for analyses. 
+ * This function propagates each segment, and saves the full representation of
+ * the Arcset in pArcOut.
+ * 
+ * @param pArcIn Pointer to input skelton Arcset
+ * @param pArcOut Pointer to output Arcset that is populated with the full 
+ * trajectory data
+ * 
+ * @throws Exception if either input or output Arcset pointer is null.
+ */
 void reconstructArc(const Arcset *pArcIn, Arcset *pArcOut){
     if(pArcIn == nullptr || pArcOut == nullptr)
         throw Exception("Calculations:reconstructArc: pArcIn or pArcOut are "

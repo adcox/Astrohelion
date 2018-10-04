@@ -145,8 +145,8 @@ int SimEngine::addEvent(const Event &evt){
     // Make sure this event hasn't been added before
     for(unsigned int e = 0; e < events.size(); e++){
         if(events[e] == evt){
-            printErr("SimEngine::addEvent: Event has already been added to "
-                "the engine; ignoring this new event\n");
+            printErr("SimEngine::addEvent: %s event has already been added to "
+                "the engine; ignoring this new event\n", evt.getTypeStr());
             return -1;
         }
     }

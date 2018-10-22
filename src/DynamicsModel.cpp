@@ -209,7 +209,6 @@ std::vector<Event> DynamicsModel::sim_makeDefaultEvents(const SysData *pSys) con
 int DynamicsModel::sim_addNode(Node &node, const double *y, double t, 
 	Arcset* arcset, EOM_ParamStruct *params, Event_tp tp) const{
 
-	(void) y;
 	(void) t;
 	
 	node.setTriggerEvent(tp);

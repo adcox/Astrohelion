@@ -498,7 +498,8 @@ int DynamicsModel_cr3bp_lt::simpleEOMs(double t, const double s[], double sdot[]
 
     // Save any derivatives of the control states
     if(law){
-        if(unsigned int ctrl_dim = law->getNumStates() > 0){
+        unsigned int ctrl_dim = law->getNumStates();
+        if(ctrl_dim > 0){
             std::vector<double> control_stateDeriv(ctrl_dim, 0);
             law->getTimeDeriv(t, s, pSys, &(control_stateDeriv.front()), ctrl_dim);
 

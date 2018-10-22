@@ -77,8 +77,7 @@ std::string ControlLaw_cr3bp_lt::getTypeString() const{
  *  @details Computes the quantity \f$ \dot{m} \f$ for the CR3BP-LT equations of motion.
  * 
  *  @param t nondimensional time
- *  @param s full state vector; contains core state, control states, STM 
- *  elements, and extra states
+ *  @param s state vector including at least the core states and control states
  *  @param pSys pointer to the system data object
  *  @return the time derivative of spacecraft mass
  */
@@ -134,8 +133,7 @@ double ControlLaw_cr3bp_lt::get_dmdt(double t, const double *s,
  * @details This is NOT the same as the magnitude of the acceleration vector
  * 
  * @param t nondimensional time
- * @param s full state vector; contains core state, control states, STM 
- * elements, and extra states
+ * @param s state vector including at least the core states and control states
  * @param pSys pointer to the system data object
  * @return the nondimensional thrust magnitude of this control law
  */
@@ -200,8 +198,7 @@ double ControlLaw_cr3bp_lt::getThrustMag(double t, const double *s,
  * 	results from the low-thrust propulsion.
  * 	
  *  @param t time parameter
- *  @param s full state vector; contains core state, control states, STM 
- *  elements, and extra states
+ *  @param s state vector including at least the core states and control states
  *  @param pSysData system data object
  *  @param output empty, initialized array to store the control law output in. 
  *  Must be at least three elements to avoid memory errors.
@@ -240,8 +237,7 @@ void ControlLaw_cr3bp_lt::getOutput(double t, const double *s,
  *  specified system
  * 
  *  @param t time parameter
- *  @param s full state vector; contains core state, control states, STM 
- *  elements, and extra states
+ *  @param s state vector including at least the core states and control states
  *  @param pSys system data object
  *  @param partials empty, initialized array of zeros to store the control law 
  *  derivatives in
@@ -345,8 +341,7 @@ void ControlLaw_cr3bp_lt::getPartials_EOMsWRTCtrlState(double t,
  * 	law, given the input time, state, and system data.
  * 	
  *  @param t time parameter
- *  @param s full state vector; contains core state, control states, STM 
- *  elements, and extra states
+ *  @param s state vector including at least the core states and control states
  *  @param pSys system data object
  *  @param law empty, initialized array to store the control law output in
  *  @param len number of elements in the `law` array
@@ -377,8 +372,7 @@ void ControlLaw_cr3bp_lt::getAccel_ConstC_2D(double t, const double *s,
  * 	law, given the input time, state, and system data.
  * 	
  *  @param t time parameter
- *  @param s full state vector; contains core state, control states, STM 
- *  elements, and extra states
+ *  @param s state vector including at least the core states and control states
  *  @param pSys system data object
  *  @param law empty, initialized array to store the control law output in
  *  @param len number of elements in the `law` array
@@ -408,8 +402,7 @@ void ControlLaw_cr3bp_lt::getAccel_AlongVel(double t, const double *s,
  * 	law, given the input time, state, and system data.
  * 	
  *  @param t time parameter
- *  @param s full state vector; contains core state, control states, STM 
- *  elements, and extra states
+ *  @param s state vector including at least the core states and control states
  *  @param pSys system data object
  *  @param law empty, initialized array to store the control law output in
  *  @param len number of elements in the `law` array
@@ -438,8 +431,7 @@ void ControlLaw_cr3bp_lt::getAccel_GeneralRot(double t, const double *s,
  * 	law, given the input time, state, and system data.
  * 	
  *  @param t time parameter
- *  @param s full state vector; contains core state, control states, STM 
- *  elements, and extra states
+ *  @param s state vector including at least the core states and control states
  *  @param pSys system data object
  *  @param law empty, initialized array to store the control law output in
  *  @param len number of elements in the `law` array
@@ -475,8 +467,7 @@ void ControlLaw_cr3bp_lt::getAccel_GeneralInert(double t, const double *s,
  *  specified system
  * 
  *  @param t time parameter
- *  @param s full state vector; contains core state, control states, STM 
- *  elements, and extra states
+ *  @param s state vector including at least the core states and control states
  *  @param pSys system data object
  *  @param partials empty, initialized array of zeros to store the control law 
  *  derivatives in. The partials are stored in mxn row-major order array
@@ -499,11 +490,11 @@ void ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_ConstC_2D(double t, const dou
 	int sign = (lawType & OP1_MASK) ? 1 : -1;	// +1 for RIGHT, -1 for LEFT
 
 	/*	CONST_F laws:
-	 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
+	 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ...}
 	 *		ctrl: {}
 	 *		params: {f, Isp}
 	 *	VAR_F laws:
-	 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
+	 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ...}
 	 *		ctrl: {g}
 	 *		params: {fmax, Isp}
 	 *		
@@ -530,8 +521,7 @@ void ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_ConstC_2D(double t, const dou
  *  states at the given time, state, in the specified system
  * 
  *  @param t time parameter
- *  @param s full state vector; contains core state, control states, STM 
- *  elements, and extra states
+ *  @param s state vector including at least the core states and control states
  *  @param pSys system data object
  * 	@param partials empty, initialized array of zeros to store the control law 
  *  derivatives in. The partials are stored in mxn row-major order array
@@ -556,11 +546,11 @@ void ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_AlongVel(double t, const doub
 	double v3 = v*v*v;
 
 	/*	CONST_F laws:
-	 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
+	 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ...}
 	 *		ctrl: {}
 	 *		params: {f, Isp}
 	 *	VAR_F laws:
-	 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
+	 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ...}
 	 *		ctrl: {g}
 	 *		params: {fmax, Isp}
 	 *		
@@ -593,8 +583,7 @@ void ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_AlongVel(double t, const doub
  *  specified system
  * 
  *  @param t time parameter
- *  @param s full state vector; contains core state, control states, STM 
- *  elements, and extra states
+ *  @param s state vector including at least the core states and control states
  *  @param pSys system data object
  * 	@param partials empty, initialized array of zeros to store the control law 
  *  derivatives in. The partials are stored in mxn row-major order array
@@ -617,12 +606,12 @@ void ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_GeneralRot(double t,
 	double f = getThrustMag(t, s, pSys);
 
 	/*	CONST_F and CONST_MF laws:
-	 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
+	 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ...}
 	 *		ctrl: {alpha, beta}
 	 *		params: {f, Isp}
 	 *		
 	 *	VAR_F laws:
-	 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
+	 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ...}
 	 *		ctrl: {alpha, beta, g}
 	 *		params: {fmax, Isp}
 	 *		
@@ -644,8 +633,7 @@ void ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_GeneralRot(double t,
  *  specified system
  * 
  *  @param t time parameter
- *  @param s full state vector; contains core state, control states, STM 
- *  elements, and extra states
+ *  @param s state vector including at least the core states and control states
  *  @param pSys system data object
  * 	@param partials empty, initialized array of zeros to store the control law 
  *  derivatives in. The partials are stored in mxn row-major order array
@@ -668,12 +656,12 @@ void ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_GeneralInert(double t,
 	double f = getThrustMag(t, s, pSys);
 
 	/*	CONST_F and CONST_MF laws:
-	 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
+	 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ...}
 	 *		ctrl: {psi, beta}
 	 *		params: {theta0, f, Isp}
 	 *		
 	 *	VAR_F laws:
-	 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
+	 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ...}
 	 *		ctrl: {psi, beta, g}
 	 *		params: {theta0, fmax, Isp}
 	 *		

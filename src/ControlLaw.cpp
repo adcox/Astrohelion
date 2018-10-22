@@ -259,7 +259,7 @@ void ControlLaw::getOutput(double t, const double *s, const SysData *pSys,
  *  in derived classes, more specific behavior may be defined.
  * 
  *  @param t nondimensional integration time
- *  @param s integration state vector (from SimEngine / DynamicsModel)
+ *  @param s state vector including at least the core states and control states
  *  @param pSys pointer to the system data object
  *  @param deriv pointer to an array of zeros in which to store the 
  *  time-derivative of the control states

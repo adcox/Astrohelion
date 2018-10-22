@@ -250,6 +250,8 @@ class SimEngine : public Core, public Engine{
 		/** Number of seconds allowed for integration; set to -1 to allow unlimitted computation time */
 		double maxCompTime = -1;
 
+		/** Dimension of the state being integrated */
+		unsigned int ic_dim = 0;
 		/** 
 		 * Maximum number of steps the fixed-step integration driver can take. This cap only limits
 		 * integrations performed when bVarStepSize = false

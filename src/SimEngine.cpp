@@ -1078,7 +1078,7 @@ void SimEngine::integrate(const double *ic, const double *ctrl0,
         "  using control law: %s\n", eomParams->pCtrlLaw ? 
         eomParams->pCtrlLaw->getTypeString().c_str() : "NONE");
 
-    /* Create a system to integrate; we don't include a Jacobin (nullptr)
+    /* Create a system to integrate; we don't include a Jacobian (nullptr)
      *  The parameter set eomParams can be modified 
      *  between integration steps (i.e., change model parameters), but the ode 
      *  functions must be reset via `gsl_odeiv2_driver_reset`, 

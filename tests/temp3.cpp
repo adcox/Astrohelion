@@ -55,7 +55,7 @@ int main(){
 
 	Arcset_cr3bp_lt arc(&sys);
 
-	Event evt(Event_tp::YZ_PLANE, 0, true);
+	Event evt(Event_tp::JC, 0, true, std::vector<double> {3.15});
 
 	sim.addEvent(evt);
 	sim.setSimpleInt(true);

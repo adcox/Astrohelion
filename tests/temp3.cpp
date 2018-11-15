@@ -55,14 +55,21 @@ int main(){
 
 	Arcset_cr3bp_lt arc(&sys);
 
-	Event evt(Event_tp::JC, 0, true, std::vector<double> {3.15});
+	Event evt(Event_tp::YZ_PLANE, 0, true, std::vector<double> {3.15});
+	evt.setStopCount(3);
 
 	sim.addEvent(evt);
-	sim.setSimpleInt(true);
-	// sim.setVerbosity(Verbosity_tp::DEBUG);
-	sim.runSim(q0, ctrl0, 0, 6*PI, &arc, &law);
 
-	arc.print();
+	sim.setMakeDefaultEvents(false);
+
+	sim.setSimpleInt(true);
+
+	// sim.setVerbosity(Verbosity_tp::DEBUG);
+	sim.runSim(q0, ctrl0, 0, 9*PI, &arc, &law);
+
+	std::vector<Event> simEvents = sim.getEvents();
+	for(auto &evt : simEvents)
+		evt.print();
 
 	return EXIT_SUCCESS;
 }

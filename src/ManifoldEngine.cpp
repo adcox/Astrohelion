@@ -390,9 +390,9 @@ std::vector<Arcset_cr3bp> ManifoldEngine::manifoldsFromPOPoint(Manifold_tp manif
 		        v /= v.norm();  // make it a unit vector
 
 		        // Compute the pseudopotential 
-		        double d = sqrt((ic[0] + mu)*(ic[0] + mu) + ic[1]*ic[1] + ic[2]*ic[2]);
-		        double r = sqrt((ic[0] - 1 + mu)*(ic[0] - 1 + mu) + ic[1]*ic[1] + ic[2]*ic[2]);
-		        double U = (1 - mu)/d + mu/r + 0.5*(ic[0]*ic[0] + ic[1]*ic[1]);
+		        double r13 = sqrt((ic[0] + mu)*(ic[0] + mu) + ic[1]*ic[1] + ic[2]*ic[2]);
+		        double r23 = sqrt((ic[0] - 1 + mu)*(ic[0] - 1 + mu) + ic[1]*ic[1] + ic[2]*ic[2]);
+		        double U = (1 - mu)/r13 + mu/r23 + 0.5*(ic[0]*ic[0] + ic[1]*ic[1]);
 
 		        // Rescale the velocity vector so that the magnitude yields the exact Jacobi Constant
 		        v *= sqrt(2*U - C);
@@ -449,8 +449,13 @@ std::vector<Arcset_cr3bp_lt> ManifoldEngine::manifoldsFromLTPOPoint(
     SimEngine sim;
     sim.setVerbosity(static_cast<Verbosity_tp>(to_underlying(verbosity) - 1));
     double mu = pSys->getMu();
+
     Eigen::VectorXd q0 = Eigen::Map<Eigen::VectorXd>(&(state[0]), 7, 1);
-    double C = DynamicsModel_cr3bp::getJacobi(&(state.front()), mu);
+
+    // Get the energy at the point
+    std::vector<double> q_full = state;
+    q_full.insert(q_full.end(), ctrl0.begin(), ctrl0.end());
+    double Hlt = DynamicsModel_cr3bp_lt::getHamiltonian(0, &(q_full[0]), pSys, pLaw);
 
     // Loop through each stability type
     for(unsigned int s = 0; s < eigVals.size(); s++){
@@ -496,12 +501,19 @@ std::vector<Arcset_cr3bp_lt> ManifoldEngine::manifoldsFromLTPOPoint(
                 v /= v.norm();  // make it a unit vector
 
                 // Compute the pseudopotential 
-                double d = sqrt((ic[0] + mu)*(ic[0] + mu) + ic[1]*ic[1] + ic[2]*ic[2]);
-                double r = sqrt((ic[0] - 1 + mu)*(ic[0] - 1 + mu) + ic[1]*ic[1] + ic[2]*ic[2]);
-                double U = (1 - mu)/d + mu/r + 0.5*(ic[0]*ic[0] + ic[1]*ic[1]);
+                double r13 = sqrt((ic[0] + mu)*(ic[0] + mu) + ic[1]*ic[1] + ic[2]*ic[2]);
+                double r23 = sqrt((ic[0] - 1 + mu)*(ic[0] - 1 + mu) + ic[1]*ic[1] + ic[2]*ic[2]);
+                double U = (1 - mu)/r13 + mu/r23 + 0.5*(ic[0]*ic[0] + ic[1]*ic[1]);
+
+                std::vector<double> ic_full(ic.data(), ic.data()+ic.cols());
+                ic_full.insert(ic_full.end(), ctrl0.begin(), ctrl0.end());
+                double alt[3] = {0};
+                pLaw->getOutput(0, &(ic_full[0]), pSys, alt, 3);
+        
+                double r_dot_a = ic[0]*alt[0] + ic[1]*alt[1] + ic[2]*alt[2];
 
                 // Rescale the velocity vector so that the magnitude yields the exact Jacobi Constant
-                v *= sqrt(2*U - C);
+                v *= sqrt(2*(Hlt + U + r_dot_a));
                 ic.block<3,1>(3,0) = v; // Reassign the velocity components of ic
             }
 

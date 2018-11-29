@@ -25,6 +25,7 @@
 #pragma once
 
 #include <ctype.h>
+#include <string.h>
 #include <iostream>
 
 namespace astroHelper{

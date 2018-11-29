@@ -3,4 +3,5 @@
  * MATLAB via the mex interface
  */
 
+#include "MexStreamOutput.hpp"
 #include "MexDataConversions.hpp"

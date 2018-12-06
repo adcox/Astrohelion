@@ -282,6 +282,8 @@ void MultShootEngine::setFindEvent(bool b){ bFindEvent = b; }
  *	@param pArcIn pointer to the arcset that needs to be corrected
  *	@param pArcOut pointer to the arcset object that will contain the results of
  *	the shooting process
+ *	@param pData Pointer to a MultShootData object. The object is overwritten by
+ *	this function, thus, the existing data is not used.
  *	@return the iteration data object for this corrections process
  *	@throws DivergeException if the corrections process does not converge
  *	@throws Exception

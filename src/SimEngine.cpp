@@ -208,7 +208,11 @@ void SimEngine::setMakeDefaultEvents(bool b){ bMakeDefaultEvents = b; }
 /**
  *  @brief Set the maximum computation time limit (seconds).
  *  @details The numerical integration is stopped once the specified number
- *  of seconds have ellapsed since the beginning of the integration. 
+ *  of seconds have ellapsed since the beginning of the integration. This check 
+ *  may only be effective if a variable step size is employed. A fixed step-size 
+ *  integration only checks the computation time after a full step is completed.
+ *  Thus, if the integrator takes a very long time to complete one step, the 
+ *  computation time limit may be violated.
  * 
  *  @param t maximum allowable seconds for the numerical integration.
  */
@@ -1258,7 +1262,8 @@ void SimEngine::integrate(const double *ic, const double *ctrl0,
             lastSeg.appendTime(t_int);
             propStepCount++;
         }
-    }else{
+    }else{ // tdim != 2
+
         // Identity matrix to reinitialize STM for each segment
         std::vector<double> I {};
         createIdentity(I, core_dim + ctrl_dim);

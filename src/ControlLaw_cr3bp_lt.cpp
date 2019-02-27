@@ -569,8 +569,8 @@ void ControlLaw_cr3bp_lt::getPartials_AccelWRTCore_AlongVel(double t, const doub
 	partials[7*1 + 5] = -sign*(f/s[6]) * s[4]*s[5]/v3;				// day/dvz
 	partials[7*1 + 6] = -sign*(f/s[6]) * s[4]/(v*s[6]);				// day/dm
 
-	partials[7*2 + 3] = partials[7*1 + 5];							// daz/dvx
-	partials[7*2 + 4] = partials[7*2 + 5];							// daz/dvy
+	partials[7*2 + 3] = partials[7*0 + 5];							// daz/dvx
+	partials[7*2 + 4] = partials[7*1 + 5];							// daz/dvy
 	partials[7*2 + 5] =  sign*(f/s[6]) * (1.0/v - s[5]*s[5]/v3);	// daz/dvz
 	partials[7*2 + 6] = -sign*(f/s[6]) * s[5]/(v*s[6]);				// daz/dm
 }//====================================================
